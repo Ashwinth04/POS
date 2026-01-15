@@ -12,7 +12,7 @@ import java.time.ZonedDateTime;
 public abstract class AbstractPojo {
     @Id
     private String id; //ZonedDateTime
-    @CreatedDate // These 2 mannotations enable mongodb to automatically set these fields when inserting or updating a record
+    @CreatedDate // These 2 annotations enable mongodb to automatically set these fields when inserting or updating a record
     private Instant createdAt;
     @LastModifiedDate
     private Instant updatedAt;

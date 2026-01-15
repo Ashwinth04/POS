@@ -7,8 +7,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserData {
+public class ProductData {
     private String id;
+    private String barcode;
+    private String clientId;
     private String name;
-    private String email;
-} 
+    private Double mrp;
+    private String imageUrl;
+}
