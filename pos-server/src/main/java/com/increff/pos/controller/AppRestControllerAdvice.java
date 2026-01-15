@@ -2,11 +2,11 @@ package com.increff.pos.controller;
 
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.MessageData;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.dao.DuplicateKeyException;
 
 @RestControllerAdvice
 public class AppRestControllerAdvice {
@@ -28,4 +28,4 @@ public class AppRestControllerAdvice {
     public MessageData handle(DuplicateKeyException e) {
         return new MessageData("A record with this key already exists");
     }
-} 
+}

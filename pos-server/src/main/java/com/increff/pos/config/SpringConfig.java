@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"com.increff.pos"})
-@RestController
+//@RestController  -- This is not required
 public class SpringConfig {
 
 	public static void main(String[] args) {

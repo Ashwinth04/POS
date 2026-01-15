@@ -12,4 +12,4 @@ public interface UserApi {
     List<UserPojo> getAll();
     UserPojo getByEmail(String email);
     Page<UserPojo> getAll(int page, int size);
-} 
+}
