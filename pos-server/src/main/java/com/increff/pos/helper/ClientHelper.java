@@ -4,16 +4,12 @@ import com.increff.pos.db.ClientPojo;
 import com.increff.pos.model.data.ClientData;
 import com.increff.pos.model.form.ClientForm;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-
 public class ClientHelper {
     public static ClientPojo convertToEntity(ClientForm clientForm) {
         ClientPojo clientPojo = new ClientPojo();
-        clientPojo.setName(clientForm.getName());
-        clientPojo.setEmail(clientForm.getEmail());
-        clientPojo.setLocation(clientForm.getLocation());
+        clientPojo.setName(clientForm.getName().toLowerCase());
+        clientPojo.setEmail(clientForm.getEmail().toLowerCase());
+        clientPojo.setLocation(clientForm.getLocation().toLowerCase());
         clientPojo.setPhoneNumber(clientForm.getPhoneNumber());
         return clientPojo;
     }

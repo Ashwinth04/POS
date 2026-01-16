@@ -13,8 +13,6 @@ import java.util.List;
 @Data
 @Document(collection = "orders")
 public class OrderPojo extends AbstractPojo {
-    @Field("orderTime")
     private Instant orderTime;
-    @Field("orderItems")
     private List<OrderItem> orderItems;
 }

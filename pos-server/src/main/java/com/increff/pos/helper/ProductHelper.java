@@ -7,7 +7,7 @@ import com.increff.pos.model.data.ProductData;
 import com.increff.pos.model.form.InventoryForm;
 import com.increff.pos.model.form.ProductForm;
 
-public class ProductHelper {
+public class    ProductHelper {
     public static ProductPojo convertToEntity(ProductForm productForm) {
         ProductPojo productPojo = new ProductPojo();
         productPojo.setName(productForm.getName());

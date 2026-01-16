@@ -7,6 +7,7 @@ import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.db.UserPojo;
+import com.increff.pos.dto.ProductDto;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.ProductData;
 import com.increff.pos.model.data.ProductUploadResult;
@@ -39,11 +40,8 @@ public class ProductApiImpl implements ProductApi {
     public ProductPojo add(ProductPojo productPojo) throws ApiException {
         logger.info("Adding a product with name: {}", productPojo.getName());
 
-        String clientId = productPojo.getClientId();
-
-        // If the clientId doesn't exist in the DB, throw an exception
-        ClientPojo client = clientDao.findById(clientId)
-                .orElseThrow(() -> new ApiException("Client with the given id does not exist"));
+        checkClientExists(productPojo);
+        checkBarcodeExists(productPojo.getBarcode());
 
         ProductPojo saved = productDao.save(productPojo);
         logger.info("Product created with name: {}", saved.getName());
@@ -122,7 +120,6 @@ public class ProductApiImpl implements ProductApi {
         return resultMap;
     }
 
-
     public InventoryPojo getDummyInventoryRecord(ProductPojo productPojo) throws ApiException {
         InventoryPojo dummyInventory = new InventoryPojo();
         dummyInventory.setProductId(productPojo.getId());
@@ -148,5 +145,19 @@ public class ProductApiImpl implements ProductApi {
         logger.info("Fetching productds page {} with size {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return productDao.findAll(pageRequest);
+    }
+
+    public void checkClientExists(ProductPojo productPojo) throws ApiException {
+
+        String clientId = productPojo.getClientId();
+
+        ClientPojo client = clientDao.findById(clientId)
+                .orElseThrow(() -> new ApiException("Client with the given id does not exist"));
+    }
+
+    public void checkBarcodeExists(String barcode) throws ApiException {
+        ProductPojo result = productDao.findByBarcode(barcode);
+
+        if (result != null) { throw new ApiException("Barcode already exists"); }
     }
 }

@@ -39,7 +39,7 @@ public class OrderApiImpl {
         logger.info("Checking if sufficient quantity of each product exists..");
         List<OrderItem> items = orderPojo.getOrderItems();
 
-        // Iterate through all the items and update the inventory
+        // Iterate through all the items and updateClient the inventory
         for (OrderItem item : items) {
             updateQuantity(item);
         }

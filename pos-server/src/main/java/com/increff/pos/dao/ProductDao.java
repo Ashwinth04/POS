@@ -24,6 +24,11 @@ public class ProductDao extends AbstractDao<ProductPojo> {
         return mongoOperations.findOne(query, ProductPojo.class);
     }
 
+    public ProductPojo findByBarcode(String barcode) {
+        Query query = Query.query(Criteria.where("barcode").is(barcode));
+        return mongoOperations.findOne(query, ProductPojo.class);
+    }
+
     @Override
     public Page<ProductPojo> findAll(Pageable pageable) {
         return super.findAll(pageable);

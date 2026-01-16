@@ -33,26 +33,14 @@ public class ClientDao extends AbstractDao<ClientPojo> {
         return mongoOperations.findOne(query, ClientPojo.class);
     }
 
-    public void updateByName(String oldName, ClientPojo clientPojo) throws ApiException {
-        String newName = clientPojo.getName();
-        String newEmail = clientPojo.getEmail();
-        String newLocation = clientPojo.getLocation();
-        String newPhoneNumber = clientPojo.getPhoneNumber();
-        Instant updateTime = clientPojo.getUpdatedAt();
+    public ClientPojo findByEmail(String email) {
+        Query query = Query.query(Criteria.where("email").is(email));
+        return mongoOperations.findOne(query, ClientPojo.class);
+    }
 
-        Query query = Query.query(Criteria.where("name").is(oldName));
-        Update update = new Update()
-                .set("name", newName)
-                .set("email", newEmail)
-                .set("location", newLocation)
-                .set("phoneNumber", newPhoneNumber)
-                .set("updatedAt",updateTime);
-
-        UpdateResult result = mongoOperations.updateFirst(query, update, ClientPojo.class);
-
-        if (result.getMatchedCount() == 0) {
-            throw new ApiException("No matching client found");
-        }
+    public ClientPojo findByPhoneNumber(String phoneNumber) {
+        Query query = Query.query(Criteria.where("phoneNumber").is(phoneNumber));
+        return mongoOperations.findOne(query, ClientPojo.class);
     }
 
     public Set<String> findExistingClientIds(Set<String> clientIds) {
@@ -74,6 +62,13 @@ public class ClientDao extends AbstractDao<ClientPojo> {
                 .collect(Collectors.toSet());
     }
 
+    public List<ClientPojo> search(String name) {
+        Query query = new Query(
+                Criteria.where("name").regex("^" + name, "i")
+        );
+
+        return mongoOperations.find(query, ClientPojo.class);
+    }
 
     @Override
     public Page<ClientPojo> findAll(Pageable pageable) {

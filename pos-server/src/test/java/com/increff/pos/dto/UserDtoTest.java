@@ -72,7 +72,7 @@ public class UserDtoTest extends AbstractUnitTest {
 
     @Test
     public void testGetByIdExisting() throws ApiException {
-        // First create a user
+        // First createNewClient a user
         UserForm form = new UserForm();
         form.setEmail("get-by-id@example.com");
         form.setName("Test User");

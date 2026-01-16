@@ -1,35 +1,33 @@
 package com.increff.pos.dto;
 
 import com.increff.pos.api.ProductApiImpl;
-import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
-import com.increff.pos.db.UserPojo;
 import com.increff.pos.exception.ApiException;
-import com.increff.pos.helper.ClientHelper;
 import com.increff.pos.helper.ProductHelper;
-import com.increff.pos.helper.UserHelper;
+import com.increff.pos.model.data.FileData;
 import com.increff.pos.model.data.InventoryData;
 import com.increff.pos.model.data.ProductData;
 import com.increff.pos.model.data.ProductUploadResult;
-import com.increff.pos.model.data.UserData;
+import com.increff.pos.model.form.FileForm;
 import com.increff.pos.model.form.InventoryForm;
 import com.increff.pos.model.form.PageForm;
 import com.increff.pos.model.form.ProductForm;
+import com.increff.pos.util.FileUtils;
 import com.increff.pos.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.increff.pos.util.FileUtils.getBase64String;
+import static com.increff.pos.util.FileUtils.parseBase64File;
 
 @Service
 public class ProductDto {
@@ -37,75 +35,20 @@ public class ProductDto {
     @Autowired
     private ProductApiImpl productApi;
 
-    public List<ProductForm> parseTsv(MultipartFile file) {
+    public FileData createProducts(FileForm base64file) throws ApiException {
 
-        //Parse the tsv and convert it a list of ProductForm objects
-        List<ProductForm> forms = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(file.getInputStream()))) {
-
-            String line;
-            boolean isHeader = true; //first line in the file is a header
-
-            //iterate through all the lines
-            //Every line corresponds to a product except the first line
-            while ((line = reader.readLine()) != null) {
-                if (isHeader) {
-                    isHeader = false; // skip header
-                    continue;
-                }
-
-                //trim removes whitespaces at the beginning and the end
-                if (line.trim().isEmpty()) continue;
-
-                String[] columns = line.split("\t", -1); // -1 keeps empty columns
-
-                ProductForm form = new ProductForm();
-                form.setBarcode(columns[0].trim());
-                form.setClientId(columns[1].trim());
-                form.setName(columns[2].trim());
-                form.setMrp(columns[3].isBlank() ? null : Double.valueOf(columns[3].trim()));
-                form.setImageUrl(columns[4].trim());
-
-                forms.add(form);
-            }
-
-        } catch (IOException e) {
-            System.out.println("Failed to parse TSV file");
-            throw new RuntimeException("Failed to read TSV file", e);
-        }
-
-        return forms;
+        List<ProductForm> forms = parseBase64File(base64file.getBase64file());
+        List<ProductUploadResult> results = upload(forms);
+        return convertResultsToBase64(results);
     }
 
-    public byte[] convertResultsToTsv(List<ProductUploadResult> results) {
+    public FileData convertResultsToBase64(List<ProductUploadResult> results) throws ApiException {
+        String resultFile = getBase64String(results);
 
-        //Products are added incrementally, so StringBuilder is necessary
-        StringBuilder sb = new StringBuilder();
+        FileData fileData = new FileData();
+        fileData.setBase64file(resultFile);
 
-        // Header
-        sb.append("barcode\tclientId\tname\tmrp\timageUrl\tproductId\tstatus\tmessage\n");
-
-        // Iterate through the products and create the tsv file incrementally
-        for (ProductUploadResult r : results) {
-            sb.append(safe(r.getBarcode())).append("\t")
-                    .append(safe(r.getClientId())).append("\t")
-                    .append(safe(r.getName())).append("\t")
-                    .append(r.getMrp() == null ? "" : r.getMrp()).append("\t")
-                    .append(safe(r.getImageUrl())).append("\t")
-                    .append(safe(r.getProductId())).append("\t")
-                    .append(safe(r.getStatus())).append("\t")
-                    .append(safe(r.getMessage()))
-                    .append("\n");
-        }
-
-        // Convert it to a string and then to a byte array. This makes it suitable for sending a file to the frontend
-        return sb.toString().getBytes(StandardCharsets.UTF_8);
-    }
-
-    private String safe(String value) {
-        return value == null ? "" : value.replace("\t", " ").replace("\n", " ");
+        return fileData;
     }
 
     public List<ProductUploadResult> upload(List<ProductForm> forms) throws ApiException {
@@ -124,7 +67,7 @@ public class ProductDto {
             result.setImageUrl(form.getImageUrl());
 
 
-            // Statuses are required to track whether a product upload is success or fail. This will be later used in the output TSV file which will be sent to the frontend
+            // Statuses are required to track whether a product createProductsBulk is success or fail. This will be later used in the output TSV file which will be sent to the frontend
             try {
                 ValidationUtil.validateProductForm(form);
                 validForms.add(ProductHelper.convertToEntity(form));
@@ -138,12 +81,16 @@ public class ProductDto {
             results.add(result);
         }
 
+        return getFinalResults(results, validForms);
+    }
+
+    private List<ProductUploadResult> getFinalResults(List<ProductUploadResult> results, List<ProductPojo> validForms) {
+
         if (!validForms.isEmpty()) {
 
             //Get API layer's response
             //API layer returns a map where the key represents the status and the value represents the object
-            Map<String, ProductUploadResult> apiResults =
-                    productApi.bulkAdd(validForms);
+            Map<String, ProductUploadResult> apiResults = productApi.bulkAdd(validForms);
 
             // Update all the results
             for (ProductUploadResult r : results) {

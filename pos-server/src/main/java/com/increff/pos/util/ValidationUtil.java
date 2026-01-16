@@ -84,7 +84,7 @@ public class ValidationUtil {
     }
 
     private static void validatePhoneNumber(String phoneNumber) throws ApiException {
-        if (phoneNumber.length() != 10) {
+        if (phoneNumber == null || phoneNumber.length() != 10 || !phoneNumber.matches("\\d{10}")) {
             throw new ApiException("Not a valid phone number");
         }
     }

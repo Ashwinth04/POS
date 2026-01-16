@@ -27,12 +27,10 @@ public class ClientApiImpl implements ClientApi {
     @Transactional(rollbackFor = ApiException.class)
     public ClientPojo add(ClientPojo clientPojo) throws ApiException {
         logger.info("Creating client with name: {}", clientPojo.getName());
-        ClientPojo existing = dao.findByName(clientPojo.getName());
 
-        //Check if client already exists
-        if (existing != null) {
-            throw new ApiException("Client already exists");
-        }
+        checkNameExists(clientPojo.getName());
+        checkEmailExists(clientPojo.getEmail());
+        checkPhoneNumberExists(clientPojo.getPhoneNumber());
 
         // Save the new client
         ClientPojo saved = dao.save(clientPojo);
@@ -49,9 +47,41 @@ public class ClientApiImpl implements ClientApi {
 
     @Transactional(rollbackFor = ApiException.class)
     public ClientPojo update(String oldName, ClientPojo clientPojo) throws ApiException {
-        dao.updateByName(oldName, clientPojo);
+        ClientPojo existingRecord = dao.findByName(oldName);
 
-        return dao.findByName(clientPojo.getName());
+        if (existingRecord == null) {throw new ApiException("Client doesn't exist");}
+
+        clientPojo.setId(existingRecord.getId());
+
+        return dao.save(clientPojo);
+    }
+
+    public List<ClientPojo> search(String name) throws ApiException {
+        return dao.search(name);
+    }
+
+    private void checkEmailExists(String email) throws ApiException {
+        ClientPojo clientPojo = dao.findByEmail(email);
+
+        if (clientPojo != null) {
+            throw new ApiException("Email already exists");
+        }
+    }
+
+    private void checkPhoneNumberExists(String phoneNumber) throws ApiException {
+        ClientPojo clientPojo = dao.findByPhoneNumber(phoneNumber);
+
+        if (clientPojo != null) {
+            throw new ApiException("Phone Number already exists");
+        }
+    }
+
+    private void checkNameExists(String name) throws ApiException{
+        ClientPojo existing = dao.findByName(name);
+
+        if (existing != null) {
+            throw new ApiException("Client already exists");
+        }
     }
 
 }

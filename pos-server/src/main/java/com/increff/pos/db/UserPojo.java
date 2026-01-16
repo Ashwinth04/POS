@@ -10,8 +10,6 @@ import lombok.Data;
 @Document(collection = "users")
 public class UserPojo extends AbstractPojo {
     @Indexed(unique = true)
-    @Field("email")
     private String email;
-    @Field("name")
     private String name;
 } 

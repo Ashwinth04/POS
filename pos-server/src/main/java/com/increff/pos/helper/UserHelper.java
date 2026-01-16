@@ -15,10 +15,10 @@ public class UserHelper {
         userPojo.setEmail(dto.getEmail());
         return userPojo;
     }
+
     public static List<UserData> convertToUserDataList(List<UserPojo> userPojoDataList) {
         return userPojoDataList.stream().map(UserHelper::convertToDto).collect(Collectors.toList());
     }
-
 
     public static UserData convertToDto(UserPojo userPojo) {
         UserData userData = new UserData();

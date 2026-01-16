@@ -18,23 +18,25 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ClientDto {
 
     @Autowired
-    private ClientApiImpl clientAPI;
+    private ClientApiImpl clientApi;
 
     public ClientData create(ClientForm clientForm) throws ApiException {
         ValidationUtil.validateClientForm(clientForm);
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
-        ClientPojo savedClientPojo = clientAPI.add(clientPojo);
+        ClientPojo savedClientPojo = clientApi.add(clientPojo);
         return ClientHelper.convertToDto(savedClientPojo);
     }
 
     public Page<ClientData> getAll(PageForm form) throws ApiException {
         ValidationUtil.validatePageForm(form);
-        Page<ClientPojo> clientPage = clientAPI.getAll(form.getPage(), form.getSize());
+        Page<ClientPojo> clientPage = clientApi.getAll(form.getPage(), form.getSize());
         return clientPage.map(ClientHelper::convertToDto);
     }
 
@@ -42,7 +44,19 @@ public class ClientDto {
         ValidationUtil.validateClientForm(clientForm);
         ValidationUtil.validateName(oldName);
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
-        ClientPojo updatedClientPojo = clientAPI.update(oldName, clientPojo);
+        ClientPojo updatedClientPojo = clientApi.update(oldName, clientPojo);
         return ClientHelper.convertToDto(updatedClientPojo);
+    }
+
+    public List<ClientData> search(String name) throws ApiException {
+        ValidationUtil.validateName(name);
+        List<ClientPojo> results = clientApi.search(name);
+        List<ClientData> response = new ArrayList<>();
+
+        for (ClientPojo pojo : results) {
+            response.add(ClientHelper.convertToDto(pojo));
+        }
+
+        return response;
     }
 }
