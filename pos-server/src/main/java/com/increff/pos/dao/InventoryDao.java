@@ -24,16 +24,16 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
     }
 
     public void updateInventory(InventoryPojo inventoryPojo) throws ApiException {
-        String productId = inventoryPojo.getProductId();
+        String barcode = inventoryPojo.getBarcode();
         int quantity = inventoryPojo.getQuantity();
 
-        Query query = Query.query(Criteria.where("productId").is(productId));
-        Update update = new Update().set("quantity", quantity);
+        Query query = Query.query(Criteria.where("barcode").is(barcode));
+        Update update = new Update().inc("quantity", quantity);
 
         UpdateResult result = mongoOperations.updateFirst(query, update, InventoryPojo.class);
 
         if (result.getMatchedCount() == 0) {
-            throw new ApiException("No matching product found for the given id");
+            throw new ApiException("No matching product found for the given barcode");
         }
     }
 

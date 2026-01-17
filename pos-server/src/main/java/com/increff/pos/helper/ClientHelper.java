@@ -7,7 +7,7 @@ import com.increff.pos.model.form.ClientForm;
 public class ClientHelper {
     public static ClientPojo convertToEntity(ClientForm clientForm) {
         ClientPojo clientPojo = new ClientPojo();
-        clientPojo.setName(clientForm.getName().toLowerCase());
+        clientPojo.setName(clientForm.getName());
         clientPojo.setEmail(clientForm.getEmail().toLowerCase());
         clientPojo.setLocation(clientForm.getLocation().toLowerCase());
         clientPojo.setPhoneNumber(clientForm.getPhoneNumber());

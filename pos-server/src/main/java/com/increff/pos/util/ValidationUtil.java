@@ -31,6 +31,7 @@ public class ValidationUtil {
         validateName(productForm.getName());
         validateMrp(productForm.getMrp());
         validateUrl(productForm.getImageUrl());
+        validateName(productForm.getBarcode());
     }
 
     public static void validateOrderForm(OrderForm orderForm) throws ApiException {
@@ -43,6 +44,7 @@ public class ValidationUtil {
     }
 
     private static void validateOrderItems(List<OrderItemForm> items) throws ApiException {
+
         if (items == null || items.isEmpty()) {
             throw new ApiException("orderItems cannot be empty");
         }
@@ -57,7 +59,7 @@ public class ValidationUtil {
             throw new ApiException("orderItems[" + index + "] cannot be null");
         }
 
-        if (item.getProductId() == null) {
+        if (item.getBarcode() == null) {
             throw new ApiException("orderItems[" + index + "].productId cannot be null");
         }
 

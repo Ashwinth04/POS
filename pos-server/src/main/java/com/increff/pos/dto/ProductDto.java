@@ -5,29 +5,19 @@ import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.ProductHelper;
-import com.increff.pos.model.data.FileData;
-import com.increff.pos.model.data.InventoryData;
-import com.increff.pos.model.data.ProductData;
-import com.increff.pos.model.data.ProductUploadResult;
-import com.increff.pos.model.form.FileForm;
-import com.increff.pos.model.form.InventoryForm;
-import com.increff.pos.model.form.PageForm;
-import com.increff.pos.model.form.ProductForm;
+import com.increff.pos.model.data.*;
+import com.increff.pos.model.form.*;
 import com.increff.pos.util.FileUtils;
 import com.increff.pos.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static com.increff.pos.util.FileUtils.getBase64String;
-import static com.increff.pos.util.FileUtils.parseBase64File;
+import static com.increff.pos.util.FileUtils.*;
 
 @Service
 public class ProductDto {
@@ -42,6 +32,14 @@ public class ProductDto {
         return convertResultsToBase64(results);
     }
 
+    public FileData addProductsInventory(FileForm base64file) throws ApiException {
+
+        List<InventoryUpdateForm> inventoryForms = getInventoryFormsFromFile(base64file.getBase64file());
+        List<InventoryUpdateResult> inventoryResults = uploadInventory(inventoryForms);
+//        return convertInventoryResults(inventoryResults);
+        return null;
+    }
+
     public FileData convertResultsToBase64(List<ProductUploadResult> results) throws ApiException {
         String resultFile = getBase64String(results);
 
@@ -53,27 +51,17 @@ public class ProductDto {
 
     public List<ProductUploadResult> upload(List<ProductForm> forms) throws ApiException {
 
-        List<ProductUploadResult> results = new ArrayList<>(); //Contains the final list of responses for each product
-        List<ProductPojo> validForms = new ArrayList<>(); //Contains all the valid products which are ready to be sent to the API layer
+        List<ProductUploadResult> results = new ArrayList<>();
+        List<ProductPojo> validForms = new ArrayList<>();
 
-        // Iterate through all the forms and validate them. Only send the valid ones to the API layer
         for (ProductForm form : forms) {
+            ProductUploadResult result = createInitialResult(form);
 
-            ProductUploadResult result = new ProductUploadResult();
-            result.setBarcode(form.getBarcode());
-            result.setClientId(form.getClientId());
-            result.setName(form.getName());
-            result.setMrp(form.getMrp());
-            result.setImageUrl(form.getImageUrl());
-
-
-            // Statuses are required to track whether a product createProductsBulk is success or fail. This will be later used in the output TSV file which will be sent to the frontend
             try {
-                ValidationUtil.validateProductForm(form);
-                validForms.add(ProductHelper.convertToEntity(form));
+                ProductPojo pojo = validateAndConvert(form);
+                validForms.add(pojo);
                 result.setStatus("PENDING");
             } catch (ApiException e) {
-                // If validation fails, mark it as failed. Don't send it to the API layer
                 result.setStatus("FAILED");
                 result.setMessage(e.getMessage());
             }
@@ -82,6 +70,52 @@ public class ProductDto {
         }
 
         return getFinalResults(results, validForms);
+    }
+
+    public List<InventoryUpdateResult> uploadInventory(List<InventoryUpdateForm> inventoryForms) throws ApiException {
+
+        List<InventoryUpdateResult> results = new ArrayList<>();
+        List<InventoryPojo> validForms = new ArrayList<>();
+
+        for (InventoryUpdateForm form : inventoryForms) {
+
+            InventoryUpdateResult result = new InventoryUpdateResult();
+            result.setBarcode(form.getBarcode());
+            result.setQuantity(form.getQuantity());
+
+            try {
+                InventoryPojo pojo = new InventoryPojo();
+
+                pojo.setBarcode(form.getBarcode());
+                pojo.setQuantity(form.getQuantity());
+
+                validForms.add(pojo);
+                result.setStatus("PENDING");
+            } catch (Exception e) {
+                e.printStackTrace();
+                result.setStatus("FAILED");
+                result.setMessage(e.getMessage());
+            }
+
+            results.add(result);
+        }
+
+        return getFinalResultsForInventoryUpdate(results, validForms);
+
+    }
+    private ProductUploadResult createInitialResult(ProductForm form) {
+        ProductUploadResult result = new ProductUploadResult();
+        result.setBarcode(form.getBarcode());
+        result.setClientId(form.getClientId());
+        result.setName(form.getName());
+        result.setMrp(form.getMrp());
+        result.setImageUrl(form.getImageUrl());
+        return result;
+    }
+
+    private ProductPojo validateAndConvert(ProductForm form) throws ApiException {
+        ValidationUtil.validateProductForm(form);
+        return ProductHelper.convertToEntity(form);
     }
 
     private List<ProductUploadResult> getFinalResults(List<ProductUploadResult> results, List<ProductPojo> validForms) {
@@ -106,6 +140,28 @@ public class ProductDto {
         return results;
     }
 
+    private List<InventoryUpdateResult> getFinalResultsForInventoryUpdate(List<InventoryUpdateResult> results, List<InventoryPojo> validForms) {
+
+        if (!validForms.isEmpty()) {
+
+            //Get API layer's response
+            //API layer returns a map where the key represents the status and the value represents the object
+            Map<String, InventoryUpdateResult> apiResults = productApi.bulkInventoryUpdate(validForms);
+
+            // Update all the results
+            for (InventoryUpdateResult r : results) {
+                if ("PENDING".equals(r.getStatus())) {
+                    InventoryUpdateResult apiResult = apiResults.get(r.getBarcode());
+                    r.setStatus(apiResult.getStatus());
+                    r.setMessage(apiResult.getMessage());
+                    r.setBarcode(apiResult.getBarcode());
+                }
+            }
+        }
+
+        return results;
+    }
+
     public ProductData create(ProductForm productForm) throws ApiException {
         ValidationUtil.validateProductForm(productForm);
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
@@ -115,9 +171,9 @@ public class ProductDto {
         return ProductHelper.convertToDto(savedProductPojo);
     }
 
-    public InventoryData updateInventory(String productId, InventoryForm inventoryForm) throws ApiException {
+    public InventoryData updateInventory(String barcode, InventoryForm inventoryForm) throws ApiException {
         ValidationUtil.validateInventoryForm(inventoryForm);
-        InventoryPojo inventoryPojo = ProductHelper.convertToInventoryEntity(productId, inventoryForm);
+        InventoryPojo inventoryPojo = ProductHelper.convertToInventoryEntity(barcode, inventoryForm);
         InventoryPojo updatedInventoryPojo = productApi.updateInventory(inventoryPojo);
         return ProductHelper.convertToInventoryDto(updatedInventoryPojo);
     }

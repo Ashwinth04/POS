@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderItemForm {
-    private String productId;
+    private String barcode;
     private Integer orderedQuantity;
     private Double sellingPrice;
 }

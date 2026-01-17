@@ -41,15 +41,15 @@ public class ProductController {
     }
 
     @Operation(summary = "Update inventory for a product")
-    @RequestMapping(path = "/update/{productId}", method = RequestMethod.PUT)
-    public InventoryData updateInventory(@PathVariable String productId, @RequestBody InventoryForm inventoryForm) throws ApiException {
-        return productDto.updateInventory(productId, inventoryForm);
+    @RequestMapping(path = "/update/{barcode}", method = RequestMethod.PUT)
+    public InventoryData updateInventory(@PathVariable String barcode, @RequestBody InventoryForm inventoryForm) throws ApiException {
+        return productDto.updateInventory(barcode, inventoryForm);
     }
 
     @Operation(summary = "Update inventory for multiple products at once")
     @RequestMapping(path = "/bulkUpdate", method = RequestMethod.POST)
-    public byte[] updateBulkInventory(@RequestPart("file") MultipartFile file) throws ApiException {
-        return null;
+    public FileData updateBulkInventory(@RequestBody FileForm base64file) throws ApiException {
+        return productDto.addProductsInventory(base64file);
     }
 
     @Operation(summary = "Get all products with pagination")

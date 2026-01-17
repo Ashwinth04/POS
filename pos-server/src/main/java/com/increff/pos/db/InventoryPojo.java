@@ -7,6 +7,6 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "inventories")
 public class InventoryPojo extends AbstractPojo {
-    private String productId;
+    private String barcode;
     private int quantity;
 }

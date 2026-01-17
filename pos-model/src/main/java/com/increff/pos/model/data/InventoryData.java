@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class InventoryData {
-    private String id;
-    private String productId;
+    private String barcode;
     private int quantity;
 }

@@ -1,5 +1,7 @@
 package com.increff.pos.dao;
 
+import com.increff.pos.db.ClientPojo;
+import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -8,6 +10,10 @@ import org.springframework.data.mongodb.repository.support.MongoRepositoryFactor
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Repository
 public class ProductDao extends AbstractDao<ProductPojo> {
@@ -27,6 +33,25 @@ public class ProductDao extends AbstractDao<ProductPojo> {
     public ProductPojo findByBarcode(String barcode) {
         Query query = Query.query(Criteria.where("barcode").is(barcode));
         return mongoOperations.findOne(query, ProductPojo.class);
+    }
+
+    public Set<String> findExistingBarcodes(Set<String> barcodes) {
+
+        if (barcodes == null || barcodes.isEmpty()) {
+            return Set.of();
+        }
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("barcode").in(barcodes));
+
+        // Only fetch the id field (optimization)
+        query.fields().include("id");
+
+        List<InventoryPojo> clients = mongoOperations.find(query, InventoryPojo.class);
+
+        return clients.stream()
+                .map(InventoryPojo::getBarcode)
+                .collect(Collectors.toSet());
     }
 
     @Override

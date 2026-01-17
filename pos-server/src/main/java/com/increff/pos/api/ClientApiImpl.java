@@ -28,9 +28,9 @@ public class ClientApiImpl implements ClientApi {
     public ClientPojo add(ClientPojo clientPojo) throws ApiException {
         logger.info("Creating client with name: {}", clientPojo.getName());
 
-        checkNameExists(clientPojo.getName());
-        checkEmailExists(clientPojo.getEmail());
-        checkPhoneNumberExists(clientPojo.getPhoneNumber());
+        checkNameExists("",clientPojo.getName());
+        checkEmailExists("",clientPojo.getEmail());
+        checkPhoneNumberExists("",clientPojo.getPhoneNumber());
 
         // Save the new client
         ClientPojo saved = dao.save(clientPojo);
@@ -51,6 +51,10 @@ public class ClientApiImpl implements ClientApi {
 
         if (existingRecord == null) {throw new ApiException("Client doesn't exist");}
 
+        checkNameExists(existingRecord.getId(),clientPojo.getName());
+        checkEmailExists(existingRecord.getId(),clientPojo.getEmail());
+        checkPhoneNumberExists(existingRecord.getId(),clientPojo.getPhoneNumber());
+
         clientPojo.setId(existingRecord.getId());
 
         return dao.save(clientPojo);
@@ -60,28 +64,31 @@ public class ClientApiImpl implements ClientApi {
         return dao.search(name);
     }
 
-    private void checkEmailExists(String email) throws ApiException {
-        ClientPojo clientPojo = dao.findByEmail(email);
+    private void checkEmailExists(String id, String email) throws ApiException {
+        ClientPojo existing = dao.findByEmail(email);
 
-        if (clientPojo != null) {
+        if (existing != null && !existing.getId().equals(id)) {
             throw new ApiException("Email already exists");
         }
     }
 
-    private void checkPhoneNumberExists(String phoneNumber) throws ApiException {
-        ClientPojo clientPojo = dao.findByPhoneNumber(phoneNumber);
 
-        if (clientPojo != null) {
+    private void checkPhoneNumberExists(String id, String phoneNumber) throws ApiException {
+        ClientPojo existing = dao.findByPhoneNumber(phoneNumber);
+
+        if (existing != null && !existing.getId().equals(id)) {
             throw new ApiException("Phone Number already exists");
         }
     }
 
-    private void checkNameExists(String name) throws ApiException{
+
+    private void checkNameExists(String id, String name) throws ApiException {
         ClientPojo existing = dao.findByName(name);
 
-        if (existing != null) {
+        if (existing != null && !existing.getId().equals(id)) {
             throw new ApiException("Client already exists");
         }
     }
+
 
 }

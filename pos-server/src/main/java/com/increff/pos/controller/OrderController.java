@@ -21,7 +21,7 @@ public class OrderController {
     private OrderDto orderDto;
 
     @Operation(summary = "Create new order")
-    @RequestMapping(value = "/createNewClient", method = RequestMethod.POST)
+    @RequestMapping(value = "/create", method = RequestMethod.POST)
     public OrderData createOrder(@RequestBody OrderForm orderForm) throws ApiException {
         return orderDto.create(orderForm);
     }

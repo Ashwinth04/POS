@@ -30,17 +30,16 @@ public class    ProductHelper {
         return productData;
     }
 
-    public static InventoryPojo convertToInventoryEntity(String productId, InventoryForm inventoryForm) {
+    public static InventoryPojo convertToInventoryEntity(String barcode, InventoryForm inventoryForm) {
         InventoryPojo inventoryPojo = new InventoryPojo();
-        inventoryPojo.setProductId(productId);
+        inventoryPojo.setBarcode(barcode);
         inventoryPojo.setQuantity(inventoryForm.getQuantity());
         return inventoryPojo;
     }
 
     public static InventoryData convertToInventoryDto(InventoryPojo inventoryPojo) {
         InventoryData inventoryData = new InventoryData();
-        inventoryData.setId(inventoryPojo.getId());
-        inventoryData.setProductId(inventoryPojo.getProductId());
+        inventoryData.setBarcode(inventoryPojo.getBarcode());
         inventoryData.setQuantity(inventoryPojo.getQuantity());
         return inventoryData;
     }

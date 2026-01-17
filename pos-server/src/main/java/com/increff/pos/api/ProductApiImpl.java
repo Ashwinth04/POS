@@ -9,6 +9,7 @@ import com.increff.pos.db.ProductPojo;
 import com.increff.pos.db.UserPojo;
 import com.increff.pos.dto.ProductDto;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.model.data.InventoryUpdateResult;
 import com.increff.pos.model.data.ProductData;
 import com.increff.pos.model.data.ProductUploadResult;
 import org.slf4j.LoggerFactory;
@@ -48,18 +49,44 @@ public class ProductApiImpl implements ProductApi {
         return saved;
     }
 
+    public Map<String, InventoryUpdateResult> bulkInventoryUpdate(List<InventoryPojo> inventoryPojos) {
+
+        Map<String, InventoryUpdateResult> resultMap = initializeInventoryResultMap(inventoryPojos);
+
+        if (inventoryPojos == null || inventoryPojos.isEmpty()) {
+            return resultMap;
+        }
+
+        Set<String> existingBarcodes = fetchExistingBarcodes(inventoryPojos);
+        List<InventoryPojo> validForInsert = filterValidProducts(inventoryPojos, existingBarcodes, resultMap);
+        persistValidInventories(validForInsert, resultMap);
+
+        return resultMap;
+    }
+
     @Transactional(rollbackFor = ApiException.class)
     public Map<String, ProductUploadResult> bulkAdd(List<ProductPojo> pojos) {
 
-        //Take all the valid Product pojos and uploads them in bulk. Also, check if the client ids exist in the DB
-
-        Map<String, ProductUploadResult> resultMap = new HashMap<>();
+        Map<String, ProductUploadResult> resultMap = initializeResultMap(pojos);
 
         if (pojos == null || pojos.isEmpty()) {
             return resultMap;
         }
 
-        //Initialize result map
+        Set<String> existingClientIds = fetchExistingClientIds(pojos);
+
+        List<ProductPojo> validForInsert = filterValidClients(pojos, existingClientIds, resultMap);
+
+        persistValidProducts(validForInsert, resultMap);
+
+        return resultMap;
+    }
+
+    private Map<String, ProductUploadResult> initializeResultMap(List<ProductPojo> pojos) {
+        Map<String, ProductUploadResult> resultMap = new HashMap<>();
+
+        if (pojos == null) return resultMap;
+
         for (ProductPojo p : pojos) {
             ProductUploadResult r = new ProductUploadResult();
             r.setBarcode(p.getBarcode());
@@ -67,41 +94,99 @@ public class ProductApiImpl implements ProductApi {
             r.setName(p.getName());
             r.setMrp(p.getMrp());
             r.setImageUrl(p.getImageUrl());
-
             r.setStatus("PENDING");
+
             resultMap.put(p.getBarcode(), r);
         }
 
-        // Fetch all existing clients in ONE call
+        return resultMap;
+    }
+
+    private Map<String, InventoryUpdateResult> initializeInventoryResultMap(List<InventoryPojo> pojos) {
+        Map<String, InventoryUpdateResult> resultMap = new HashMap<>();
+
+        if (pojos == null) return resultMap;
+
+        for (InventoryPojo p : pojos) {
+            InventoryUpdateResult r = new InventoryUpdateResult();
+            r.setBarcode(p.getBarcode());
+            r.setQuantity(p.getQuantity());
+            r.setStatus("PENDING");
+
+            resultMap.put(p.getBarcode(), r);
+        }
+
+        return resultMap;
+    }
+
+    private Set<String> fetchExistingClientIds(List<ProductPojo> pojos) {
         Set<String> requestedClientIds = pojos.stream()
                 .map(ProductPojo::getClientId)
                 .collect(Collectors.toSet());
 
-        Set<String> existingClientIds = clientDao.findExistingClientIds(requestedClientIds);
+        return clientDao.findExistingClientIds(requestedClientIds);
+    }
 
-        // Step 3: Filter valid vs invalid clients
-        List<ProductPojo> validForInsert = new ArrayList<>();
+    private Set<String> fetchExistingBarcodes(List<InventoryPojo> pojos) {
+        Set<String> requestedBarcodes = pojos.stream()
+                .map(InventoryPojo::getBarcode)
+                .collect(Collectors.toSet());
 
-        // Iterate through the pojos and check if the client ids exist. If it doesn't, mark it as failed.
+        return productDao.findExistingBarcodes(requestedBarcodes);
+    }
+
+    private List<ProductPojo> filterValidClients(List<ProductPojo> pojos, Set<String> existingClientIds, Map<String, ProductUploadResult> resultMap) {
+
+        List<ProductPojo> valid = new ArrayList<>();
+
         for (ProductPojo p : pojos) {
             ProductUploadResult r = resultMap.get(p.getBarcode());
+
+            String barcode = p.getBarcode();
+            ProductPojo existing = productDao.findByBarcode(barcode);
 
             if (!existingClientIds.contains(p.getClientId())) {
                 r.setStatus("FAILED");
                 r.setMessage("Client with the given id does not exist");
-            } else {
-                validForInsert.add(p);
+            } else if (existing != null) {
+                r.setStatus("FAILED");
+                r.setMessage("Product with the given barcode already exists");
+            }
+            else {
+                valid.add(p);
             }
         }
 
-        // Step 4: Bulk insert valid ones
+        return valid;
+    }
+
+    private List<InventoryPojo> filterValidProducts(List<InventoryPojo> pojos, Set<String> existingBarcodes, Map<String, InventoryUpdateResult> resultMap) {
+
+        List<InventoryPojo> valid = new ArrayList<>();
+
+        for (InventoryPojo p: pojos) {
+            InventoryUpdateResult r = resultMap.get(p.getBarcode());
+
+            if (!existingBarcodes.contains(p.getBarcode())) {
+                r.setStatus("FAILED");
+                r.setMessage("Product with the given Barcode doest not exist");
+            }
+            else {
+                valid.add(p);
+            }
+        }
+
+        return valid;
+    }
+
+    private void persistValidProducts(List<ProductPojo> validForInsert, Map<String, ProductUploadResult> resultMap) {
+
         try {
-            // Save only the valid pojos (Valid input + clientId exists in DB)
             List<ProductPojo> saved = productDao.saveAll(validForInsert);
 
-            // Mark status
             for (ProductPojo savedPojo : saved) {
                 addInventory(savedPojo);
+
                 ProductUploadResult r = resultMap.get(savedPojo.getBarcode());
                 r.setStatus("SUCCESS");
                 r.setProductId(savedPojo.getId());
@@ -109,40 +194,72 @@ public class ProductApiImpl implements ProductApi {
             }
 
         } catch (Exception e) {
-            // if bulk insert explodes (constraint, DB down, etc) - just an extra layer of exception handling
-            for (ProductPojo p : validForInsert) {
-                ProductUploadResult r = resultMap.get(p.getBarcode());
-                r.setStatus("FAILED");
-                r.setMessage("Database error: " + e.getMessage());
+            markDatabaseFailure(validForInsert, resultMap, e);
+        }
+    }
+
+    private void persistValidInventories(List<InventoryPojo> validForInsert, Map<String, InventoryUpdateResult> resultMap) {
+
+        try {
+
+            List<InventoryPojo> saved = inventoryDao.saveAll(validForInsert);
+
+            for (InventoryPojo savedPojo: saved) {
+
+                InventoryUpdateResult r = resultMap.get(savedPojo.getBarcode());
+                r.setStatus("SUCCESS");
+                r.setBarcode(savedPojo.getBarcode());
+                r.setMessage("Inserted successfully");
             }
+
+        } catch (Exception e) {
+            markDatabaseFailureInventory(validForInsert, resultMap, e);
         }
 
-        return resultMap;
+    }
+
+    private void markDatabaseFailure(List<ProductPojo> validForInsert, Map<String, ProductUploadResult> resultMap, Exception e) {
+
+        for (ProductPojo p : validForInsert) {
+            ProductUploadResult r = resultMap.get(p.getBarcode());
+            r.setStatus("FAILED");
+            r.setMessage("Database error: " + e.getMessage());
+        }
+    }
+
+    private void markDatabaseFailureInventory(List<InventoryPojo> validForInsert, Map<String, InventoryUpdateResult> resultMap, Exception e) {
+
+        for (InventoryPojo p : validForInsert) {
+            InventoryUpdateResult r = resultMap.get(p.getBarcode());
+            r.setStatus("FAILED");
+            r.setMessage("Database error: " + e.getMessage());
+        }
     }
 
     public InventoryPojo getDummyInventoryRecord(ProductPojo productPojo) throws ApiException {
         InventoryPojo dummyInventory = new InventoryPojo();
-        dummyInventory.setProductId(productPojo.getId());
+        dummyInventory.setBarcode(productPojo.getBarcode());
         dummyInventory.setQuantity(0);
         return dummyInventory;
     }
 
     public InventoryPojo addInventory(ProductPojo productPojo) throws ApiException {
         InventoryPojo dummyInventory = getDummyInventoryRecord(productPojo);
-        logger.info("Adding new inventory for product with id: {}", dummyInventory.getProductId());
+        logger.info("Adding new inventory for product with barcode: {}", dummyInventory.getBarcode());
         InventoryPojo saved = inventoryDao.save(dummyInventory);
-        logger.info("Inventory added for product with id: {}", saved.getProductId());
+        logger.info("Inventory added for product with id: {}", saved.getBarcode());
         return saved;
     }
 
     @Transactional(rollbackFor = ApiException.class)
     public InventoryPojo updateInventory(InventoryPojo inventoryPojo) throws ApiException {
+
         inventoryDao.updateInventory(inventoryPojo);
         return inventoryPojo;
     }
 
     public Page<ProductPojo> getAll(int page, int size) {
-        logger.info("Fetching productds page {} with size {}", page, size);
+        logger.info("Fetching products page {} with size {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return productDao.findAll(pageRequest);
     }

@@ -39,7 +39,7 @@ public class OrderApiImpl {
         logger.info("Checking if sufficient quantity of each product exists..");
         List<OrderItem> items = orderPojo.getOrderItems();
 
-        // Iterate through all the items and updateClient the inventory
+        // Iterate through all the items and update the inventory
         for (OrderItem item : items) {
             updateQuantity(item);
         }
@@ -67,13 +67,14 @@ public class OrderApiImpl {
     }
 
     private void updateQuantity(OrderItem item) throws ApiException {
-        String productId = item.getProductId();
+        String barcode = item.getBarcode();
 
         // Check if the product exists in the database
-        ProductPojo product = productDao.findById(productId)
-                .orElseThrow(() -> new ApiException("Product not found: " + productId));
+        ProductPojo product = productDao.findByBarcode(barcode);
 
-        int availableQuantity = inventoryDao.getQuantity(productId);
+        if (product == null) { throw new ApiException("No matching barcode"); }
+
+        int availableQuantity = inventoryDao.getQuantity(barcode);
         int requiredQuantity = item.getOrderedQuantity();
 
         if(requiredQuantity > availableQuantity) {
@@ -82,7 +83,7 @@ public class OrderApiImpl {
 
         InventoryPojo updatedInventory = new InventoryPojo();
         updatedInventory.setQuantity(availableQuantity - requiredQuantity);
-        updatedInventory.setProductId(productId);
+//        updatedInventory.setBarcode(barcode);
 
         inventoryDao.updateInventory(updatedInventory);
 
