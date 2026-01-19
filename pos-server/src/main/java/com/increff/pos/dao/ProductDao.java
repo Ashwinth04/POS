@@ -25,11 +25,6 @@ public class ProductDao extends AbstractDao<ProductPojo> {
         );
     }
 
-    public ProductPojo findByProductId(String productId) {
-        Query query = Query.query(Criteria.where("productId").is(productId));
-        return mongoOperations.findOne(query, ProductPojo.class);
-    }
-
     public ProductPojo findByBarcode(String barcode) {
         Query query = Query.query(Criteria.where("barcode").is(barcode));
         return mongoOperations.findOne(query, ProductPojo.class);
@@ -44,13 +39,12 @@ public class ProductDao extends AbstractDao<ProductPojo> {
         Query query = new Query();
         query.addCriteria(Criteria.where("barcode").in(barcodes));
 
-        // Only fetch the id field (optimization)
-        query.fields().include("id");
+        query.fields().include("barcode");
 
-        List<InventoryPojo> clients = mongoOperations.find(query, InventoryPojo.class);
+        List<ProductPojo> products = mongoOperations.find(query, ProductPojo.class);
 
-        return clients.stream()
-                .map(InventoryPojo::getBarcode)
+        return products.stream()
+                .map(ProductPojo::getBarcode)
                 .collect(Collectors.toSet());
     }
 

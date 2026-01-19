@@ -1,15 +1,14 @@
 package com.increff.pos.helper;
 
 import com.increff.pos.db.OrderPojo;
-import com.increff.pos.model.data.OrderData;
-import com.increff.pos.model.data.OrderItem;
-import com.increff.pos.model.data.OrderItemForm;
+import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.OrderForm;
 import org.springframework.core.annotation.Order;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OrderHelper {
 
@@ -32,11 +31,24 @@ public class OrderHelper {
         return orderPojo;
     }
 
-    public static OrderData convertToDto(OrderPojo orderPojo) {
+    public static OrderStatusData convertToDto(Map<String, OrderStatus> orderStatuses) {
+        OrderStatusData orderStatusData = new OrderStatusData();
+        List<OrderStatus> statuses = new ArrayList<>();
+
+        orderStatuses.forEach((orderItemId, status) -> {
+            statuses.add(status);
+        });
+
+        orderStatusData.setOrderItems(statuses);
+        return orderStatusData;
+    }
+
+    public static OrderData convertToOrderDto(OrderPojo orderPojo) {
         OrderData orderData = new OrderData();
-        orderData.setId(orderPojo.getId());
         orderData.setOrderTime(orderPojo.getOrderTime());
         orderData.setOrderItems(orderPojo.getOrderItems());
+        orderData.setOrderStatus(orderPojo.getOrderStatus());
+
         return orderData;
     }
 }

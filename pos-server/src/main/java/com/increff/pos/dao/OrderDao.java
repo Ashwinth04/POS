@@ -20,11 +20,6 @@ public class OrderDao extends AbstractDao<OrderPojo> {
         );
     }
 
-//    public ProductPojo findByName(String name) {
-//        Query query = Query.query(Criteria.where("name").is(name));
-//        return mongoOperations.findOne(query, ProductPojo.class);
-//    }
-
     @Override
     public Page<OrderPojo> findAll(Pageable pageable) {
         return super.findAll(pageable);

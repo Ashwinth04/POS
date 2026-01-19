@@ -35,6 +35,7 @@ public class ProductDto {
     public FileData addProductsInventory(FileForm base64file) throws ApiException {
 
         List<InventoryUpdateForm> inventoryForms = getInventoryFormsFromFile(base64file.getBase64file());
+        System.out.println("Inventory forms: " + inventoryForms);
         List<InventoryUpdateResult> inventoryResults = uploadInventory(inventoryForms);
 //        return convertInventoryResults(inventoryResults);
         return null;
@@ -103,6 +104,7 @@ public class ProductDto {
         return getFinalResultsForInventoryUpdate(results, validForms);
 
     }
+
     private ProductUploadResult createInitialResult(ProductForm form) {
         ProductUploadResult result = new ProductUploadResult();
         result.setBarcode(form.getBarcode());

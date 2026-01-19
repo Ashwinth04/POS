@@ -1,7 +1,6 @@
 package com.increff.pos.dao;
 
 import com.increff.pos.db.InventoryPojo;
-import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.mongodb.client.result.UpdateResult;
 import org.springframework.data.mongodb.core.MongoOperations;
@@ -37,11 +36,18 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         }
     }
 
-    public int getQuantity(String productId) throws ApiException {
-        Query query = Query.query(Criteria.where("productId").is(productId));
+    public int getQuantity(String barcode) throws ApiException {
+        Query query = Query.query(Criteria.where("barcode").is(barcode));
 
-        return mongoOperations.findOne(query,InventoryPojo.class).getQuantity();
+        InventoryPojo pojo = mongoOperations.findOne(query, InventoryPojo.class);
+
+        if (pojo == null) {
+            throw new ApiException("Inventory not found for barcode: " + barcode);
+        }
+
+        return pojo.getQuantity();
     }
+
 
     @Override
     public Page<InventoryPojo> findAll(Pageable pageable) {

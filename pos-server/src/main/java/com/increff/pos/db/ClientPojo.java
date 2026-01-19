@@ -1,11 +1,14 @@
 package com.increff.pos.db;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-@Data
+@Getter
+@Setter
 @Document(collection = "clients")
 public class ClientPojo extends AbstractPojo {
     @Indexed(unique = true)

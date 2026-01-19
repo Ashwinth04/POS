@@ -2,12 +2,12 @@ package com.increff.pos.model.data;
 
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserData {
-    private String id;
-    private String name;
-    private String email;
-} 
+public class OrderStatusData {
+    private List<OrderStatus> orderItems;
+}

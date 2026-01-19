@@ -8,13 +8,20 @@ import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.OrderItem;
+import com.increff.pos.model.data.OrderStatus;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -31,62 +38,107 @@ public class OrderApiImpl {
     private InventoryDao inventoryDao;
 
     @Transactional(rollbackFor = ApiException.class)
-    public OrderPojo add(OrderPojo orderPojo) throws ApiException {
-        logger.info("Creating an order");
+    public Map<String, OrderStatus> add(OrderPojo orderPojo) throws ApiException {
 
-        orderPojo = createOrderItemIds(orderPojo);
+        createOrderItemIds(orderPojo);
+        Map<String, OrderStatus> statuses = new HashMap<>();
 
-        logger.info("Checking if sufficient quantity of each product exists..");
-        List<OrderItem> items = orderPojo.getOrderItems();
+        Boolean validationFailure = false;
 
-        // Iterate through all the items and update the inventory
-        for (OrderItem item : items) {
-            updateQuantity(item);
+        for (OrderItem item : orderPojo.getOrderItems()) {
+            try {
+                validateItem(item); // barcode + price only
+            } catch (ApiException e) {
+                OrderStatus status = new OrderStatus();
+                status.setOrderItemId(item.getOrderItemId());
+                status.setStatus("INVALID INPUT");
+                status.setMessage(e.getMessage());
+                statuses.put(item.getOrderItemId(), status);
+                validationFailure = true;
+            }
+
         }
 
-        try {
-            OrderPojo saved = orderDao.save(orderPojo);
-            logger.info("Order created");
-            return saved;
-        } catch (Exception e) {
-            throw e;
+        if (validationFailure) return statuses;
+
+        // 2. INVENTORY CHECK (soft validation)
+        boolean allFulfillable = true;
+
+        for (OrderItem item : orderPojo.getOrderItems()) {
+            int available = inventoryDao.getQuantity(item.getBarcode());
+            int required = item.getOrderedQuantity();
+
+            OrderStatus status = new OrderStatus();
+            status.setOrderItemId(item.getOrderItemId());
+
+            if (available < required) {
+                item.setOrderItemStatus("UNFULFILLABLE");
+                status.setStatus("UNFULFILLABLE");
+                status.setMessage("Insufficient inventory");
+
+                allFulfillable = false;
+            } else {
+                item.setOrderItemStatus("FULFILLABLE");
+                status.setStatus("FULFILLABLE");
+                status.setMessage("OK");
+            }
+
+            statuses.put(item.getOrderItemId(), status);
         }
+
+        // 3. Set order-level status
+        orderPojo.setOrderStatus(
+                allFulfillable ? "FULFILLABLE" : "UNFULFILLABLE"
+        );
+
+        // 4. Persist order ALWAYS if we reached here
+        orderDao.save(orderPojo);
+
+        // 5. Update inventory only if fully fulfillable
+        if (allFulfillable) {
+            for (OrderItem item : orderPojo.getOrderItems()) {
+                applyInventoryUpdate(item);
+            }
+        }
+
+        return statuses;
     }
 
-    private OrderPojo createOrderItemIds(OrderPojo orderPojo) throws ApiException {
 
-        List<OrderItem> items = orderPojo.getOrderItems();
-
-        for(OrderItem item: items) {
+    private OrderPojo createOrderItemIds(OrderPojo orderPojo) {
+        for (OrderItem item : orderPojo.getOrderItems()) {
             item.setOrderItemId(UUID.randomUUID().toString());
         }
-
-        orderPojo.setOrderItems(items);
-
         return orderPojo;
     }
 
-    private void updateQuantity(OrderItem item) throws ApiException {
+    private void validateItem(OrderItem item) throws ApiException {
         String barcode = item.getBarcode();
 
-        // Check if the product exists in the database
         ProductPojo product = productDao.findByBarcode(barcode);
-
-        if (product == null) { throw new ApiException("No matching barcode"); }
-
-        int availableQuantity = inventoryDao.getQuantity(barcode);
-        int requiredQuantity = item.getOrderedQuantity();
-
-        if(requiredQuantity > availableQuantity) {
-            throw new ApiException("Required quantity not available in inventory. Available quantity:" + availableQuantity);
+        if (product == null) {
+            throw new ApiException("Invalid barcode: " + barcode);
         }
 
-        InventoryPojo updatedInventory = new InventoryPojo();
-        updatedInventory.setQuantity(availableQuantity - requiredQuantity);
-//        updatedInventory.setBarcode(barcode);
+        if (item.getSellingPrice() > product.getMrp() || item.getSellingPrice() <= 0) {
+            throw new ApiException("Selling price exceeds MRP for barcode: " + barcode);
+        }
+    }
 
-        inventoryDao.updateInventory(updatedInventory);
+    private void applyInventoryUpdate(OrderItem item) throws ApiException {
+        InventoryPojo pojo = new InventoryPojo();
+        pojo.setBarcode(item.getBarcode());
+        pojo.setQuantity(-item.getOrderedQuantity());
 
-        logger.info("Product updated!!");
+        int available = inventoryDao.getQuantity(item.getBarcode());
+        int required = item.getOrderedQuantity();
+
+        inventoryDao.updateInventory(pojo);
+    }
+
+    public Page<OrderPojo> getAll(int page, int size) {
+        logger.info("Fetching orders page {} with size {}", page, size);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return orderDao.findAll(pageRequest);
     }
 }

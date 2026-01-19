@@ -2,13 +2,21 @@ package com.increff.pos.dto;
 
 import com.increff.pos.api.OrderApiImpl;
 import com.increff.pos.db.OrderPojo;
+import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.OrderHelper;
-import com.increff.pos.model.data.OrderData;
+import com.increff.pos.helper.ProductHelper;
+import com.increff.pos.model.data.*;
+import com.increff.pos.model.data.OrderStatusData;
 import com.increff.pos.model.form.OrderForm;
+import com.increff.pos.model.form.PageForm;
 import com.increff.pos.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class OrderDto {
@@ -16,12 +24,17 @@ public class OrderDto {
     @Autowired
     private OrderApiImpl orderApi;
 
-    public OrderData create(OrderForm orderForm) throws ApiException {
+    public OrderStatusData create(OrderForm orderForm) throws ApiException {
         ValidationUtil.validateOrderForm(orderForm);
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
-        OrderPojo savedOrderPojo = orderApi.add(orderPojo);
+        Map<String, OrderStatus> orderStatuses = orderApi.add(orderPojo);
 
-        return OrderHelper.convertToDto(savedOrderPojo);
+        return OrderHelper.convertToDto(orderStatuses);
     }
 
+    public Page<OrderData> getAll(PageForm form) throws ApiException {
+        ValidationUtil.validatePageForm(form);
+        Page<OrderPojo> orderPage = orderApi.getAll(form.getPage(), form.getSize());
+        return orderPage.map(OrderHelper::convertToOrderDto);
+    }
 }

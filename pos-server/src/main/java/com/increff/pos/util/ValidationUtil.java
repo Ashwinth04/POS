@@ -60,7 +60,7 @@ public class ValidationUtil {
         }
 
         if (item.getBarcode() == null) {
-            throw new ApiException("orderItems[" + index + "].productId cannot be null");
+            throw new ApiException("orderItems[" + index + "].barcode cannot be null");
         }
 
         if (item.getOrderedQuantity() == null || item.getOrderedQuantity() <= 0) {
@@ -104,14 +104,14 @@ public class ValidationUtil {
     }
 
     private static void validateMrp(Double mrp) throws ApiException {
-        if (mrp == 0) {
+        if (mrp <= 0) {
             throw new ApiException("MRP cannot be zero");
         }
     }
 
     private static void validateQuantity(int quantity) throws ApiException {
-        if (quantity == 0) {
-            throw new ApiException("Quantity cannot be zero");
+        if (quantity <= 0) {
+            throw new ApiException("Quantity cannot be less than or equal to zero");
         }
     }
 

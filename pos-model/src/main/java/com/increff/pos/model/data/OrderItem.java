@@ -1,14 +1,14 @@
 package com.increff.pos.model.data;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderItem {
     private String orderItemId;
+    private String orderItemStatus;
     private String barcode;
     private Integer orderedQuantity;
     private Double sellingPrice;
