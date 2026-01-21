@@ -3,6 +3,7 @@ package com.increff.pos.api;
 import com.increff.pos.dao.InventoryDao;
 import com.increff.pos.dao.OrderDao;
 import com.increff.pos.dao.ProductDao;
+import com.increff.pos.dao.StorageService;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
@@ -11,7 +12,6 @@ import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.model.data.OrderStatus;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.annotation.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -19,10 +19,8 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.io.IOException;
+import java.util.*;
 
 @Service
 public class OrderApiImpl {
@@ -37,79 +35,132 @@ public class OrderApiImpl {
     @Autowired
     private InventoryDao inventoryDao;
 
+    @Autowired
+    private StorageService storageService;
+
     @Transactional(rollbackFor = ApiException.class)
     public Map<String, OrderStatus> add(OrderPojo orderPojo) throws ApiException {
 
         createOrderItemIds(orderPojo);
-        Map<String, OrderStatus> statuses = new HashMap<>();
 
-        Boolean validationFailure = false;
+        Map<String, OrderStatus> statuses = new LinkedHashMap<>();
 
-        for (OrderItem item : orderPojo.getOrderItems()) {
-            try {
-                validateItem(item); // barcode + price only
-            } catch (ApiException e) {
-                OrderStatus status = new OrderStatus();
-                status.setOrderItemId(item.getOrderItemId());
-                status.setStatus("INVALID INPUT");
-                status.setMessage(e.getMessage());
-                statuses.put(item.getOrderItemId(), status);
-                validationFailure = true;
-            }
+        boolean hasValidationErrors = validateAllOrderItems(orderPojo, statuses);
+        if (hasValidationErrors) return statuses;
 
-        }
+        boolean allFulfillable = checkInventoryAndUpdateItemStatus(orderPojo, statuses);
 
-        if (validationFailure) return statuses;
+        setOrderLevelStatus(orderPojo, allFulfillable);
 
-        // 2. INVENTORY CHECK (soft validation)
-        boolean allFulfillable = true;
-
-        for (OrderItem item : orderPojo.getOrderItems()) {
-            int available = inventoryDao.getQuantity(item.getBarcode());
-            int required = item.getOrderedQuantity();
-
-            OrderStatus status = new OrderStatus();
-            status.setOrderItemId(item.getOrderItemId());
-
-            if (available < required) {
-                item.setOrderItemStatus("UNFULFILLABLE");
-                status.setStatus("UNFULFILLABLE");
-                status.setMessage("Insufficient inventory");
-
-                allFulfillable = false;
-            } else {
-                item.setOrderItemStatus("FULFILLABLE");
-                status.setStatus("FULFILLABLE");
-                status.setMessage("OK");
-            }
-
-            statuses.put(item.getOrderItemId(), status);
-        }
-
-        // 3. Set order-level status
-        orderPojo.setOrderStatus(
-                allFulfillable ? "FULFILLABLE" : "UNFULFILLABLE"
-        );
-
-        // 4. Persist order ALWAYS if we reached here
         orderDao.save(orderPojo);
 
-        // 5. Update inventory only if fully fulfillable
-        if (allFulfillable) {
-            for (OrderItem item : orderPojo.getOrderItems()) {
-                applyInventoryUpdate(item);
-            }
-        }
+        updateInventoryIfOrderIsFulfillable(orderPojo, allFulfillable);
 
         return statuses;
     }
 
+    public byte[] getInvoice(String orderId) throws ApiException {
 
-    private OrderPojo createOrderItemIds(OrderPojo orderPojo) {
+        try {
+            return storageService.readInvoice(orderId);
+        } catch (IOException e) {
+            throw new ApiException("Failed to fetch invoice for order: " + orderId);
+        }
+    }
+
+    private boolean validateAllOrderItems(OrderPojo orderPojo, Map<String, OrderStatus> statuses) {
+
+        boolean validationFailure = false;
+
+        for (OrderItem item : orderPojo.getOrderItems()) {
+            try {
+                validateItem(item);
+                addValidItemStatus(item, statuses);
+            } catch (ApiException e) {
+                addInvalidItemStatus(item, e.getMessage(), statuses);
+                validationFailure = true;
+            }
+        }
+
+        return validationFailure;
+    }
+
+    private void addValidItemStatus(OrderItem item, Map<String, OrderStatus> statuses) {
+
+        OrderStatus status = new OrderStatus();
+        status.setOrderItemId(item.getOrderItemId());
+        status.setStatus("VALID");
+        status.setMessage("OK");
+        statuses.put(item.getOrderItemId(), status);
+    }
+
+    private void addInvalidItemStatus(OrderItem item, String errorMessage, Map<String, OrderStatus> statuses) {
+
+        OrderStatus status = new OrderStatus();
+        status.setOrderItemId(item.getOrderItemId());
+        status.setStatus("INVALID");
+        status.setMessage(errorMessage);
+        statuses.put(item.getOrderItemId(), status);
+    }
+
+    private boolean checkInventoryAndUpdateItemStatus(OrderPojo orderPojo, Map<String, OrderStatus> statuses) throws ApiException {
+
+        boolean allFulfillable = true;
+
+        for (OrderItem item : orderPojo.getOrderItems()) {
+            boolean fulfillable = isItemFulfillable(item);
+            updateItemAndStatus(item, fulfillable, statuses);
+
+            if (!fulfillable) allFulfillable = false;
+        }
+
+        return allFulfillable;
+    }
+
+    private boolean isItemFulfillable(OrderItem item) throws ApiException {
+
+        int available = inventoryDao.getQuantity(item.getBarcode());
+        int required = item.getOrderedQuantity();
+        return available >= required;
+    }
+
+    private void updateItemAndStatus(OrderItem item, boolean fulfillable, Map<String, OrderStatus> statuses) {
+
+        OrderStatus status = new OrderStatus();
+        status.setOrderItemId(item.getOrderItemId());
+
+        if (fulfillable) {
+            item.setOrderItemStatus("FULFILLABLE");
+            status.setStatus("FULFILLABLE");
+            status.setMessage("OK");
+        } else {
+            item.setOrderItemStatus("UNFULFILLABLE");
+            status.setStatus("UNFULFILLABLE");
+            status.setMessage("Insufficient inventory");
+        }
+
+        statuses.put(item.getOrderItemId(), status);
+    }
+
+    private void setOrderLevelStatus(OrderPojo orderPojo, boolean allFulfillable) {
+        orderPojo.setOrderStatus(
+                allFulfillable ? "FULFILLABLE" : "UNFULFILLABLE"
+        );
+    }
+
+    private void updateInventoryIfOrderIsFulfillable(OrderPojo orderPojo, boolean allFulfillable) throws ApiException{
+        if (!allFulfillable) return;
+
+        for (OrderItem item : orderPojo.getOrderItems()) {
+            applyInventoryUpdate(item);
+        }
+    }
+
+    private void createOrderItemIds(OrderPojo orderPojo) {
         for (OrderItem item : orderPojo.getOrderItems()) {
             item.setOrderItemId(UUID.randomUUID().toString());
         }
-        return orderPojo;
+//        return orderPojo;
     }
 
     private void validateItem(OrderItem item) throws ApiException {
@@ -129,9 +180,6 @@ public class OrderApiImpl {
         InventoryPojo pojo = new InventoryPojo();
         pojo.setBarcode(item.getBarcode());
         pojo.setQuantity(-item.getOrderedQuantity());
-
-        int available = inventoryDao.getQuantity(item.getBarcode());
-        int required = item.getOrderedQuantity();
 
         inventoryDao.updateInventory(pojo);
     }

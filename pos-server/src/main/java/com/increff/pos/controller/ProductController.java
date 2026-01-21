@@ -31,7 +31,7 @@ public class ProductController {
     @Operation(summary = "Create a new product")
     @RequestMapping(path = "/add", method = RequestMethod.POST)
     public ProductData createProduct(@RequestBody ProductForm productForm) throws ApiException {
-        return productDto.create(productForm);
+        return productDto.createProduct(productForm);
     }
 
     @Operation(summary = "Upload a list of products")
@@ -55,6 +55,6 @@ public class ProductController {
     @Operation(summary = "Get all products with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
     public Page<ProductData> getAllProducts(@RequestBody PageForm form) throws ApiException {
-        return productDto.getAll(form);
+        return productDto.getAllProducts(form);
     }
 }

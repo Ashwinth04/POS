@@ -6,9 +6,12 @@ import com.increff.pos.model.form.OrderForm;
 import org.springframework.core.annotation.Order;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class OrderHelper {
 
@@ -28,10 +31,12 @@ public class OrderHelper {
         }
 
         orderPojo.setOrderItems(items);
+        String id = generate();
+        orderPojo.setOrderId(id);
         return orderPojo;
     }
 
-    public static OrderStatusData convertToDto(Map<String, OrderStatus> orderStatuses) {
+    public static OrderStatusData convertToDto(Map<String, OrderStatus> orderStatuses, String orderId) {
         OrderStatusData orderStatusData = new OrderStatusData();
         List<OrderStatus> statuses = new ArrayList<>();
 
@@ -40,6 +45,7 @@ public class OrderHelper {
         });
 
         orderStatusData.setOrderItems(statuses);
+        orderStatusData.setOrderId(orderId);
         return orderStatusData;
     }
 
@@ -48,7 +54,20 @@ public class OrderHelper {
         orderData.setOrderTime(orderPojo.getOrderTime());
         orderData.setOrderItems(orderPojo.getOrderItems());
         orderData.setOrderStatus(orderPojo.getOrderStatus());
+        orderData.setId(orderPojo.getOrderId());
 
         return orderData;
+    }
+
+    public static String generate() {
+        String timestamp = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+
+        String random = UUID.randomUUID()
+                .toString()
+                .substring(0, 4)
+                .toUpperCase();
+
+        return "ORD-" + timestamp + "-" + random;
     }
 }

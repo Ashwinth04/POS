@@ -9,5 +9,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderStatusData {
+    private String orderId;
     private List<OrderStatus> orderItems;
 }

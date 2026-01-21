@@ -2,7 +2,9 @@ package com.increff.pos.dao;
 
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.exception.ApiException;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.result.UpdateResult;
+import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -11,6 +13,8 @@ import org.springframework.data.mongodb.repository.support.MongoRepositoryFactor
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public class InventoryDao extends AbstractDao<InventoryPojo> {
@@ -46,6 +50,22 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         }
 
         return pojo.getQuantity();
+    }
+
+    public BulkWriteResult bulkUpdate(List<InventoryPojo> validPojos) {
+        BulkOperations bulkOps = mongoOperations.bulkOps(
+                BulkOperations.BulkMode.UNORDERED,
+                InventoryPojo.class
+        );
+
+        for (InventoryPojo pojo : validPojos) {
+            Query query = Query.query(Criteria.where("barcode").is(pojo.getBarcode()));
+            Update update = new Update().inc("quantity", pojo.getQuantity());
+
+            bulkOps.updateOne(query, update);
+        }
+
+        return bulkOps.execute();
     }
 
 

@@ -10,10 +10,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Order Management", description = "Create, view and filter orders")
 @RestController
@@ -33,5 +33,18 @@ public class OrderController {
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
     public Page<OrderData> getAllProducts(@RequestBody PageForm form) throws ApiException {
         return orderDto.getAll(form);
+    }
+
+    @Operation(summary = "Download invoice PDF for an order")
+    @RequestMapping(value = "/{orderId}/invoice", method = RequestMethod.GET)
+    public ResponseEntity<byte[]> downloadInvoice(@PathVariable String orderId) throws ApiException {
+
+        byte[] pdfBytes = orderDto.fetchInvoice(orderId); // you'll add this in DTO
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=invoice-" + orderId + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
     }
 }

@@ -49,17 +49,39 @@ public class ProductApiImpl implements ProductApi {
         return saved;
     }
 
-    public Map<String, InventoryUpdateResult> bulkInventoryUpdate(List<InventoryPojo> inventoryPojos) {
+    public Map<String, String> bulkInventoryUpdate(List<InventoryPojo> inventoryPojos) {
 
-        Map<String, InventoryUpdateResult> resultMap = initializeInventoryResultMap(inventoryPojos);
+        Map<String, String> resultMap = new HashMap<>();
 
         if (inventoryPojos == null || inventoryPojos.isEmpty()) {
             return resultMap;
         }
 
-        Set<String> existingBarcodes = fetchExistingBarcodes(inventoryPojos);
-        List<InventoryPojo> validForInsert = filterValidProducts(inventoryPojos, existingBarcodes, resultMap);
-        persistValidInventories(validForInsert, resultMap);
+        // 1. Extract incoming barcodes
+        Set<String> incomingBarcodes = inventoryPojos.stream()
+                .map(InventoryPojo::getBarcode)
+                .collect(Collectors.toSet());
+
+        // 2. Fetch existing barcodes from DB
+        Set<String> existingBarcodes = productDao.findExistingBarcodes(incomingBarcodes);
+
+        // 3. Split valid and invalid
+        List<InventoryPojo> valid = new ArrayList<>();
+
+        for (InventoryPojo pojo : inventoryPojos) {
+            if (existingBarcodes.contains(pojo.getBarcode())) {
+                valid.add(pojo);
+            } else {
+                resultMap.put(
+                        pojo.getBarcode(),
+                        "Product with the given barcode doesn't exist"
+                );
+            }
+        }
+
+        if (!valid.isEmpty()) {
+            inventoryDao.bulkUpdate(valid);
+        }
 
         return resultMap;
     }
@@ -83,6 +105,7 @@ public class ProductApiImpl implements ProductApi {
     }
 
     private Map<String, ProductUploadResult> initializeResultMap(List<ProductPojo> pojos) {
+
         Map<String, ProductUploadResult> resultMap = new HashMap<>();
 
         if (pojos == null) return resultMap;
@@ -102,37 +125,12 @@ public class ProductApiImpl implements ProductApi {
         return resultMap;
     }
 
-    private Map<String, InventoryUpdateResult> initializeInventoryResultMap(List<InventoryPojo> pojos) {
-        Map<String, InventoryUpdateResult> resultMap = new HashMap<>();
-
-        if (pojos == null) return resultMap;
-
-        for (InventoryPojo p : pojos) {
-            InventoryUpdateResult r = new InventoryUpdateResult();
-            r.setBarcode(p.getBarcode());
-            r.setQuantity(p.getQuantity());
-            r.setStatus("PENDING");
-
-            resultMap.put(p.getBarcode(), r);
-        }
-
-        return resultMap;
-    }
-
     private Set<String> fetchExistingClientIds(List<ProductPojo> pojos) {
         Set<String> requestedClientIds = pojos.stream()
                 .map(ProductPojo::getClientId)
                 .collect(Collectors.toSet());
 
         return clientDao.findExistingClientIds(requestedClientIds);
-    }
-
-    private Set<String> fetchExistingBarcodes(List<InventoryPojo> pojos) {
-        Set<String> requestedBarcodes = pojos.stream()
-                .map(InventoryPojo::getBarcode)
-                .collect(Collectors.toSet());
-
-        return productDao.findExistingBarcodes(requestedBarcodes);
     }
 
     private List<ProductPojo> filterValidClients(List<ProductPojo> pojos, Set<String> existingClientIds, Map<String, ProductUploadResult> resultMap) {
@@ -160,77 +158,31 @@ public class ProductApiImpl implements ProductApi {
         return valid;
     }
 
-    private List<InventoryPojo> filterValidProducts(List<InventoryPojo> pojos, Set<String> existingBarcodes, Map<String, InventoryUpdateResult> resultMap) {
-
-        List<InventoryPojo> valid = new ArrayList<>();
-
-        for (InventoryPojo p: pojos) {
-            InventoryUpdateResult r = resultMap.get(p.getBarcode());
-
-            if (!existingBarcodes.contains(p.getBarcode())) {
-                r.setStatus("FAILED");
-                r.setMessage("Product with the given Barcode doest not exist");
-            }
-            else {
-                valid.add(p);
-            }
-        }
-
-        return valid;
-    }
-
     private void persistValidProducts(List<ProductPojo> validForInsert, Map<String, ProductUploadResult> resultMap) {
 
         try {
             List<ProductPojo> saved = productDao.saveAll(validForInsert);
 
+            System.out.println(resultMap.keySet());
+
+
             for (ProductPojo savedPojo : saved) {
                 addInventory(savedPojo);
-
-                ProductUploadResult r = resultMap.get(savedPojo.getBarcode());
-                r.setStatus("SUCCESS");
-                r.setProductId(savedPojo.getId());
-                r.setMessage("Inserted successfully");
+                System.out.println("Saved: " + savedPojo.getBarcode());
+                resultMap.remove(savedPojo.getBarcode());
             }
 
         } catch (Exception e) {
             markDatabaseFailure(validForInsert, resultMap, e);
         }
-    }
 
-    private void persistValidInventories(List<InventoryPojo> validForInsert, Map<String, InventoryUpdateResult> resultMap) {
-
-        try {
-
-            List<InventoryPojo> saved = inventoryDao.saveAll(validForInsert);
-
-            for (InventoryPojo savedPojo: saved) {
-
-                InventoryUpdateResult r = resultMap.get(savedPojo.getBarcode());
-                r.setStatus("SUCCESS");
-                r.setBarcode(savedPojo.getBarcode());
-                r.setMessage("Inserted successfully");
-            }
-
-        } catch (Exception e) {
-            markDatabaseFailureInventory(validForInsert, resultMap, e);
-        }
-
+        System.out.println("Persisted all the valid products");
     }
 
     private void markDatabaseFailure(List<ProductPojo> validForInsert, Map<String, ProductUploadResult> resultMap, Exception e) {
 
         for (ProductPojo p : validForInsert) {
             ProductUploadResult r = resultMap.get(p.getBarcode());
-            r.setStatus("FAILED");
-            r.setMessage("Database error: " + e.getMessage());
-        }
-    }
-
-    private void markDatabaseFailureInventory(List<InventoryPojo> validForInsert, Map<String, InventoryUpdateResult> resultMap, Exception e) {
-
-        for (InventoryPojo p : validForInsert) {
-            InventoryUpdateResult r = resultMap.get(p.getBarcode());
             r.setStatus("FAILED");
             r.setMessage("Database error: " + e.getMessage());
         }

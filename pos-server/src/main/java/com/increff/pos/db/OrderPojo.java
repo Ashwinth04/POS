@@ -16,6 +16,7 @@ import java.util.List;
 @Setter
 @Document(collection = "orders")
 public class OrderPojo extends AbstractPojo {
+    private String orderId;
     private Instant orderTime;
     private String orderStatus;
     private List<OrderItem> orderItems;

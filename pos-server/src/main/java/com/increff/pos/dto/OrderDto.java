@@ -11,6 +11,7 @@ import com.increff.pos.model.data.OrderStatusData;
 import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.PageForm;
 import com.increff.pos.util.ValidationUtil;
+import com.increff.service.InvoiceGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -29,12 +30,25 @@ public class OrderDto {
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
         Map<String, OrderStatus> orderStatuses = orderApi.add(orderPojo);
 
-        return OrderHelper.convertToDto(orderStatuses);
+        generateInvoice(orderPojo);
+
+        return OrderHelper.convertToDto(orderStatuses, orderPojo.getOrderId());
     }
 
     public Page<OrderData> getAll(PageForm form) throws ApiException {
         ValidationUtil.validatePageForm(form);
         Page<OrderPojo> orderPage = orderApi.getAll(form.getPage(), form.getSize());
         return orderPage.map(OrderHelper::convertToOrderDto);
+    }
+
+    public void generateInvoice(OrderPojo orderPojo) {
+        OrderData orderData = OrderHelper.convertToOrderDto(orderPojo);
+        InvoiceGenerator invoiceGenerator = new InvoiceGenerator();
+        invoiceGenerator.generate(orderData);
+    }
+
+    public byte[] fetchInvoice(String orderId) throws ApiException {
+        ValidationUtil.validateOrderId(orderId);
+        return orderApi.getInvoice(orderId);
     }
 }

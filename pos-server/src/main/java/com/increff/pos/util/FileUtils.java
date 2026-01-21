@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 public class FileUtils {
     public static List<ProductForm> parseBase64File(String base64) {
@@ -70,6 +71,8 @@ public class FileUtils {
         sb.append("barcode\tclientId\tname\tmrp\timageUrl\tproductId\tstatus\tmessage\n");
 
         for (ProductUploadResult r : results) {
+            if (r.getStatus() != "FAILED") continue;
+
             sb.append(safe(r.getBarcode())).append("\t")
                     .append(safe(r.getClientId())).append("\t")
                     .append(safe(r.getName())).append("\t")
@@ -82,6 +85,24 @@ public class FileUtils {
         }
 
         // Convert TSV string → bytes → Base64 string
+        byte[] tsvBytes = sb.toString().getBytes(StandardCharsets.UTF_8);
+        return Base64.getEncoder().encodeToString(tsvBytes);
+    }
+
+    public static String getBase64InventoryUpdate(Map<String, String> inventoryUpdateResults) {
+        if (inventoryUpdateResults.isEmpty()) return "";
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("barcode\tmessage\n");
+
+        for (String key: inventoryUpdateResults.keySet()) {
+            sb.append(safe(key))
+                    .append("\t")
+                    .append(inventoryUpdateResults.get(key))
+                    .append("\n");
+        }
+
         byte[] tsvBytes = sb.toString().getBytes(StandardCharsets.UTF_8);
         return Base64.getEncoder().encodeToString(tsvBytes);
     }
@@ -109,8 +130,17 @@ public class FileUtils {
                 String[] columns = line.split("\t", -1);
 
                 InventoryUpdateForm form = new InventoryUpdateForm();
-                form.setBarcode(columns[0].trim());
-                form.setQuantity(Integer.parseInt(columns[1].trim()));
+
+                // Barcode (safe)
+                form.setBarcode(columns.length > 0 ? columns[0].trim() : "");
+
+                // Quantity (safe parsing)
+                String qtyStr = columns.length > 1 ? columns[1].trim() : "";
+                try {
+                    form.setQuantity(Integer.parseInt(qtyStr));
+                } catch (NumberFormatException e) {
+                    form.setQuantity(0); // Let validation catch this as invalid
+                }
 
                 inventoryForms.add(form);
             }
@@ -121,6 +151,7 @@ public class FileUtils {
 
         return inventoryForms;
     }
+
 
     public static byte[] convertFileToBytes(String base64File) {
 

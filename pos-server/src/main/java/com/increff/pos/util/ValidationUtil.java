@@ -76,6 +76,25 @@ public class ValidationUtil {
         validateQuantity(inventoryForm.getQuantity());
     }
 
+    public static String validateInventoryUpdateForm(InventoryUpdateForm form) {
+        if (form.getBarcode() == null || form.getBarcode().trim().isEmpty()) {
+            return "Barcode is missing";
+        }
+
+        if (form.getQuantity() <= 0) {
+            return "Quantity must be positive, non-zero";
+        }
+
+        return null; // valid
+    }
+
+
+    public static void validateOrderId(String orderId) throws ApiException {
+
+        if (orderId.length() != 24) throw new ApiException("Not a valid order id");
+
+    }
+
     private static void validateEmail(String email) throws ApiException {
         if (!StringUtils.hasText(email)) {
             throw new ApiException("Email cannot be empty");

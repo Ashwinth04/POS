@@ -7,5 +7,6 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FileData {
+    private String status;
     private String base64file;
 }
