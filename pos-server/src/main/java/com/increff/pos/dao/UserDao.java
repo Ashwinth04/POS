@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+
 @Repository
 public class UserDao extends AbstractDao<UserPojo> {
     public UserDao(MongoOperations mongoOperations) {
@@ -24,4 +25,8 @@ public class UserDao extends AbstractDao<UserPojo> {
         return mongoOperations.findOne(query, UserPojo.class);
     }
 
+    public UserPojo findByUsername(String username) {
+        Query query = Query.query(Criteria.where("username").is(username));
+        return mongoOperations.findOne(query, UserPojo.class);
+    }
 }
