@@ -62,13 +62,29 @@ public class ProductDto {
         List<ProductUploadResult> results = new ArrayList<>();
         List<ProductPojo> validForms = new ArrayList<>();
 
+        // First pass: count barcodes
+        Map<String, Integer> barcodeCount = new HashMap<>();
+        for (ProductForm form : forms) {
+            barcodeCount.merge(form.getBarcode().toLowerCase(), 1, Integer::sum);
+        }
+
+        // Second pass: validate
         for (ProductForm form : forms) {
             ProductUploadResult result = createInitialResult(form);
 
             try {
                 ProductPojo pojo = validateAndConvertToProductEntity(form);
-                validForms.add(pojo);
-                result.setStatus("PENDING");
+
+                String barcode = pojo.getBarcode();
+
+                if (barcodeCount.get(barcode) > 1) {
+                    result.setStatus("FAILED");
+                    result.setMessage("Duplicate barcode in file");
+                } else {
+                    validForms.add(pojo);
+                    result.setStatus("PENDING");
+                }
+
             } catch (ApiException e) {
                 result.setStatus("FAILED");
                 result.setMessage(e.getMessage());
@@ -80,9 +96,10 @@ public class ProductDto {
         return getFinalResults(results, validForms);
     }
 
+
     private ProductUploadResult createInitialResult(ProductForm form) {
         ProductUploadResult result = new ProductUploadResult();
-        result.setBarcode(form.getBarcode());
+        result.setBarcode(form.getBarcode().toLowerCase());
         result.setClientName(form.getClientName());
         result.setName(form.getName());
         result.setMrp(form.getMrp());

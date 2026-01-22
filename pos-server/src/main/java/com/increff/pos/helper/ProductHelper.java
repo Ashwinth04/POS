@@ -12,7 +12,7 @@ public class    ProductHelper {
         ProductPojo productPojo = new ProductPojo();
         productPojo.setName(productForm.getName());
         productPojo.setMrp(productForm.getMrp());
-        productPojo.setBarcode(productForm.getBarcode());
+        productPojo.setBarcode(productForm.getBarcode().toLowerCase());
         productPojo.setClientName(productForm.getClientName());
         productPojo.setImageUrl(productForm.getImageUrl());
         return productPojo;

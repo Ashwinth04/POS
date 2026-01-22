@@ -117,6 +117,8 @@ public class ProductApiImpl implements ProductApi {
         if (pojos == null) return resultMap;
 
         for (ProductPojo p : pojos) {
+
+
             ProductUploadResult r = new ProductUploadResult();
             r.setBarcode(p.getBarcode());
             r.setClientName(p.getClientName());
@@ -143,15 +145,12 @@ public class ProductApiImpl implements ProductApi {
 
         List<ProductPojo> valid = new ArrayList<>();
 
-        System.out.println("Existing client names: " + existingClientNames);
 
         for (ProductPojo p : pojos) {
             ProductUploadResult r = resultMap.get(p.getBarcode());
 
             String barcode = p.getBarcode();
             ProductPojo existing = productDao.findByBarcode(barcode);
-
-            System.out.println("Current client name: " + p.getClientName());
 
             if (!existingClientNames.contains(p.getClientName())) {
                 r.setStatus("FAILED");
@@ -178,7 +177,6 @@ public class ProductApiImpl implements ProductApi {
 
             for (ProductPojo savedPojo : saved) {
                 createDummyInventoryRecord(savedPojo);
-                System.out.println("Saved: " + savedPojo.getBarcode());
                 resultMap.remove(savedPojo.getBarcode());
             }
 
@@ -186,7 +184,6 @@ public class ProductApiImpl implements ProductApi {
             markDatabaseFailure(validForInsert, resultMap, e);
         }
 
-        System.out.println("Persisted all the valid products");
     }
 
     private void markDatabaseFailure(List<ProductPojo> validForInsert, Map<String, ProductUploadResult> resultMap, Exception e) {
