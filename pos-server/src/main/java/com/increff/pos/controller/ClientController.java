@@ -24,23 +24,23 @@ public class ClientController {
     @Operation(summary = "Create a new client")
     @RequestMapping(value = "/add",method = RequestMethod.POST)
     public ClientData createNewClient(@RequestBody ClientForm clientForm) throws ApiException {
-        return clientDto.create(clientForm);
+        return clientDto.createClient(clientForm);
     }
 
     @Operation(summary = "Get all clients with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
     public Page<ClientData> getAllClients(@RequestBody PageForm form) throws ApiException {
-        return clientDto.getAll(form);
+        return clientDto.getAllClients(form);
     }
 
     @Operation(summary = "Update client details")
     @RequestMapping(path = "/update/{oldName}", method = RequestMethod.PUT)
     public ClientData updateClient(@PathVariable String oldName, @RequestBody ClientForm clientForm) throws ApiException {
-        return clientDto.update(oldName, clientForm);
+        return clientDto.updateClientDetails(oldName, clientForm);
     }
 
     @RequestMapping(path = "/search/{name}", method = RequestMethod.GET)
     public List<ClientData> searchByName(@PathVariable String name) throws ApiException {
-        return clientDto.search(name);
+        return clientDto.searchClient(name);
     }
 }

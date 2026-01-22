@@ -68,9 +68,4 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         return bulkOps.execute();
     }
 
-
-    @Override
-    public Page<InventoryPojo> findAll(Pageable pageable) {
-        return super.findAll(pageable);
-    }
 }

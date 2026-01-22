@@ -13,7 +13,7 @@ public class    ProductHelper {
         productPojo.setName(productForm.getName());
         productPojo.setMrp(productForm.getMrp());
         productPojo.setBarcode(productForm.getBarcode());
-        productPojo.setClientId(productForm.getClientId());
+        productPojo.setClientName(productForm.getClientName());
         productPojo.setImageUrl(productForm.getImageUrl());
         return productPojo;
     }
@@ -24,7 +24,7 @@ public class    ProductHelper {
         productData.setName(productPojo.getName());
         productData.setMrp(productPojo.getMrp());
         productData.setBarcode(productPojo.getBarcode());
-        productData.setClientId(productPojo.getClientId());
+        productData.setClientName(productPojo.getClientName());
         productData.setImageUrl(productPojo.getImageUrl());
 
         return productData;

@@ -26,13 +26,13 @@ public class OrderController {
     @Operation(summary = "Create new order")
     @RequestMapping(value = "/create", method = RequestMethod.POST)
     public OrderStatusData createOrder(@RequestBody OrderForm orderForm) throws ApiException {
-        return orderDto.create(orderForm);
+        return orderDto.createOrder(orderForm);
     }
 
     @Operation(summary = "Get all orders with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
     public Page<OrderData> getAllProducts(@RequestBody PageForm form) throws ApiException {
-        return orderDto.getAll(form);
+        return orderDto.getAllOrders(form);
     }
 
     @Operation(summary = "Download invoice PDF for an order")

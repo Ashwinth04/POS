@@ -20,8 +20,4 @@ public class OrderDao extends AbstractDao<OrderPojo> {
         );
     }
 
-    @Override
-    public Page<OrderPojo> findAll(Pageable pageable) {
-        return super.findAll(pageable);
-    }
 }

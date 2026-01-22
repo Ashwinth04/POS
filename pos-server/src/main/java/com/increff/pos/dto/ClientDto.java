@@ -27,30 +27,30 @@ public class ClientDto {
     @Autowired
     private ClientApiImpl clientApi;
 
-    public ClientData create(ClientForm clientForm) throws ApiException {
+    public ClientData createClient(ClientForm clientForm) throws ApiException {
         ValidationUtil.validateClientForm(clientForm);
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
-        ClientPojo savedClientPojo = clientApi.add(clientPojo);
+        ClientPojo savedClientPojo = clientApi.addClient(clientPojo);
         return ClientHelper.convertToDto(savedClientPojo);
     }
 
-    public Page<ClientData> getAll(PageForm form) throws ApiException {
+    public Page<ClientData> getAllClients(PageForm form) throws ApiException {
         ValidationUtil.validatePageForm(form);
-        Page<ClientPojo> clientPage = clientApi.getAll(form.getPage(), form.getSize());
+        Page<ClientPojo> clientPage = clientApi.getAllClients(form.getPage(), form.getSize());
         return clientPage.map(ClientHelper::convertToDto);
     }
 
-    public ClientData update(String oldName, ClientForm clientForm) throws ApiException {
+    public ClientData updateClientDetails(String oldName, ClientForm clientForm) throws ApiException {
         ValidationUtil.validateClientForm(clientForm);
         ValidationUtil.validateName(oldName);
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
-        ClientPojo updatedClientPojo = clientApi.update(oldName, clientPojo);
+        ClientPojo updatedClientPojo = clientApi.updateClient(oldName, clientPojo);
         return ClientHelper.convertToDto(updatedClientPojo);
     }
 
-    public List<ClientData> search(String name) throws ApiException {
+    public List<ClientData> searchClient(String name) throws ApiException {
         ValidationUtil.validateName(name);
-        List<ClientPojo> results = clientApi.search(name);
+        List<ClientPojo> results = clientApi.searchClient(name);
         List<ClientData> response = new ArrayList<>();
 
         for (ClientPojo pojo : results) {

@@ -24,8 +24,4 @@ public class UserDao extends AbstractDao<UserPojo> {
         return mongoOperations.findOne(query, UserPojo.class);
     }
 
-    @Override
-    public Page<UserPojo> findAll(Pageable pageable) {
-        return super.findAll(pageable);
-    }
 }

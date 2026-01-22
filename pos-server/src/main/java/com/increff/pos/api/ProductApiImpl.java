@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ProductApiImpl implements ProductApi {
-    private static final Logger logger = LoggerFactory.getLogger(ProductDao.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProductApiImpl.class);
 
     @Autowired
     private ProductDao productDao;
@@ -38,7 +38,7 @@ public class ProductApiImpl implements ProductApi {
     private ClientDao clientDao;
 
     @Transactional(rollbackFor = ApiException.class)
-    public ProductPojo add(ProductPojo productPojo) throws ApiException {
+    public ProductPojo addProduct(ProductPojo productPojo) throws ApiException {
         logger.info("Adding a product with name: {}", productPojo.getName());
 
         checkClientExists(productPojo);
@@ -46,6 +46,8 @@ public class ProductApiImpl implements ProductApi {
 
         ProductPojo saved = productDao.save(productPojo);
         logger.info("Product created with name: {}", saved.getName());
+        createDummyInventoryRecord(productPojo);
+
         return saved;
     }
 
@@ -87,7 +89,7 @@ public class ProductApiImpl implements ProductApi {
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public Map<String, ProductUploadResult> bulkAdd(List<ProductPojo> pojos) {
+    public Map<String, ProductUploadResult> addProductsBulk(List<ProductPojo> pojos) {
 
         Map<String, ProductUploadResult> resultMap = initializeResultMap(pojos);
 
@@ -95,9 +97,9 @@ public class ProductApiImpl implements ProductApi {
             return resultMap;
         }
 
-        Set<String> existingClientIds = fetchExistingClientIds(pojos);
+        List<String> existingClientNames = fetchExistingClientNames(pojos);
 
-        List<ProductPojo> validForInsert = filterValidClients(pojos, existingClientIds, resultMap);
+        List<ProductPojo> validForInsert = filterValidClients(pojos, existingClientNames, resultMap);
 
         persistValidProducts(validForInsert, resultMap);
 
@@ -113,7 +115,7 @@ public class ProductApiImpl implements ProductApi {
         for (ProductPojo p : pojos) {
             ProductUploadResult r = new ProductUploadResult();
             r.setBarcode(p.getBarcode());
-            r.setClientId(p.getClientId());
+            r.setClientName(p.getClientName());
             r.setName(p.getName());
             r.setMrp(p.getMrp());
             r.setImageUrl(p.getImageUrl());
@@ -125,17 +127,19 @@ public class ProductApiImpl implements ProductApi {
         return resultMap;
     }
 
-    private Set<String> fetchExistingClientIds(List<ProductPojo> pojos) {
-        Set<String> requestedClientIds = pojos.stream()
-                .map(ProductPojo::getClientId)
-                .collect(Collectors.toSet());
+    private List<String> fetchExistingClientNames(List<ProductPojo> pojos) {
+        List<String> requestedClientNames = pojos.stream()
+                .map(ProductPojo::getClientName)
+                .toList();
 
-        return clientDao.findExistingClientIds(requestedClientIds);
+        return clientDao.findExistingClientNames(requestedClientNames);
     }
 
-    private List<ProductPojo> filterValidClients(List<ProductPojo> pojos, Set<String> existingClientIds, Map<String, ProductUploadResult> resultMap) {
+    private List<ProductPojo> filterValidClients(List<ProductPojo> pojos, List<String> existingClientNames, Map<String, ProductUploadResult> resultMap) {
 
         List<ProductPojo> valid = new ArrayList<>();
+
+        System.out.println("Existing client names: " + existingClientNames);
 
         for (ProductPojo p : pojos) {
             ProductUploadResult r = resultMap.get(p.getBarcode());
@@ -143,9 +147,11 @@ public class ProductApiImpl implements ProductApi {
             String barcode = p.getBarcode();
             ProductPojo existing = productDao.findByBarcode(barcode);
 
-            if (!existingClientIds.contains(p.getClientId())) {
+            System.out.println("Current client name: " + p.getClientName());
+
+            if (!existingClientNames.contains(p.getClientName())) {
                 r.setStatus("FAILED");
-                r.setMessage("Client with the given id does not exist");
+                r.setMessage("Client with the given name does not exist");
             } else if (existing != null) {
                 r.setStatus("FAILED");
                 r.setMessage("Product with the given barcode already exists");
@@ -167,7 +173,7 @@ public class ProductApiImpl implements ProductApi {
 
 
             for (ProductPojo savedPojo : saved) {
-                addInventory(savedPojo);
+                createDummyInventoryRecord(savedPojo);
                 System.out.println("Saved: " + savedPojo.getBarcode());
                 resultMap.remove(savedPojo.getBarcode());
             }
@@ -195,7 +201,7 @@ public class ProductApiImpl implements ProductApi {
         return dummyInventory;
     }
 
-    public InventoryPojo addInventory(ProductPojo productPojo) throws ApiException {
+    public InventoryPojo createDummyInventoryRecord(ProductPojo productPojo) throws ApiException {
         InventoryPojo dummyInventory = getDummyInventoryRecord(productPojo);
         logger.info("Adding new inventory for product with barcode: {}", dummyInventory.getBarcode());
         InventoryPojo saved = inventoryDao.save(dummyInventory);
@@ -210,7 +216,7 @@ public class ProductApiImpl implements ProductApi {
         return inventoryPojo;
     }
 
-    public Page<ProductPojo> getAll(int page, int size) {
+    public Page<ProductPojo> getAllProducts(int page, int size) {
         logger.info("Fetching products page {} with size {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return productDao.findAll(pageRequest);
@@ -218,10 +224,14 @@ public class ProductApiImpl implements ProductApi {
 
     public void checkClientExists(ProductPojo productPojo) throws ApiException {
 
-        String clientId = productPojo.getClientId();
+        String clientName = productPojo.getClientName();
 
-        ClientPojo client = clientDao.findById(clientId)
-                .orElseThrow(() -> new ApiException("Client with the given id does not exist"));
+        ClientPojo client = clientDao.findByName(clientName);
+
+        if (client == null) {
+            throw new ApiException("Client with the given name does not exist");
+        }
+
     }
 
     public void checkBarcodeExists(String barcode) throws ApiException {

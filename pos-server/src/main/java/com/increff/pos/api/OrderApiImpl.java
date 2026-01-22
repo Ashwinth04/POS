@@ -24,7 +24,7 @@ import java.util.*;
 
 @Service
 public class OrderApiImpl {
-    private static final Logger logger = LoggerFactory.getLogger(OrderDao.class);
+    private static final Logger logger = LoggerFactory.getLogger(OrderApiImpl.class);
 
     @Autowired
     private OrderDao orderDao;
@@ -39,7 +39,7 @@ public class OrderApiImpl {
     private StorageService storageService;
 
     @Transactional(rollbackFor = ApiException.class)
-    public Map<String, OrderStatus> add(OrderPojo orderPojo) throws ApiException {
+    public Map<String, OrderStatus> createOrder(OrderPojo orderPojo) throws ApiException {
 
         createOrderItemIds(orderPojo);
 
@@ -184,7 +184,7 @@ public class OrderApiImpl {
         inventoryDao.updateInventory(pojo);
     }
 
-    public Page<OrderPojo> getAll(int page, int size) {
+    public Page<OrderPojo> getAllOrders(int page, int size) {
         logger.info("Fetching orders page {} with size {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return orderDao.findAll(pageRequest);

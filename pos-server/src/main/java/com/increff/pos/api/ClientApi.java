@@ -5,7 +5,7 @@ import com.increff.pos.exception.ApiException;
 import org.springframework.data.domain.Page;
 
 public interface ClientApi {
-    ClientPojo add(ClientPojo clientPojo) throws ApiException;
-    Page<ClientPojo> getAll(int page, int size) throws ApiException;
-    ClientPojo update(String oldName, ClientPojo clientPojo) throws ApiException;
+    ClientPojo addClient(ClientPojo clientPojo) throws ApiException;
+    Page<ClientPojo> getAllClients(int page, int size) throws ApiException;
+    ClientPojo updateClient(String oldName, ClientPojo clientPojo) throws ApiException;
 }

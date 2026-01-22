@@ -43,23 +43,22 @@ public class ClientDao extends AbstractDao<ClientPojo> {
         return mongoOperations.findOne(query, ClientPojo.class);
     }
 
-    public Set<String> findExistingClientIds(Set<String> clientIds) {
+    public List<String> findExistingClientNames(List<String> clientNames) {
 
-        if (clientIds == null || clientIds.isEmpty()) {
-            return Set.of();
+        if (clientNames == null || clientNames.isEmpty()) {
+            return List.of();
         }
 
         Query query = new Query();
-        query.addCriteria(Criteria.where("id").in(clientIds));
+        query.addCriteria(Criteria.where("name").in(clientNames));
 
-        // Only fetch the id field (optimization)
-        query.fields().include("id");
+        query.fields().include("name");
 
         List<ClientPojo> clients = mongoOperations.find(query, ClientPojo.class);
 
         return clients.stream()
-                .map(ClientPojo::getId)
-                .collect(Collectors.toSet());
+                .map(ClientPojo::getName)
+                .toList();
     }
 
     public List<ClientPojo> search(String name) {
@@ -68,10 +67,5 @@ public class ClientDao extends AbstractDao<ClientPojo> {
         );
 
         return mongoOperations.find(query, ClientPojo.class);
-    }
-
-    @Override
-    public Page<ClientPojo> findAll(Pageable pageable) {
-        return super.findAll(pageable);
     }
 }

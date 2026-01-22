@@ -8,7 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 public class ProductUploadResult {
     private String barcode;
-    private String clientId;
+    private String clientName;
     private String name;
     private Double mrp;
     private String imageUrl;

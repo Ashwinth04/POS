@@ -4,5 +4,5 @@ import com.increff.pos.db.OrderPojo;
 import com.increff.pos.exception.ApiException;
 
 public interface OrderApi {
-    OrderPojo add(OrderPojo orderPojo) throws ApiException;
+    OrderPojo createOrder(OrderPojo orderPojo) throws ApiException;
 }

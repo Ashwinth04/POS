@@ -124,7 +124,7 @@ public class ValidationUtil {
 
     private static void validateMrp(Double mrp) throws ApiException {
         if (mrp <= 0) {
-            throw new ApiException("MRP cannot be zero");
+            throw new ApiException("MRP cannot be less than or equal to zero");
         }
     }
 

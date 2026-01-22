@@ -29,9 +29,8 @@ public class ProductDto {
     public ProductData createProduct(ProductForm productForm) throws ApiException {
         ValidationUtil.validateProductForm(productForm);
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
-        ProductPojo savedProductPojo = productApi.add(productPojo);
+        ProductPojo savedProductPojo = productApi.addProduct(productPojo);
 
-        productApi.addInventory(productPojo);
         return ProductHelper.convertToDto(savedProductPojo);
     }
 
@@ -44,11 +43,11 @@ public class ProductDto {
 
     public Page<ProductData> getAllProducts(PageForm form) throws ApiException {
         ValidationUtil.validatePageForm(form);
-        Page<ProductPojo> productPage = productApi.getAll(form.getPage(), form.getSize());
+        Page<ProductPojo> productPage = productApi.getAllProducts(form.getPage(), form.getSize());
         return productPage.map(ProductHelper::convertToDto);
     }
 
-    public FileData createProducts(FileForm base64file) {
+    public FileData createProducts(FileForm base64file) throws ApiException {
 
         List<ProductForm> forms = parseBase64File(base64file.getBase64file());
         List<ProductUploadResult> results = uploadProducts(forms);
@@ -81,7 +80,7 @@ public class ProductDto {
     private ProductUploadResult createInitialResult(ProductForm form) {
         ProductUploadResult result = new ProductUploadResult();
         result.setBarcode(form.getBarcode());
-        result.setClientId(form.getClientId());
+        result.setClientName(form.getClientName());
         result.setName(form.getName());
         result.setMrp(form.getMrp());
         result.setImageUrl(form.getImageUrl());
@@ -97,7 +96,7 @@ public class ProductDto {
 
         if (validForms.isEmpty()) return results;
 
-        Map<String, ProductUploadResult> apiResults = productApi.bulkAdd(validForms);
+        Map<String, ProductUploadResult> apiResults = productApi.addProductsBulk(validForms);
 
         for (ProductUploadResult r : results) {
             if ("PENDING".equals(r.getStatus())) {

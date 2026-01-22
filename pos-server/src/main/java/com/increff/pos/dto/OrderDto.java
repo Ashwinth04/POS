@@ -25,19 +25,19 @@ public class OrderDto {
     @Autowired
     private OrderApiImpl orderApi;
 
-    public OrderStatusData create(OrderForm orderForm) throws ApiException {
+    public OrderStatusData createOrder(OrderForm orderForm) throws ApiException {
         ValidationUtil.validateOrderForm(orderForm);
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
-        Map<String, OrderStatus> orderStatuses = orderApi.add(orderPojo);
+        Map<String, OrderStatus> orderStatuses = orderApi.createOrder(orderPojo);
 
         generateInvoice(orderPojo);
 
         return OrderHelper.convertToDto(orderStatuses, orderPojo.getOrderId());
     }
 
-    public Page<OrderData> getAll(PageForm form) throws ApiException {
+    public Page<OrderData> getAllOrders(PageForm form) throws ApiException {
         ValidationUtil.validatePageForm(form);
-        Page<OrderPojo> orderPage = orderApi.getAll(form.getPage(), form.getSize());
+        Page<OrderPojo> orderPage = orderApi.getAllOrders(form.getPage(), form.getSize());
         return orderPage.map(OrderHelper::convertToOrderDto);
     }
 

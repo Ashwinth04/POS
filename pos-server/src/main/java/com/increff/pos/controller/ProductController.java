@@ -12,6 +12,7 @@ import com.increff.pos.model.form.PageForm;
 import com.increff.pos.model.form.ProductForm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
@@ -30,7 +31,8 @@ public class ProductController {
 
     @Operation(summary = "Create a new product")
     @RequestMapping(path = "/add", method = RequestMethod.POST)
-    public ProductData createProduct(@RequestBody ProductForm productForm) throws ApiException {
+    public ProductData createProduct(@Valid @RequestBody ProductForm productForm) throws ApiException {
+        System.out.println("Controller called");
         return productDto.createProduct(productForm);
     }
 

@@ -19,13 +19,13 @@ import java.util.List;
 
 @Service
 public class ClientApiImpl implements ClientApi {
-    private static final Logger logger = LoggerFactory.getLogger(ClientDao.class);
+    private static final Logger logger = LoggerFactory.getLogger(ClientApiImpl.class);
 
     @Autowired
     private ClientDao dao;
 
     @Transactional(rollbackFor = ApiException.class)
-    public ClientPojo add(ClientPojo clientPojo) throws ApiException {
+    public ClientPojo addClient(ClientPojo clientPojo) throws ApiException {
         logger.info("Creating client with name: {}", clientPojo.getName());
 
         checkNameExists("",clientPojo.getName());
@@ -39,14 +39,14 @@ public class ClientApiImpl implements ClientApi {
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public Page<ClientPojo> getAll(int page, int size) {
+    public Page<ClientPojo> getAllClients(int page, int size) {
         logger.info("Fetching clients page {} with size {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return dao.findAll(pageRequest);
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public ClientPojo update(String oldName, ClientPojo clientPojo) throws ApiException {
+    public ClientPojo updateClient(String oldName, ClientPojo clientPojo) throws ApiException {
         ClientPojo existingRecord = dao.findByName(oldName);
 
         if (existingRecord == null) {throw new ApiException("Client doesn't exist");}
@@ -60,7 +60,7 @@ public class ClientApiImpl implements ClientApi {
         return dao.save(clientPojo);
     }
 
-    public List<ClientPojo> search(String name) throws ApiException {
+    public List<ClientPojo> searchClient(String name) throws ApiException {
         return dao.search(name);
     }
 

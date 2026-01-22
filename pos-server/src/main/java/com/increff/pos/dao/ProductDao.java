@@ -48,8 +48,4 @@ public class ProductDao extends AbstractDao<ProductPojo> {
                 .collect(Collectors.toSet());
     }
 
-    @Override
-    public Page<ProductPojo> findAll(Pageable pageable) {
-        return super.findAll(pageable);
-    }
 }

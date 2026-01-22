@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Map;
 
 public interface ProductApi {
-    ProductPojo add(ProductPojo productPojo) throws ApiException;
-    Map<String, ProductUploadResult> bulkAdd(List<ProductPojo> pojos) throws ApiException;
-    InventoryPojo addInventory(ProductPojo productPojo) throws ApiException;
+    ProductPojo addProduct(ProductPojo productPojo) throws ApiException;
+    Map<String, ProductUploadResult> addProductsBulk(List<ProductPojo> pojos) throws ApiException;
+    InventoryPojo createDummyInventoryRecord(ProductPojo productPojo) throws ApiException;
     InventoryPojo updateInventory(InventoryPojo inventoryPojo) throws ApiException;
-    Page<ProductPojo> getAll(int page, int size);
+    Page<ProductPojo> getAllProducts(int page, int size);
 }
