@@ -20,8 +20,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    @Autowired
-    private OrderDto orderDto;
+    private final OrderDto orderDto;
+
+    public OrderController(OrderDto orderDto) {
+        this.orderDto = orderDto;
+    }
 
     @Operation(summary = "Create new order")
     @RequestMapping(value = "/create", method = RequestMethod.POST)

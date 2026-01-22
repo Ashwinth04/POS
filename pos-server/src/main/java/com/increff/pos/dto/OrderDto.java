@@ -22,8 +22,11 @@ import java.util.Map;
 @Service
 public class OrderDto {
 
-    @Autowired
-    private OrderApiImpl orderApi;
+    private final OrderApiImpl orderApi;
+
+    public OrderDto(OrderApiImpl orderApi) {
+        this.orderApi = orderApi;
+    }
 
     public OrderStatusData createOrder(OrderForm orderForm) throws ApiException {
         ValidationUtil.validateOrderForm(orderForm);

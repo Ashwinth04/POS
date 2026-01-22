@@ -17,8 +17,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
-    @Autowired
-    private UserDto userDto;
+
+    private final UserDto userDto;
+
+    public UserController(UserDto userDto) {
+        this.userDto = userDto;
+    }
 
     @Operation(summary = "Create a new user")
     @RequestMapping(path = "/add", method = RequestMethod.POST)

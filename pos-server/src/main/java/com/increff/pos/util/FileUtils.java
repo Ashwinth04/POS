@@ -152,7 +152,7 @@ public class FileUtils {
         return Base64.getEncoder().encodeToString(tsvBytes);
     }
 
-    public static List<InventoryUpdateForm> getInventoryFormsFromFile(String base64File) {
+    public static List<InventoryUpdateForm> getInventoryFormsFromFile(String base64File) throws ApiException {
 
         byte[] fileBytes = convertFileToBytes(base64File);
 
@@ -163,8 +163,10 @@ public class FileUtils {
 
             String line;
             boolean isHeader = true;
+            int lineNumber = 0;
 
             while ((line = reader.readLine()) != null) {
+                lineNumber++;
                 if (isHeader) {
                     isHeader = false;
                     continue;
@@ -174,6 +176,11 @@ public class FileUtils {
 
                 String[] columns = line.split("\t", -1);
 
+                if (columns.length != 2) {
+
+                    throw new ApiException("Line " + lineNumber + ": Expected 2 columns but found " + columns.length + " " + columns[0]);
+                }
+
                 InventoryUpdateForm form = new InventoryUpdateForm();
 
                 // Barcode (safe)
@@ -181,7 +188,27 @@ public class FileUtils {
 
                 // Quantity (safe parsing)
                 String qtyStr = columns.length > 1 ? columns[1].trim() : "";
+
+                if (form.getBarcode().isBlank()) {
+                    throw new ApiException("Line " + lineNumber + ": Barcode cannot be empty");
+                }
+                if (qtyStr.isBlank()) {
+                    throw new ApiException("Line " + lineNumber + ": Quantity cannot be empty");
+                }
+
+
+                // Safe numeric parsing
+                Double qty = null;
+                if (!qtyStr.isBlank()) {
+                    try {
+                        qty = Double.valueOf(qtyStr);
+                    } catch (NumberFormatException e) {
+                        throw new ApiException("Line " + lineNumber + ": Invalid Quantity value: " + qtyStr);
+                    }
+                }
+
                 try {
+
                     form.setQuantity(Integer.parseInt(qtyStr));
                 } catch (NumberFormatException e) {
                     form.setQuantity(0); // Let validation catch this as invalid

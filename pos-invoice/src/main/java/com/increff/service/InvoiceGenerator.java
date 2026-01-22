@@ -28,8 +28,6 @@ public class InvoiceGenerator {
             Path dir = projectRoot.resolve("data").resolve(folderName);
             Files.createDirectories(dir);
 
-            Files.createDirectories(dir); // IMPORTANT
-
             // 4. Full file path
             Path outputPath = dir.resolve(orderId + ".pdf");
 

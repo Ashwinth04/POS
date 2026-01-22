@@ -23,8 +23,11 @@ import static com.increff.pos.util.FileUtils.*;
 @Service
 public class ProductDto {
 
-    @Autowired
-    private ProductApiImpl productApi;
+    private final ProductApiImpl productApi;
+
+    public ProductDto(ProductApiImpl productApi) {
+        this.productApi = productApi;
+    }
 
     public ProductData createProduct(ProductForm productForm) throws ApiException {
         ValidationUtil.validateProductForm(productForm);
@@ -124,7 +127,7 @@ public class ProductDto {
         return fileData;
     }
 
-    public FileData addProductsInventory(FileForm base64file) {
+    public FileData addProductsInventory(FileForm base64file) throws ApiException {
 
         List<InventoryUpdateForm> inventoryForms =
                 getInventoryFormsFromFile(base64file.getBase64file());

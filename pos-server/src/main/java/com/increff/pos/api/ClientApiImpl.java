@@ -6,6 +6,7 @@ import com.increff.pos.dao.UserDao;
 import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.UserPojo;
 import com.increff.pos.exception.ApiException;
+import jakarta.validation.constraints.Null;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +22,13 @@ import java.util.List;
 public class ClientApiImpl implements ClientApi {
     private static final Logger logger = LoggerFactory.getLogger(ClientApiImpl.class);
 
-    @Autowired
-    private ClientDao dao;
+    private final ClientDao clientDao;
 
-    @Transactional(rollbackFor = ApiException.class)
+    public ClientApiImpl(ClientDao clientDao) {
+        this.clientDao = clientDao;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
     public ClientPojo addClient(ClientPojo clientPojo) throws ApiException {
         logger.info("Creating client with name: {}", clientPojo.getName());
 
@@ -33,7 +37,8 @@ public class ClientApiImpl implements ClientApi {
         checkPhoneNumberExists("",clientPojo.getPhoneNumber());
 
         // Save the new client
-        ClientPojo saved = dao.save(clientPojo);
+        ClientPojo saved = clientDao.save(clientPojo);
+
         logger.info("Created client with id: {}", saved.getId());
         return saved;
     }
@@ -42,12 +47,12 @@ public class ClientApiImpl implements ClientApi {
     public Page<ClientPojo> getAllClients(int page, int size) {
         logger.info("Fetching clients page {} with size {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return dao.findAll(pageRequest);
+        return clientDao.findAll(pageRequest);
     }
 
     @Transactional(rollbackFor = ApiException.class)
     public ClientPojo updateClient(String oldName, ClientPojo clientPojo) throws ApiException {
-        ClientPojo existingRecord = dao.findByName(oldName);
+        ClientPojo existingRecord = clientDao.findByName(oldName);
 
         if (existingRecord == null) {throw new ApiException("Client doesn't exist");}
 
@@ -57,15 +62,15 @@ public class ClientApiImpl implements ClientApi {
 
         clientPojo.setId(existingRecord.getId());
 
-        return dao.save(clientPojo);
+        return clientDao.save(clientPojo);
     }
 
     public List<ClientPojo> searchClient(String name) throws ApiException {
-        return dao.search(name);
+        return clientDao.search(name);
     }
 
     private void checkEmailExists(String id, String email) throws ApiException {
-        ClientPojo existing = dao.findByEmail(email);
+        ClientPojo existing = clientDao.findByEmail(email);
 
         if (existing != null && !existing.getId().equals(id)) {
             throw new ApiException("Email already exists");
@@ -74,7 +79,7 @@ public class ClientApiImpl implements ClientApi {
 
 
     private void checkPhoneNumberExists(String id, String phoneNumber) throws ApiException {
-        ClientPojo existing = dao.findByPhoneNumber(phoneNumber);
+        ClientPojo existing = clientDao.findByPhoneNumber(phoneNumber);
 
         if (existing != null && !existing.getId().equals(id)) {
             throw new ApiException("Phone Number already exists");
@@ -83,7 +88,7 @@ public class ClientApiImpl implements ClientApi {
 
 
     private void checkNameExists(String id, String name) throws ApiException {
-        ClientPojo existing = dao.findByName(name);
+        ClientPojo existing = clientDao.findByName(name);
 
         if (existing != null && !existing.getId().equals(id)) {
             throw new ApiException("Client already exists");

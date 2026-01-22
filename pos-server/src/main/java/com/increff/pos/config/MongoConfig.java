@@ -17,5 +17,4 @@ public class MongoConfig {
 
     @Autowired
     private MongoMappingContext mongoMappingContext;
-
 } 

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.PublicKey;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,14 +29,17 @@ import java.util.stream.Collectors;
 public class ProductApiImpl implements ProductApi {
     private static final Logger logger = LoggerFactory.getLogger(ProductApiImpl.class);
 
-    @Autowired
-    private ProductDao productDao;
+    private final ProductDao productDao;
 
-    @Autowired
-    private InventoryDao inventoryDao;
+    private final InventoryDao inventoryDao;
 
-    @Autowired
-    private ClientDao clientDao;
+    private final ClientDao clientDao;
+
+    public ProductApiImpl(ProductDao productDao, InventoryDao inventoryDao, ClientDao clientDao) {
+        this.productDao = productDao;
+        this.inventoryDao = inventoryDao;
+        this.clientDao = clientDao;
+    }
 
     @Transactional(rollbackFor = ApiException.class)
     public ProductPojo addProduct(ProductPojo productPojo) throws ApiException {

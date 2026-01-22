@@ -26,8 +26,11 @@ import java.util.List;
 @RequestMapping("/api/products")
 public class ProductController {
 
-    @Autowired
-    private ProductDto productDto;
+    private final ProductDto productDto;
+
+    public ProductController(ProductDto productDto) {
+        this.productDto = productDto;
+    }
 
     @Operation(summary = "Create a new product")
     @RequestMapping(path = "/add", method = RequestMethod.POST)

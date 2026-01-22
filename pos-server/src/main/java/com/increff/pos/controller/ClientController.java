@@ -18,8 +18,11 @@ import java.util.List;
 @RequestMapping("/api/clients")
 public class ClientController {
 
-    @Autowired
-    private ClientDto clientDto;
+    private final ClientDto clientDto;
+
+    public ClientController(ClientDto clientDto) {
+        this.clientDto = clientDto;
+    }
 
     @Operation(summary = "Create a new client")
     @RequestMapping(value = "/add",method = RequestMethod.POST)

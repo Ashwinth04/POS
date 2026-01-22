@@ -24,8 +24,11 @@ import java.util.List;
 @Service
 public class ClientDto {
 
-    @Autowired
-    private ClientApiImpl clientApi;
+    private final ClientApiImpl clientApi;
+
+    public ClientDto(ClientApiImpl clientApi) {
+        this.clientApi = clientApi;
+    }
 
     public ClientData createClient(ClientForm clientForm) throws ApiException {
         ValidationUtil.validateClientForm(clientForm);
