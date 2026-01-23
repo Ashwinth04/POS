@@ -16,6 +16,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Public
@@ -30,12 +31,14 @@ public class SecurityConfig {
                         // Orders accessible by both
                         .requestMatchers("/api/orders/**").hasAnyRole("SUPERVISOR", "OPERATOR")
 
+                        .requestMatchers("/debug/**").permitAll()
                         // Everything else supervisor only
                         .anyRequest().hasRole("SUPERVISOR")
                 )
 
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionFixation().migrateSession()   // 👈 IMPORTANT
                 )
                 .securityContext(context -> context.requireExplicitSave(false));
 
