@@ -1,13 +1,13 @@
-package com.increff.pos.dao;
+package com.increff.pos.storage;
 
 import org.springframework.stereotype.Service;
 
-import javax.sound.midi.SysexMessage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class LocalStorageService implements StorageService {
@@ -17,10 +17,17 @@ public class LocalStorageService implements StorageService {
     @Override
     public byte[] readInvoice(String orderId) throws IOException {
         // Example: data/2026-01-20/12345.pdf
-        String today = LocalDate.now().toString();
 
-        Path filePath = Path.of("..", "data", today, orderId + ".pdf");
+        System.out.println("Order id: " + orderId);
+        String orderDate = orderId.split("-")[1];
 
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        LocalDate date = LocalDate.parse(orderDate, inputFormatter);
+        String formattedDate = date.format(outputFormatter);
+
+        Path filePath = Path.of("..", "data", formattedDate, orderId + ".pdf");
 
         System.out.println("Working directory: " + Paths.get("").toAbsolutePath());
         System.out.println("Trying to read: " + filePath.toAbsolutePath());

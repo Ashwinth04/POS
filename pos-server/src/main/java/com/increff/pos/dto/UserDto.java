@@ -1,6 +1,7 @@
 package com.increff.pos.dto;
 
 import com.increff.pos.api.UserApi;
+import com.increff.pos.api.UserApiImpl;
 import com.increff.pos.helper.UserHelper;
 import com.increff.pos.model.data.UserData;
 import com.increff.pos.model.form.UserForm;
@@ -17,9 +18,9 @@ import java.util.List;
 @Service
 public class UserDto {
 
-    private final UserApi userApi;
+    private final UserApiImpl userApi;
 
-    public UserDto(UserApi userApi) {
+    public UserDto(UserApiImpl userApi) {
         this.userApi = userApi;
     }
 

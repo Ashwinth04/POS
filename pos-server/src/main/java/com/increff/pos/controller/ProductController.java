@@ -35,7 +35,6 @@ public class ProductController {
     @Operation(summary = "Create a new product")
     @RequestMapping(path = "/add", method = RequestMethod.POST)
     public ProductData createProduct(@Valid @RequestBody ProductForm productForm) throws ApiException {
-        System.out.println("Controller called");
         return productDto.createProduct(productForm);
     }
 
@@ -43,18 +42,6 @@ public class ProductController {
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
     public FileData createProductsBulk(@RequestBody FileForm base64file) throws ApiException { // Use base64 string
         return productDto.createProducts(base64file);
-    }
-
-    @Operation(summary = "Update inventory for a product")
-    @RequestMapping(path = "/update/{barcode}", method = RequestMethod.PUT)
-    public InventoryData updateInventory(@PathVariable String barcode, @RequestBody InventoryForm inventoryForm) throws ApiException {
-        return productDto.updateInventory(barcode, inventoryForm);
-    }
-
-    @Operation(summary = "Update inventory for multiple products at once")
-    @RequestMapping(path = "/bulkUpdate", method = RequestMethod.POST)
-    public FileData updateBulkInventory(@RequestBody FileForm base64file) throws ApiException {
-        return productDto.addProductsInventory(base64file);
     }
 
     @Operation(summary = "Get all products with pagination")

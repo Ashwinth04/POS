@@ -30,10 +30,10 @@ public class ProductDao extends AbstractDao<ProductPojo> {
         return mongoOperations.findOne(query, ProductPojo.class);
     }
 
-    public Set<String> findExistingBarcodes(Set<String> barcodes) {
+    public List<String> findExistingBarcodes(List<String> barcodes) {
 
         if (barcodes == null || barcodes.isEmpty()) {
-            return Set.of();
+            return List.of();
         }
 
         Query query = new Query();
@@ -45,7 +45,7 @@ public class ProductDao extends AbstractDao<ProductPojo> {
 
         return products.stream()
                 .map(ProductPojo::getBarcode)
-                .collect(Collectors.toSet());
+                .toList();
     }
 
 }

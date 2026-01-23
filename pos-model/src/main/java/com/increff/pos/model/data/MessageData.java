@@ -8,4 +8,4 @@ import lombok.*;
 @NoArgsConstructor
 public class MessageData {
     private String message;
-} 
+}

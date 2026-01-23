@@ -2,21 +2,17 @@ package com.increff.pos.dto;
 
 import com.increff.pos.api.OrderApiImpl;
 import com.increff.pos.db.OrderPojo;
-import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.OrderHelper;
-import com.increff.pos.helper.ProductHelper;
 import com.increff.pos.model.data.*;
 import com.increff.pos.model.data.OrderStatusData;
 import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.PageForm;
 import com.increff.pos.util.ValidationUtil;
 import com.increff.service.InvoiceGenerator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Map;
 
 @Service

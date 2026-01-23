@@ -43,53 +43,19 @@ public class ProductApiImpl implements ProductApi {
 
     @Transactional(rollbackFor = ApiException.class)
     public ProductPojo addProduct(ProductPojo productPojo) throws ApiException {
-        logger.info("Adding a product with name: {}", productPojo.getName());
+
+        logger.info("Adding a product with barcode: {}", productPojo.getBarcode());
 
         checkClientExists(productPojo);
         checkBarcodeExists(productPojo.getBarcode());
 
         ProductPojo saved = productDao.save(productPojo);
-        logger.info("Product created with name: {}", saved.getName());
+
+        logger.info("Product created with barcode: {}", saved.getBarcode());
+
         createDummyInventoryRecord(productPojo);
 
         return saved;
-    }
-
-    public Map<String, String> bulkInventoryUpdate(List<InventoryPojo> inventoryPojos) {
-
-        Map<String, String> resultMap = new HashMap<>();
-
-        if (inventoryPojos == null || inventoryPojos.isEmpty()) {
-            return resultMap;
-        }
-
-        // 1. Extract incoming barcodes
-        Set<String> incomingBarcodes = inventoryPojos.stream()
-                .map(InventoryPojo::getBarcode)
-                .collect(Collectors.toSet());
-
-        // 2. Fetch existing barcodes from DB
-        Set<String> existingBarcodes = productDao.findExistingBarcodes(incomingBarcodes);
-
-        // 3. Split valid and invalid
-        List<InventoryPojo> valid = new ArrayList<>();
-
-        for (InventoryPojo pojo : inventoryPojos) {
-            if (existingBarcodes.contains(pojo.getBarcode())) {
-                valid.add(pojo);
-            } else {
-                resultMap.put(
-                        pojo.getBarcode(),
-                        "Product with the given barcode doesn't exist"
-                );
-            }
-        }
-
-        if (!valid.isEmpty()) {
-            inventoryDao.bulkUpdate(valid);
-        }
-
-        return resultMap;
     }
 
     @Transactional(rollbackFor = ApiException.class)
@@ -210,13 +176,6 @@ public class ProductApiImpl implements ProductApi {
         return saved;
     }
 
-    @Transactional(rollbackFor = ApiException.class)
-    public InventoryPojo updateInventory(InventoryPojo inventoryPojo) throws ApiException {
-
-        inventoryDao.updateInventory(inventoryPojo);
-        return inventoryPojo;
-    }
-
     public Page<ProductPojo> getAllProducts(int page, int size) {
         logger.info("Fetching products page {} with size {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -229,13 +188,11 @@ public class ProductApiImpl implements ProductApi {
 
         ClientPojo client = clientDao.findByName(clientName);
 
-        if (client == null) {
-            throw new ApiException("Client with the given name does not exist");
-        }
-
+        if (client == null) { throw new ApiException("Client with the given name does not exist"); }
     }
 
     public void checkBarcodeExists(String barcode) throws ApiException {
+
         ProductPojo result = productDao.findByBarcode(barcode);
 
         if (result != null) { throw new ApiException("Barcode already exists"); }

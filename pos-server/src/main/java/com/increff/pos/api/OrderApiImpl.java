@@ -3,7 +3,7 @@ package com.increff.pos.api;
 import com.increff.pos.dao.InventoryDao;
 import com.increff.pos.dao.OrderDao;
 import com.increff.pos.dao.ProductDao;
-import com.increff.pos.dao.StorageService;
+import com.increff.pos.storage.StorageService;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
@@ -23,20 +23,23 @@ import java.io.IOException;
 import java.util.*;
 
 @Service
-public class OrderApiImpl {
+public class OrderApiImpl implements OrderApi {
     private static final Logger logger = LoggerFactory.getLogger(OrderApiImpl.class);
 
-    @Autowired
-    private OrderDao orderDao;
+    private final OrderDao orderDao;
 
-    @Autowired
-    private ProductDao productDao;
+    private final ProductDao productDao;
 
-    @Autowired
-    private InventoryDao inventoryDao;
+    private final InventoryDao inventoryDao;
 
-    @Autowired
-    private StorageService storageService;
+    private final StorageService storageService;
+
+    public OrderApiImpl(OrderDao orderDao, ProductDao productDao, InventoryDao inventoryDao, StorageService storageService) {
+        this.orderDao = orderDao;
+        this.productDao = productDao;
+        this.inventoryDao = inventoryDao;
+        this.storageService = storageService;
+    }
 
     @Transactional(rollbackFor = ApiException.class)
     public Map<String, OrderStatus> createOrder(OrderPojo orderPojo) throws ApiException {

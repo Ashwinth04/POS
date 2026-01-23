@@ -1,10 +1,10 @@
 package com.increff.pos.util;
 
 import com.fasterxml.jackson.databind.ser.Serializers;
+import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.ProductUploadResult;
 import com.increff.pos.model.form.InventoryForm;
-import com.increff.pos.model.form.InventoryUpdateForm;
 import com.increff.pos.model.form.ProductForm;
 
 import java.io.BufferedReader;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 public class FileUtils {
-    public static List<ProductForm> parseBase64File(String base64) throws ApiException {
+    public static List<ProductForm> readProductFormsFromBase64(String base64) throws ApiException {
 
         if (base64 == null || base64.isBlank()) {
             throw new ApiException("File content is empty");
@@ -50,7 +50,6 @@ public class FileUtils {
 
                 if (line.trim().isEmpty()) continue;
 
-                // Skip header safely
                 if (isHeader) {
                     isHeader = false;
                     continue;
@@ -68,7 +67,6 @@ public class FileUtils {
                 String mrpStr = columns[3].trim();
                 String imageUrl = columns[4].trim();
 
-                // Required field validations
                 if (barcode.isBlank()) {
                     throw new ApiException("Line " + lineNumber + ": Barcode cannot be empty");
                 }
@@ -79,7 +77,6 @@ public class FileUtils {
                     throw new ApiException("Line " + lineNumber + ": Name cannot be empty");
                 }
 
-                // Safe numeric parsing
                 Double mrp = null;
                 if (!mrpStr.isBlank()) {
                     try {
@@ -100,7 +97,7 @@ public class FileUtils {
             }
 
         } catch (ApiException e) {
-            throw e; // preserve meaningful validation errors
+            throw e;
         } catch (Exception e) {
             throw new ApiException("Failed to parse TSV file" + e);
         }
@@ -152,11 +149,11 @@ public class FileUtils {
         return Base64.getEncoder().encodeToString(tsvBytes);
     }
 
-    public static List<InventoryUpdateForm> getInventoryFormsFromFile(String base64File) throws ApiException {
+    public static List<InventoryPojo> getInventoryFormsFromFile(String base64File) throws ApiException {
 
         byte[] fileBytes = convertFileToBytes(base64File);
 
-        List<InventoryUpdateForm> inventoryForms = new ArrayList<>();
+        List<InventoryPojo> inventoryPojos = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(new ByteArrayInputStream(fileBytes)))) {
@@ -181,15 +178,15 @@ public class FileUtils {
                     throw new ApiException("Line " + lineNumber + ": Expected 2 columns but found " + columns.length + " " + columns[0]);
                 }
 
-                InventoryUpdateForm form = new InventoryUpdateForm();
+                InventoryPojo inventoryPojo = new InventoryPojo();
 
                 // Barcode (safe)
-                form.setBarcode(columns.length > 0 ? columns[0].trim() : "");
+                inventoryPojo.setBarcode(columns.length > 0 ? columns[0].trim() : "");
 
                 // Quantity (safe parsing)
                 String qtyStr = columns.length > 1 ? columns[1].trim() : "";
 
-                if (form.getBarcode().isBlank()) {
+                if (inventoryPojo.getBarcode().isBlank()) {
                     throw new ApiException("Line " + lineNumber + ": Barcode cannot be empty");
                 }
                 if (qtyStr.isBlank()) {
@@ -209,19 +206,19 @@ public class FileUtils {
 
                 try {
 
-                    form.setQuantity(Integer.parseInt(qtyStr));
+                    inventoryPojo.setQuantity(Integer.parseInt(qtyStr));
                 } catch (NumberFormatException e) {
-                    form.setQuantity(0); // Let validation catch this as invalid
+                    inventoryPojo.setQuantity(0); // Let validation catch this as invalid
                 }
 
-                inventoryForms.add(form);
+                inventoryPojos.add(inventoryPojo);
             }
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse TSV from Base64", e);
         }
 
-        return inventoryForms;
+        return inventoryPojos;
     }
 
 

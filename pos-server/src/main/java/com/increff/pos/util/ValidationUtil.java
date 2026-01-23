@@ -1,8 +1,9 @@
 package com.increff.pos.util;
 
+import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.OrderItem;
-import com.increff.pos.model.data.OrderItemForm;
+import com.increff.pos.model.form.OrderItemForm;
 import com.increff.pos.model.form.*;
 import org.springframework.util.StringUtils;
 
@@ -76,12 +77,12 @@ public class ValidationUtil {
         validateQuantity(inventoryForm.getQuantity());
     }
 
-    public static String validateInventoryUpdateForm(InventoryUpdateForm form) {
-        if (form.getBarcode() == null || form.getBarcode().trim().isEmpty()) {
+    public static String validateInventoryUpdateForm(InventoryPojo pojo) {
+        if (pojo.getBarcode() == null || pojo.getBarcode().trim().isEmpty()) {
             return "Barcode is missing";
         }
 
-        if (form.getQuantity() <= 0) {
+        if (pojo.getQuantity() <= 0) {
             return "Quantity must be positive, non-zero";
         }
 

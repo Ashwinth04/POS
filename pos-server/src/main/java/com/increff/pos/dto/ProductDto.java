@@ -1,5 +1,6 @@
 package com.increff.pos.dto;
 
+import com.increff.pos.api.InventoryApiImpl;
 import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
@@ -25,8 +26,11 @@ public class ProductDto {
 
     private final ProductApiImpl productApi;
 
-    public ProductDto(ProductApiImpl productApi) {
+    private final InventoryApiImpl inventoryApi;
+
+    public ProductDto(ProductApiImpl productApi, InventoryApiImpl inventoryApi) {
         this.productApi = productApi;
+        this.inventoryApi = inventoryApi;
     }
 
     public ProductData createProduct(ProductForm productForm) throws ApiException {
@@ -37,13 +41,6 @@ public class ProductDto {
         return ProductHelper.convertToDto(savedProductPojo);
     }
 
-    public InventoryData updateInventory(String barcode, InventoryForm inventoryForm) throws ApiException {
-        ValidationUtil.validateInventoryForm(inventoryForm);
-        InventoryPojo inventoryPojo = ProductHelper.convertToInventoryEntity(barcode, inventoryForm);
-        InventoryPojo updatedInventoryPojo = productApi.updateInventory(inventoryPojo);
-        return ProductHelper.convertToInventoryDto(updatedInventoryPojo);
-    }
-
     public Page<ProductData> getAllProducts(PageForm form) throws ApiException {
         ValidationUtil.validatePageForm(form);
         Page<ProductPojo> productPage = productApi.getAllProducts(form.getPage(), form.getSize());
@@ -52,48 +49,70 @@ public class ProductDto {
 
     public FileData createProducts(FileForm base64file) throws ApiException {
 
-        List<ProductForm> forms = parseBase64File(base64file.getBase64file());
+        List<ProductForm> forms = readProductFormsFromBase64(base64file.getBase64file());
         List<ProductUploadResult> results = uploadProducts(forms);
-        return convertResultsToBase64(results);
+        return convertProductResultsToBase64(results);
     }
 
     public List<ProductUploadResult> uploadProducts(List<ProductForm> forms) {
 
+        Map<String, Integer> barcodeCount = countBarcodes(forms);
+
         List<ProductUploadResult> results = new ArrayList<>();
         List<ProductPojo> validForms = new ArrayList<>();
 
-        // First pass: count barcodes
+        for (ProductForm form : forms) {
+            ProductUploadResult result = processSingleForm(form, barcodeCount, validForms);
+            results.add(result);
+        }
+
+        return getProductUploadResults(results, validForms);
+    }
+
+    private Map<String, Integer> countBarcodes(List<ProductForm> forms) {
         Map<String, Integer> barcodeCount = new HashMap<>();
+
         for (ProductForm form : forms) {
             barcodeCount.merge(form.getBarcode().toLowerCase(), 1, Integer::sum);
         }
 
-        // Second pass: validate
-        for (ProductForm form : forms) {
-            ProductUploadResult result = createInitialResult(form);
+        return barcodeCount;
+    }
 
-            try {
-                ProductPojo pojo = validateAndConvertToProductEntity(form);
+    private ProductUploadResult processSingleForm(ProductForm form, Map<String, Integer> barcodeCount, List<ProductPojo> validForms) {
 
-                String barcode = pojo.getBarcode();
+        ProductUploadResult result = createInitialResult(form);
 
-                if (barcodeCount.get(barcode) > 1) {
-                    result.setStatus("FAILED");
-                    result.setMessage("Duplicate barcode in file");
-                } else {
-                    validForms.add(pojo);
-                    result.setStatus("PENDING");
-                }
+        try {
+            ValidationUtil.validateProductForm(form);
+            ProductPojo pojo = ProductHelper.convertToEntity(form);
 
-            } catch (ApiException e) {
-                result.setStatus("FAILED");
-                result.setMessage(e.getMessage());
+            if (barcodeCount.get(pojo.getBarcode().toLowerCase()) > 1) {
+                markDuplicate(result);
+            } else {
+                markValid(result);
+                validForms.add(pojo);
             }
 
-            results.add(result);
+        } catch (ApiException e) {
+            markFailed(result, e.getMessage());
         }
 
-        return getFinalResults(results, validForms);
+        return result;
+    }
+
+    private void markDuplicate(ProductUploadResult result) {
+        result.setStatus("FAILED");
+        result.setMessage("Duplicate barcode in file");
+    }
+
+    private void markValid(ProductUploadResult result) {
+        result.setStatus("PENDING");
+    }
+
+    private void markFailed(ProductUploadResult result, String message) {
+        result.setStatus("FAILED");
+        result.setMessage(message);
     }
 
 
@@ -107,16 +126,11 @@ public class ProductDto {
         return result;
     }
 
-    private ProductPojo validateAndConvertToProductEntity(ProductForm form) throws ApiException {
-        ValidationUtil.validateProductForm(form);
-        return ProductHelper.convertToEntity(form);
-    }
+    private List<ProductUploadResult> getProductUploadResults(List<ProductUploadResult> results, List<ProductPojo> validPojos) {
 
-    private List<ProductUploadResult> getFinalResults(List<ProductUploadResult> results, List<ProductPojo> validForms) {
+        if (validPojos.isEmpty()) return results;
 
-        if (validForms.isEmpty()) return results;
-
-        Map<String, ProductUploadResult> apiResults = productApi.addProductsBulk(validForms);
+        Map<String, ProductUploadResult> apiResults = productApi.addProductsBulk(validPojos);
 
         for (ProductUploadResult r : results) {
             if ("PENDING".equals(r.getStatus())) {
@@ -134,7 +148,7 @@ public class ProductDto {
         return results;
     }
 
-    public FileData convertResultsToBase64(List<ProductUploadResult> results) {
+    public FileData convertProductResultsToBase64(List<ProductUploadResult> results) {
 
         String resultFile = getBase64String(results);
 
@@ -144,47 +158,5 @@ public class ProductDto {
         return fileData;
     }
 
-    public FileData addProductsInventory(FileForm base64file) throws ApiException {
-
-        List<InventoryUpdateForm> inventoryForms =
-                getInventoryFormsFromFile(base64file.getBase64file());
-
-        List<InventoryPojo> validForms = new ArrayList<>();
-        Map<String, String> invalidForms = new HashMap<>();
-
-        validateAndSplit(inventoryForms, validForms, invalidForms);
-
-        if (!validForms.isEmpty()) {
-            Map<String, String> dbInvalid = productApi.bulkInventoryUpdate(validForms);
-            invalidForms.putAll(dbInvalid);
-        }
-
-        return buildResponse(invalidForms);
-    }
-
-    private void validateAndSplit(List<InventoryUpdateForm> forms, List<InventoryPojo> valid, Map<String, String> invalid) {
-
-        for (InventoryUpdateForm form : forms) {
-            String error = ValidationUtil.validateInventoryUpdateForm(form);
-
-            if (error == null) {
-                InventoryPojo pojo = new InventoryPojo();
-                pojo.setBarcode(form.getBarcode());
-                pojo.setQuantity(form.getQuantity());
-                valid.add(pojo);
-            } else {
-                invalid.put(form.getBarcode(), error);
-            }
-        }
-    }
-
-    private FileData buildResponse(Map<String, String> invalidForms) {
-
-        FileData fileData = new FileData();
-        fileData.setBase64file(FileUtils.getBase64InventoryUpdate(invalidForms));
-        fileData.setStatus(invalidForms.isEmpty() ? "SUCCESS" : "UNSUCCESSFUL");
-
-        return fileData;
-    }
 
 }

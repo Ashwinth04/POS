@@ -1,4 +1,4 @@
-package com.increff.pos.model.data;
+package com.increff.pos.model.form;
 
 import lombok.*;
 

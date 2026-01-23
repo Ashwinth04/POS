@@ -9,6 +9,7 @@ import com.increff.pos.model.form.ProductForm;
 
 public class    ProductHelper {
     public static ProductPojo convertToEntity(ProductForm productForm) {
+
         ProductPojo productPojo = new ProductPojo();
         productPojo.setName(productForm.getName());
         productPojo.setMrp(productForm.getMrp());
@@ -19,6 +20,7 @@ public class    ProductHelper {
     }
 
     public static ProductData convertToDto(ProductPojo productPojo) {
+
         ProductData productData = new ProductData();
         productData.setId(productPojo.getId());
         productData.setName(productPojo.getName());
@@ -31,6 +33,7 @@ public class    ProductHelper {
     }
 
     public static InventoryPojo convertToInventoryEntity(String barcode, InventoryForm inventoryForm) {
+
         InventoryPojo inventoryPojo = new InventoryPojo();
         inventoryPojo.setBarcode(barcode);
         inventoryPojo.setQuantity(inventoryForm.getQuantity());
@@ -38,6 +41,7 @@ public class    ProductHelper {
     }
 
     public static InventoryData convertToInventoryDto(InventoryPojo inventoryPojo) {
+
         InventoryData inventoryData = new InventoryData();
         inventoryData.setBarcode(inventoryPojo.getBarcode());
         inventoryData.setQuantity(inventoryPojo.getQuantity());

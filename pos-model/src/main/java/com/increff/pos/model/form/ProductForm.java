@@ -12,8 +12,6 @@ public class ProductForm {
     private String barcode;
     private String clientName; //USe client name
     private String name;
-    @NotNull(message = "MRP is required")
-    @Positive(message = "MRP must be a positive number")
     private Double mrp;
     private String imageUrl;
 }

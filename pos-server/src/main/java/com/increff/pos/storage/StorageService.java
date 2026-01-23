@@ -1,4 +1,4 @@
-package com.increff.pos.dao;
+package com.increff.pos.storage;
 
 import java.io.IOException;
 
