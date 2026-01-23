@@ -1,0 +1,58 @@
+package com.increff.pos.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .cors(cors -> {})
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        // Public
+                        .requestMatchers("/auth/login").permitAll()
+
+                        // Any logged-in user
+                        .requestMatchers("/auth/me").authenticated()
+
+                        // Supervisor only
+                        .requestMatchers("/auth/create-operator").hasRole("SUPERVISOR")
+
+                        // Orders accessible by both
+                        .requestMatchers("/api/orders/**").hasAnyRole("SUPERVISOR", "OPERATOR")
+
+                        .requestMatchers("/debug/**").permitAll()
+                        // Everything else supervisor only
+                        .anyRequest().hasRole("SUPERVISOR")
+                )
+
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionFixation().migrateSession()   // 👈 IMPORTANT
+                )
+                .securityContext(context -> context.requireExplicitSave(false));
+
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+}
+

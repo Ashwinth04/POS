@@ -1,23 +1,16 @@
 package com.increff.pos.dto;
 
-import ch.qos.logback.core.net.server.Client;
 import com.increff.pos.api.ClientApiImpl;
 import com.increff.pos.db.ClientPojo;
-import com.increff.pos.db.UserPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.ClientHelper;
-import com.increff.pos.helper.UserHelper;
 import com.increff.pos.model.data.ClientData;
-import com.increff.pos.model.data.UserData;
 import com.increff.pos.model.form.ClientForm;
 import com.increff.pos.model.form.PageForm;
 import com.increff.pos.util.ValidationUtil;
-import jakarta.validation.Validation;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 

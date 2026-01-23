@@ -1,5 +1,6 @@
 package com.increff.pos.controller;
 
+import com.increff.pos.config.SupervisorConfig;
 import com.increff.pos.dto.ClientDto;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.ClientData;
@@ -19,6 +20,14 @@ import java.util.List;
 public class ClientController {
 
     private final ClientDto clientDto;
+
+    @Autowired
+    private SupervisorConfig supervisorConfig;
+
+    @GetMapping("/test/supervisor")
+    public String test() {
+        return supervisorConfig.getUsername() + " : " + supervisorConfig.getPassword();
+    }
 
 
     public ClientController(ClientDto clientDto) {
