@@ -21,15 +21,6 @@ public class ClientController {
 
     private final ClientDto clientDto;
 
-    @Autowired
-    private SupervisorConfig supervisorConfig;
-
-    @GetMapping("/test/supervisor")
-    public String test() {
-        return supervisorConfig.getUsername() + " : " + supervisorConfig.getPassword();
-    }
-
-
     public ClientController(ClientDto clientDto) {
         this.clientDto = clientDto;
     }
