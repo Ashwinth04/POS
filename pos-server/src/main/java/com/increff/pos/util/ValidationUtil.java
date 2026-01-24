@@ -77,26 +77,13 @@ public class ValidationUtil {
         validateQuantity(inventoryForm.getQuantity());
     }
 
-    public static String validateInventoryUpdateForm(InventoryPojo pojo) {
-        if (pojo.getBarcode() == null || pojo.getBarcode().trim().isEmpty()) {
-            return "Barcode is missing";
-        }
-
-        if (pojo.getQuantity() <= 0) {
-            return "Quantity must be positive, non-zero";
-        }
-
-        return null; // valid
-    }
-
-
     public static void validateOrderId(String orderId) throws ApiException {
 
         if (orderId.length() != 24) throw new ApiException("Not a valid order id");
 
     }
 
-    private static void validateEmail(String email) throws ApiException {
+    public static void validateEmail(String email) throws ApiException {
         if (!StringUtils.hasText(email)) {
             throw new ApiException("Email cannot be empty");
         }
@@ -135,10 +122,6 @@ public class ValidationUtil {
         }
     }
 
-    private static void validateProduct(int productId) throws ApiException {
-        // Add logic to check if productId exists in the DB
-    }
-
     private static void validateUrl(String url) throws ApiException {
         try {
             URL newUrl = new URL(url);
@@ -161,6 +144,93 @@ public class ValidationUtil {
         }
         if (form.getSize() > 100) {
             throw new ApiException("Page size cannot be greater than 100");
+        }
+    }
+
+    public static void validateProductRow(String[] row) throws ApiException {
+
+        validateName(row[0]);
+        validateName(row[1]);
+        validateName(row[2]);
+        validateMrp(Double.parseDouble(row[3]));
+        validateUrl(row[4]);
+    }
+
+    public static void validateInventoryRow(String[] row) throws ApiException {
+
+        int quantity = Integer.parseInt(row[1]);
+
+        if (quantity <= 0) {
+            throw new ApiException("Quantity must be positive");
+        }
+
+    }
+
+    public static void validateProductRows(List<String[]> rows) throws ApiException {
+
+        int lineNumber = 1;
+        for (String[] columns: rows) {
+
+            if (columns.length != 5) {
+                throw new ApiException("Line " + lineNumber + ": Expected 5 columns but found " + columns.length);
+            }
+
+            String barcode = columns[0].trim();
+            String clientName = columns[1].trim();
+            String name = columns[2].trim();
+            String mrpStr = columns[3].trim();
+            String imageUrl = columns[4].trim();
+
+            if (barcode.isBlank()) {
+                throw new ApiException("Line " + lineNumber + ": Barcode cannot be empty");
+            }
+            if (clientName.isBlank()) {
+                throw new ApiException("Line " + lineNumber + ": ClientName cannot be empty");
+            }
+            if (name.isBlank()) {
+                throw new ApiException("Line " + lineNumber + ": Name cannot be empty");
+            }
+
+            Double mrp = null;
+            if (!mrpStr.isBlank()) {
+                try {
+                    mrp = Double.valueOf(mrpStr);
+                } catch (NumberFormatException e) {
+                    throw new ApiException("Line " + lineNumber + ": Invalid MRP value: " + mrpStr);
+                }
+            }
+
+            lineNumber++;
+
+        }
+    }
+
+    public static void validateInventoryRows(List<String[]> rows) throws ApiException {
+
+        int lineNumber = 1;
+
+        for(String[] columns: rows) {
+
+            if (columns.length != 2) {
+                throw new ApiException("Line " + lineNumber + ": Expected 2 columns but found " + columns.length);
+            }
+
+            String barcode = columns[0].trim();
+            String quantity = columns[1].trim();
+
+            if (barcode.isBlank()) {
+                throw new ApiException("Line " + lineNumber + ": Barcode cannot be empty");
+            }
+
+            Integer qty = null;
+            if (!quantity.isBlank()) {
+                try {
+                    qty = Integer.valueOf(quantity);
+                } catch (NumberFormatException e) {
+                    throw new ApiException("Line " + lineNumber + ": Invalid value for quantity: " + quantity);
+                }
+            }
+            lineNumber++;
         }
     }
 } 

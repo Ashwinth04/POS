@@ -43,8 +43,15 @@ public class ClientController {
         return clientDto.updateClientDetails(oldName, clientForm);
     }
 
-    @RequestMapping(path = "/search/{name}", method = RequestMethod.GET)
+    @Operation(summary = "Search by name")
+    @RequestMapping(path = "/search/name/{name}", method = RequestMethod.GET)
     public List<ClientData> searchByName(@PathVariable String name) throws ApiException {
         return clientDto.searchClient(name);
+    }
+
+    @Operation(summary = "Search by email")
+    @RequestMapping(path = "/search/email/{email}", method = RequestMethod.GET)
+    public List<ClientData> searchByEmail(@PathVariable String email) throws ApiException {
+        return clientDto.searchClientByEmail(email);
     }
 }

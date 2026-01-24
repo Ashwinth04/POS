@@ -69,6 +69,10 @@ public class ClientApiImpl implements ClientApi {
         return clientDao.search(name);
     }
 
+    public List<ClientPojo> searchClientByEmail(String email) throws ApiException {
+        return clientDao.searchByEmail(email);
+    }
+
     private void checkEmailExists(String id, String email) throws ApiException {
         ClientPojo existing = clientDao.findByEmail(email);
 

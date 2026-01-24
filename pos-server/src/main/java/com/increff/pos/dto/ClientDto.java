@@ -55,4 +55,16 @@ public class ClientDto {
 
         return response;
     }
+
+    public List<ClientData> searchClientByEmail(String email) throws ApiException {
+        ValidationUtil.validateEmail(email);
+        List<ClientPojo> results = clientApi.searchClientByEmail(email);
+        List<ClientData> response = new ArrayList<>();
+
+        for (ClientPojo pojo : results) {
+            response.add(ClientHelper.convertToDto(pojo));
+        }
+
+        return response;
+    }
 }

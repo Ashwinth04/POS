@@ -1,5 +1,6 @@
 package com.increff.pos.dao;
 
+import ch.qos.logback.core.net.server.Client;
 import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.exception.ApiException;
@@ -64,6 +65,14 @@ public class ClientDao extends AbstractDao<ClientPojo> {
     public List<ClientPojo> search(String name) {
         Query query = new Query(
                 Criteria.where("name").regex("^" + name, "i")
+        );
+
+        return mongoOperations.find(query, ClientPojo.class);
+    }
+
+    public List<ClientPojo> searchByEmail(String email) {
+        Query query = new Query(
+                Criteria.where("email").regex("^" + email, "i")
         );
 
         return mongoOperations.find(query, ClientPojo.class);

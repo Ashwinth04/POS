@@ -11,7 +11,6 @@ import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.model.data.OrderStatus;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -163,7 +162,6 @@ public class OrderApiImpl implements OrderApi {
         for (OrderItem item : orderPojo.getOrderItems()) {
             item.setOrderItemId(UUID.randomUUID().toString());
         }
-//        return orderPojo;
     }
 
     private void validateItem(OrderItem item) throws ApiException {

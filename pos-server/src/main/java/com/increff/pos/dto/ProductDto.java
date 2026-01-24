@@ -1,36 +1,28 @@
 package com.increff.pos.dto;
 
-import com.increff.pos.api.InventoryApiImpl;
 import com.increff.pos.api.ProductApiImpl;
-import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.ProductHelper;
 import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.*;
-import com.increff.pos.util.FileUtils;
+import com.increff.pos.util.TsvParser;
 import com.increff.pos.util.ValidationUtil;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.increff.pos.util.FileUtils.*;
+import static com.increff.pos.util.ValidationUtil.validateProductRows;
 
 @Service
 public class ProductDto {
 
     private final ProductApiImpl productApi;
 
-    private final InventoryApiImpl inventoryApi;
-
-    public ProductDto(ProductApiImpl productApi, InventoryApiImpl inventoryApi) {
+    public ProductDto(ProductApiImpl productApi) {
         this.productApi = productApi;
-        this.inventoryApi = inventoryApi;
     }
 
     public ProductData createProduct(ProductForm productForm) throws ApiException {
@@ -47,45 +39,48 @@ public class ProductDto {
         return productPage.map(ProductHelper::convertToDto);
     }
 
-    public FileData createProducts(FileForm base64file) throws ApiException {
+    public FileData createProducts(FileForm fileForm) throws ApiException {
 
-        List<ProductForm> forms = readProductFormsFromBase64(base64file.getBase64file());
-        List<ProductUploadResult> results = uploadProducts(forms);
+        List<String[]> rows = TsvParser.parseBase64Tsv(fileForm.getBase64file());
+
+        validateProductRows(rows);
+
+        List<ProductUploadResult> results = uploadProducts(rows);
         return convertProductResultsToBase64(results);
     }
 
-    public List<ProductUploadResult> uploadProducts(List<ProductForm> forms) {
+    public List<ProductUploadResult> uploadProducts(List<String[]> rows) {
 
-        Map<String, Integer> barcodeCount = countBarcodes(forms);
+        Map<String, Integer> barcodeCount = countBarcodes(rows);
 
         List<ProductUploadResult> results = new ArrayList<>();
         List<ProductPojo> validForms = new ArrayList<>();
 
-        for (ProductForm form : forms) {
-            ProductUploadResult result = processSingleForm(form, barcodeCount, validForms);
+        for (String[] row : rows) {
+            ProductUploadResult result = processSingleForm(row, barcodeCount, validForms);
             results.add(result);
         }
 
         return getProductUploadResults(results, validForms);
     }
 
-    private Map<String, Integer> countBarcodes(List<ProductForm> forms) {
+    private Map<String, Integer> countBarcodes(List<String[]> rows) {
         Map<String, Integer> barcodeCount = new HashMap<>();
 
-        for (ProductForm form : forms) {
-            barcodeCount.merge(form.getBarcode().toLowerCase(), 1, Integer::sum);
+        for (String[] row : rows) {
+            barcodeCount.merge(row[0].toLowerCase(), 1, Integer::sum);
         }
 
         return barcodeCount;
     }
 
-    private ProductUploadResult processSingleForm(ProductForm form, Map<String, Integer> barcodeCount, List<ProductPojo> validForms) {
+    private ProductUploadResult processSingleForm(String[] row, Map<String, Integer> barcodeCount, List<ProductPojo> validForms) {
 
-        ProductUploadResult result = createInitialResult(form);
+        ProductUploadResult result = createInitialResult(row);
 
         try {
-            ValidationUtil.validateProductForm(form);
-            ProductPojo pojo = ProductHelper.convertToEntity(form);
+            ValidationUtil.validateProductRow(row);
+            ProductPojo pojo = ProductHelper.convertRowToEntity(row);
 
             if (barcodeCount.get(pojo.getBarcode().toLowerCase()) > 1) {
                 markDuplicate(result);
@@ -115,14 +110,13 @@ public class ProductDto {
         result.setMessage(message);
     }
 
-
-    private ProductUploadResult createInitialResult(ProductForm form) {
+    private ProductUploadResult createInitialResult(String[] row) {
         ProductUploadResult result = new ProductUploadResult();
-        result.setBarcode(form.getBarcode().toLowerCase());
-        result.setClientName(form.getClientName());
-        result.setName(form.getName());
-        result.setMrp(form.getMrp());
-        result.setImageUrl(form.getImageUrl());
+        result.setBarcode(row[0].toLowerCase());
+        result.setClientName(row[1]);
+        result.setName(row[2]);
+        result.setMrp(Double.parseDouble(row[3]));
+        result.setImageUrl(row[4]);
         return result;
     }
 
@@ -150,13 +144,11 @@ public class ProductDto {
 
     public FileData convertProductResultsToBase64(List<ProductUploadResult> results) {
 
-        String resultFile = getBase64String(results);
+        String resultFile = generateProductUploadResults(results);
 
         FileData fileData = new FileData();
         fileData.setBase64file(resultFile);
 
         return fileData;
     }
-
-
 }

@@ -29,8 +29,8 @@ public class InventoryController {
 
     @Operation(summary = "Update inventory for multiple products at once")
     @RequestMapping(path = "/bulkUpdate", method = RequestMethod.POST)
-    public FileData updateBulkInventory(@RequestBody FileForm base64file) throws ApiException {
-        return inventoryDto.addProductsInventory(base64file);
+    public FileData updateBulkInventory(@RequestBody FileForm fileForm) throws ApiException {
+        return inventoryDto.updateInventoryBulk(fileForm);
     }
 
 }

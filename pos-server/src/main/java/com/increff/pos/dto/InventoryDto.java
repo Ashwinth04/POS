@@ -3,12 +3,13 @@ package com.increff.pos.dto;
 import com.increff.pos.api.InventoryApiImpl;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.exception.ApiException;
-import com.increff.pos.helper.ProductHelper;
+import com.increff.pos.helper.InventoryHelper;
 import com.increff.pos.model.data.FileData;
 import com.increff.pos.model.data.InventoryData;
 import com.increff.pos.model.form.FileForm;
 import com.increff.pos.model.form.InventoryForm;
 import com.increff.pos.util.FileUtils;
+import com.increff.pos.util.TsvParser;
 import com.increff.pos.util.ValidationUtil;
 import org.springframework.stereotype.Service;
 
@@ -16,8 +17,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.increff.pos.util.FileUtils.getInventoryFormsFromFile;
+import static com.increff.pos.util.ValidationUtil.validateInventoryRow;
+import static com.increff.pos.util.ValidationUtil.validateInventoryRows;
 
 @Service
 public class InventoryDto {
@@ -30,20 +31,21 @@ public class InventoryDto {
 
     public InventoryData updateInventory(String barcode, InventoryForm inventoryForm) throws ApiException {
         ValidationUtil.validateInventoryForm(inventoryForm);
-        InventoryPojo inventoryPojo = ProductHelper.convertToInventoryEntity(barcode, inventoryForm);
+        InventoryPojo inventoryPojo = InventoryHelper.convertToEntity(barcode, inventoryForm);
         InventoryPojo updatedInventoryPojo = inventoryApi.updateInventory(inventoryPojo);
-        return ProductHelper.convertToInventoryDto(updatedInventoryPojo);
+        return InventoryHelper.convertToDto(updatedInventoryPojo);
     }
 
-    public FileData addProductsInventory(FileForm base64file) throws ApiException {
+    public FileData updateInventoryBulk(FileForm fileForm) throws ApiException {
 
-        List<InventoryPojo> inventoryPojos =
-                getInventoryFormsFromFile(base64file.getBase64file());
+        List<String[]> rows = TsvParser.parseBase64Tsv(fileForm.getBase64file());
+
+        validateInventoryRows(rows);
 
         List<InventoryPojo> validPojos = new ArrayList<>();
         Map<String, String> invalidPojos = new HashMap<>();
 
-        validateAndSplit(inventoryPojos, validPojos, invalidPojos);
+        validateAndSplit(rows, validPojos, invalidPojos);
 
         if (!validPojos.isEmpty()) {
             Map<String, String> dbInvalid = inventoryApi.bulkInventoryUpdate(validPojos);
@@ -53,16 +55,16 @@ public class InventoryDto {
         return buildResponse(invalidPojos);
     }
 
-    private void validateAndSplit(List<InventoryPojo> pojos, List<InventoryPojo> valid, Map<String, String> invalid) {
+    private void validateAndSplit(List<String[]> rows, List<InventoryPojo> valid, Map<String, String> invalid) {
 
-        for (InventoryPojo pojo : pojos) {
-            String error = ValidationUtil.validateInventoryUpdateForm(pojo);
+        for (String[] row : rows) {
 
-            if (error == null) {
-
-                valid.add(pojo);
-            } else {
-                invalid.put(pojo.getBarcode(), error);
+            try {
+                validateInventoryRow(row);
+                InventoryPojo inventoryPojo = InventoryHelper.convertRowToEntity(row);
+                valid.add(inventoryPojo);
+            } catch (ApiException e) {
+                invalid.put(row[0], e.getMessage());
             }
         }
     }
@@ -70,7 +72,7 @@ public class InventoryDto {
     private FileData buildResponse(Map<String, String> invalidForms) {
 
         FileData fileData = new FileData();
-        fileData.setBase64file(FileUtils.getBase64InventoryUpdate(invalidForms));
+        fileData.setBase64file(FileUtils.generateInventoryUpdateResults(invalidForms));
         fileData.setStatus(invalidForms.isEmpty() ? "SUCCESS" : "UNSUCCESSFUL");
 
         return fileData;
