@@ -1,4 +1,4 @@
-package com.increff.pos.security;
+package com.increff.pos.api;
 
 import com.increff.pos.config.SupervisorConfig;
 import com.increff.pos.dao.UserDao;
@@ -12,14 +12,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    @Autowired
-    private SupervisorConfig supervisorConfig;
+    private final SupervisorConfig supervisorConfig;
+    private final UserDao userDao;
+    private final PasswordEncoder encoder;
 
-    @Autowired
-    private UserDao userDao;
-
-    @Autowired
-    private PasswordEncoder encoder;
+    public CustomUserDetailsService(SupervisorConfig supervisorConfig, UserDao userDao, PasswordEncoder encoder) {
+        this.supervisorConfig = supervisorConfig;
+        this.userDao = userDao;
+        this.encoder = encoder;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) {
@@ -40,7 +41,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return User.builder()
                 .username(user.getUsername())
-                .password(user.getPassword()) // already hashed in DB
+                .password(user.getPassword())
                 .roles(Roles.OPERATOR)
                 .build();
     }
