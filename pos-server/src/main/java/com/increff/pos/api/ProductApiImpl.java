@@ -1,8 +1,11 @@
 package com.increff.pos.api;
 
 import com.increff.pos.dao.ProductDao;
+import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.model.data.OrderItem;
+import com.increff.pos.model.data.OrderStatus;
 import com.increff.pos.model.data.ProductUploadResult;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -152,4 +155,54 @@ public class ProductApiImpl implements ProductApi {
 
         if (result != null) { throw new ApiException("Barcode already exists"); }
     }
+
+    public boolean validateAllOrderItems(OrderPojo orderPojo, Map<String, OrderStatus> statuses) {
+
+        boolean validationFailure = false;
+
+        for (OrderItem item : orderPojo.getOrderItems()) {
+            try {
+                validateItem(item);
+                addValidItemStatus(item, statuses);
+            } catch (ApiException e) {
+                addInvalidItemStatus(item, e.getMessage(), statuses);
+                validationFailure = true;
+            }
+        }
+
+        return validationFailure;
+    }
+
+    public void validateItem(OrderItem item) throws ApiException {
+        String barcode = item.getBarcode();
+
+        ProductPojo product = productDao.findByBarcode(barcode);
+        if (product == null) {
+            throw new ApiException("Invalid barcode: " + barcode);
+        }
+
+        if (item.getSellingPrice() > product.getMrp() || item.getSellingPrice() <= 0) {
+            throw new ApiException("Selling price exceeds MRP for barcode: " + barcode);
+        }
+    }
+
+
+    public void addValidItemStatus(OrderItem item, Map<String, OrderStatus> statuses) {
+
+        OrderStatus status = new OrderStatus();
+        status.setOrderItemId(item.getOrderItemId());
+        status.setStatus("VALID");
+        status.setMessage("OK");
+        statuses.put(item.getOrderItemId(), status);
+    }
+
+    public void addInvalidItemStatus(OrderItem item, String errorMessage, Map<String, OrderStatus> statuses) {
+
+        OrderStatus status = new OrderStatus();
+        status.setOrderItemId(item.getOrderItemId());
+        status.setStatus("INVALID");
+        status.setMessage(errorMessage);
+        statuses.put(item.getOrderItemId(), status);
+    }
+
 }

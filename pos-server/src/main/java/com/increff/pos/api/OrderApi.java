@@ -7,5 +7,5 @@ import com.increff.pos.model.data.OrderStatus;
 import java.util.Map;
 
 public interface OrderApi {
-    Map<String, OrderStatus> createOrder(OrderPojo orderPojo) throws ApiException;
+    Map<String, OrderStatus> placeOrder(OrderPojo orderPojo, Map<String, OrderStatus> statuses, boolean isFulfillable) throws ApiException;
 }

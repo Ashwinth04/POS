@@ -3,6 +3,7 @@ package com.increff.pos.dto;
 import com.increff.pos.api.OrderApiImpl;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.flow.OrderFlow;
 import com.increff.pos.helper.OrderHelper;
 import com.increff.pos.model.data.*;
 import com.increff.pos.model.data.OrderStatusData;
@@ -19,15 +20,17 @@ import java.util.Map;
 public class OrderDto {
 
     private final OrderApiImpl orderApi;
+    private final OrderFlow orderFlow;
 
-    public OrderDto(OrderApiImpl orderApi) {
+    public OrderDto(OrderApiImpl orderApi, OrderFlow orderFlow) {
         this.orderApi = orderApi;
+        this.orderFlow = orderFlow;
     }
 
     public OrderStatusData createOrder(OrderForm orderForm) throws ApiException {
         ValidationUtil.validateOrderForm(orderForm);
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
-        Map<String, OrderStatus> orderStatuses = orderApi.createOrder(orderPojo);
+        Map<String, OrderStatus> orderStatuses = orderFlow.createOrder(orderPojo);
 
         generateInvoice(orderPojo);
 

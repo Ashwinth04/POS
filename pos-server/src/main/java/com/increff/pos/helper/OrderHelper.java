@@ -24,7 +24,7 @@ public class OrderHelper {
 
         for (OrderItemForm item: orderForm.getOrderItems()) {
             OrderItem orderItem = new OrderItem();
-            orderItem.setBarcode(item.getBarcode());
+            orderItem.setBarcode(item.getBarcode().toLowerCase());
             orderItem.setOrderedQuantity(item.getOrderedQuantity());
             orderItem.setSellingPrice(item.getSellingPrice());
 

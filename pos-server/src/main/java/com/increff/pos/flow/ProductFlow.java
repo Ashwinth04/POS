@@ -2,7 +2,6 @@ package com.increff.pos.flow;
 
 import com.increff.pos.api.ClientApiImpl;
 import com.increff.pos.api.InventoryApiImpl;
-import com.increff.pos.api.ProductApi;
 import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
