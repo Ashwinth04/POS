@@ -33,6 +33,15 @@ public class ProductDto {
         return ProductHelper.convertToDto(savedProductPojo);
     }
 
+    public ProductData editProduct(ProductForm productForm) throws ApiException {
+        System.out.println("Inside DTO");
+        ValidationUtil.validateProductForm(productForm);
+        ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
+        ProductPojo editedPojo = productApi.editProduct(productPojo);
+
+        return ProductHelper.convertToDto(editedPojo);
+    }
+
     public Page<ProductData> getAllProducts(PageForm form) throws ApiException {
         ValidationUtil.validatePageForm(form);
         Page<ProductPojo> productPage = productApi.getAllProducts(form.getPage(), form.getSize());

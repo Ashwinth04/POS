@@ -1,12 +1,21 @@
 package com.increff.pos.dto;
 
 import com.increff.pos.api.AuthApiImpl;
+import com.increff.pos.db.ClientPojo;
+import com.increff.pos.db.UserPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.helper.AuthHelper;
+import com.increff.pos.helper.ClientHelper;
+import com.increff.pos.model.data.ClientData;
 import com.increff.pos.model.data.LoginResponse;
+import com.increff.pos.model.data.OperatorData;
 import com.increff.pos.model.form.CreateUserRequest;
 import com.increff.pos.model.form.LoginRequest;
+import com.increff.pos.model.form.PageForm;
+import com.increff.pos.util.ValidationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -66,5 +75,11 @@ public class AuthDto {
         }
 
         return authApi.me(authentication);
+    }
+
+    public Page<OperatorData> getAllOperators(PageForm form) throws ApiException {
+        ValidationUtil.validatePageForm(form);
+        Page<UserPojo> operatorPage = authApi.getAllOperators(form.getPage(), form.getSize());
+        return operatorPage.map(AuthHelper::convertToDto);
     }
 }

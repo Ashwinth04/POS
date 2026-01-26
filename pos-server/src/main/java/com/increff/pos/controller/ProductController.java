@@ -38,6 +38,12 @@ public class ProductController {
         return productDto.createProduct(productForm);
     }
 
+    @Operation(summary = "Edit product details")
+    @RequestMapping(path = "/edit", method = RequestMethod.POST)
+    public ProductData editProductDetails(@RequestBody ProductForm productForm) throws ApiException {
+        return productDto.editProduct(productForm);
+    }
+
     @Operation(summary = "Upload a list of products")
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
     public FileData createProductsBulk(@RequestBody FileForm fileForm) throws ApiException { // Use base64 string

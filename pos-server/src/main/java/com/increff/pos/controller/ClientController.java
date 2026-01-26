@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -54,4 +56,5 @@ public class ClientController {
     public List<ClientData> searchByEmail(@PathVariable String email) throws ApiException {
         return clientDto.searchClientByEmail(email);
     }
+
 }

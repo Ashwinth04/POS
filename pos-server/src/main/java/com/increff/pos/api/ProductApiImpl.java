@@ -58,6 +58,23 @@ public class ProductApiImpl implements ProductApi {
         return saved;
     }
 
+    public ProductPojo editProduct(ProductPojo productPojo) throws ApiException {
+
+        System.out.println("Inside API Layer");
+
+        checkClientExists(productPojo);
+
+        ProductPojo existingRecord = productDao.findByBarcode(productPojo.getBarcode());
+
+        if (existingRecord == null) {
+            throw new ApiException("Product with this given barcode doesn't exist");
+        }
+
+        productPojo.setId(existingRecord.getId());
+
+        return productDao.save(productPojo);
+    }
+
     @Transactional(rollbackFor = ApiException.class)
     public Map<String, ProductUploadResult> addProductsBulk(List<ProductPojo> pojos) {
 
@@ -137,9 +154,6 @@ public class ProductApiImpl implements ProductApi {
 
         try {
             List<ProductPojo> saved = productDao.saveAll(validForInsert);
-
-            System.out.println(resultMap.keySet());
-
 
             for (ProductPojo savedPojo : saved) {
                 createDummyInventoryRecord(savedPojo);

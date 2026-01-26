@@ -4,11 +4,14 @@ import com.increff.pos.db.UserPojo;
 import com.increff.pos.dto.AuthDto;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.LoginResponse;
+import com.increff.pos.model.data.OperatorData;
 import com.increff.pos.model.form.CreateUserRequest;
 import com.increff.pos.model.form.LoginRequest;
+import com.increff.pos.model.form.PageForm;
 import com.increff.pos.security.Roles;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -49,23 +52,14 @@ public class AuthController {
         return authDto.me(authentication);
     }
 
-
-//    @GetMapping("/me")
-//    public LoginResponse me(Authentication authentication) {
-//
-//        if (authentication == null) {
-//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not logged in");
-//        }
-//
-//        return new LoginResponse(
-//                authentication.getName(),
-//                authentication.getAuthorities().iterator().next().getAuthority()
-//        );
-//    }
-
     @PostMapping("/create-operator")
     public void createOperator(@RequestBody CreateUserRequest request) throws ApiException {
         authDto.createOperator(request);
+    }
+
+    @RequestMapping(value = "/get-all-operators", method = RequestMethod.POST)
+    public Page<OperatorData> getAllOperatorsPaginated(@RequestBody PageForm form) throws ApiException {
+        return authDto.getAllOperators(form);
     }
 
 }

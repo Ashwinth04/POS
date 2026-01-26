@@ -6,7 +6,6 @@ import com.increff.pos.db.UserPojo;
 import com.increff.pos.security.Roles;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
@@ -37,7 +36,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         // 2. Operator from DB
         UserPojo user = userDao.findByUsername(username);
 
-        if (user == null) throw new UsernameNotFoundException("Username not found");
+        if (user == null || "INACTIVE".equals(user.getStatus())) throw new UsernameNotFoundException("Username not found or user access revoked");
 
         return User.builder()
                 .username(user.getUsername())

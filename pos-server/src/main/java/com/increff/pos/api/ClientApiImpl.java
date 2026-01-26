@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,7 +82,6 @@ public class ClientApiImpl implements ClientApi {
         }
     }
 
-
     private void checkPhoneNumberExists(String id, String phoneNumber) throws ApiException {
         ClientPojo existing = clientDao.findByPhoneNumber(phoneNumber);
 
@@ -89,7 +89,6 @@ public class ClientApiImpl implements ClientApi {
             throw new ApiException("Phone Number already exists");
         }
     }
-
 
     private void checkNameExists(String id, String name) throws ApiException {
         ClientPojo existing = clientDao.findByName(name);
