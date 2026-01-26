@@ -1,6 +1,7 @@
 package com.increff.pos.dao;
 
 import com.increff.pos.db.InventoryPojo;
+import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.result.UpdateResult;
@@ -66,6 +67,24 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         }
 
         return bulkOps.execute();
+    }
+
+    public List<String> findExistingBarcodes(List<String> barcodes) {
+
+        if (barcodes == null || barcodes.isEmpty()) {
+            return List.of();
+        }
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("barcode").in(barcodes));
+
+        query.fields().include("barcode");
+
+        List<InventoryPojo> records = mongoOperations.find(query, InventoryPojo.class);
+
+        return records.stream()
+                .map(InventoryPojo::getBarcode)
+                .toList();
     }
 
 }

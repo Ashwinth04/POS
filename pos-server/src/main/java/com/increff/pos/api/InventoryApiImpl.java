@@ -1,8 +1,8 @@
 package com.increff.pos.api;
 
 import com.increff.pos.dao.InventoryDao;
-import com.increff.pos.dao.ProductDao;
 import com.increff.pos.db.InventoryPojo;
+import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,12 +15,9 @@ import java.util.Map;
 @Service
 public class InventoryApiImpl implements InventoryApi{
 
-    private final ProductDao productDao;
-
     private final InventoryDao inventoryDao;
 
-    public InventoryApiImpl(ProductDao productDao, InventoryDao inventoryDao) {
-        this.productDao = productDao;
+    public InventoryApiImpl(InventoryDao inventoryDao) {
         this.inventoryDao = inventoryDao;
     }
 
@@ -43,7 +40,7 @@ public class InventoryApiImpl implements InventoryApi{
                 .map(InventoryPojo::getBarcode)
                 .toList();
 
-        List<String> existingBarcodes = productDao.findExistingBarcodes(incomingBarcodes);
+        List<String> existingBarcodes = inventoryDao.findExistingBarcodes(incomingBarcodes);
 
         List<InventoryPojo> valid = new ArrayList<>();
 
@@ -63,6 +60,15 @@ public class InventoryApiImpl implements InventoryApi{
         }
 
         return resultMap;
+    }
+
+    public void createDummyInventoryRecord(String barcode) throws ApiException {
+
+        InventoryPojo dummyRecord = new InventoryPojo();
+        dummyRecord.setBarcode(barcode);
+        dummyRecord.setQuantity(0);
+
+        inventoryDao.save(dummyRecord);
     }
 
 }

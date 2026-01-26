@@ -1,19 +1,10 @@
 package com.increff.pos.api;
 
-import com.increff.pos.dao.ClientDao;
-import com.increff.pos.dao.InventoryDao;
 import com.increff.pos.dao.ProductDao;
-import com.increff.pos.db.ClientPojo;
-import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
-import com.increff.pos.db.UserPojo;
-import com.increff.pos.dto.ProductDto;
 import com.increff.pos.exception.ApiException;
-import com.increff.pos.model.data.InventoryUpdateResult;
-import com.increff.pos.model.data.ProductData;
 import com.increff.pos.model.data.ProductUploadResult;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -21,9 +12,7 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.PublicKey;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductApiImpl implements ProductApi {
@@ -31,38 +20,24 @@ public class ProductApiImpl implements ProductApi {
 
     private final ProductDao productDao;
 
-    private final InventoryDao inventoryDao;
-
-    private final ClientDao clientDao;
-
-    public ProductApiImpl(ProductDao productDao, InventoryDao inventoryDao, ClientDao clientDao) {
+    public ProductApiImpl(ProductDao productDao) {
         this.productDao = productDao;
-        this.inventoryDao = inventoryDao;
-        this.clientDao = clientDao;
     }
 
     @Transactional(rollbackFor = ApiException.class)
     public ProductPojo addProduct(ProductPojo productPojo) throws ApiException {
-
         logger.info("Adding a product with barcode: {}", productPojo.getBarcode());
 
-        checkClientExists(productPojo);
         checkBarcodeExists(productPojo.getBarcode());
 
         ProductPojo saved = productDao.save(productPojo);
 
         logger.info("Product created with barcode: {}", saved.getBarcode());
 
-        createDummyInventoryRecord(productPojo);
-
         return saved;
     }
 
     public ProductPojo editProduct(ProductPojo productPojo) throws ApiException {
-
-        System.out.println("Inside API Layer");
-
-        checkClientExists(productPojo);
 
         ProductPojo existingRecord = productDao.findByBarcode(productPojo.getBarcode());
 
@@ -75,8 +50,14 @@ public class ProductApiImpl implements ProductApi {
         return productDao.save(productPojo);
     }
 
+    public Page<ProductPojo> getAllProducts(int page, int size) {
+        logger.info("Fetching products page {} with size {}", page, size);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return productDao.findAll(pageRequest);
+    }
+
     @Transactional(rollbackFor = ApiException.class)
-    public Map<String, ProductUploadResult> addProductsBulk(List<ProductPojo> pojos) {
+    public Map<String, ProductUploadResult> addProductsBulk(List<ProductPojo> pojos, List<String> existingClientNames) {
 
         Map<String, ProductUploadResult> resultMap = initializeResultMap(pojos);
 
@@ -84,9 +65,7 @@ public class ProductApiImpl implements ProductApi {
             return resultMap;
         }
 
-        List<String> existingClientNames = fetchExistingClientNames(pojos);
-
-        List<ProductPojo> validForInsert = filterValidClients(pojos, existingClientNames, resultMap);
+        List<ProductPojo> validForInsert = filterValidClients(pojos, existingClientNames, resultMap); // no change needed
 
         persistValidProducts(validForInsert, resultMap);
 
@@ -116,18 +95,9 @@ public class ProductApiImpl implements ProductApi {
         return resultMap;
     }
 
-    private List<String> fetchExistingClientNames(List<ProductPojo> pojos) {
-        List<String> requestedClientNames = pojos.stream()
-                .map(ProductPojo::getClientName)
-                .toList();
-
-        return clientDao.findExistingClientNames(requestedClientNames);
-    }
-
     private List<ProductPojo> filterValidClients(List<ProductPojo> pojos, List<String> existingClientNames, Map<String, ProductUploadResult> resultMap) {
 
         List<ProductPojo> valid = new ArrayList<>();
-
 
         for (ProductPojo p : pojos) {
             ProductUploadResult r = resultMap.get(p.getBarcode());
@@ -156,8 +126,9 @@ public class ProductApiImpl implements ProductApi {
             List<ProductPojo> saved = productDao.saveAll(validForInsert);
 
             for (ProductPojo savedPojo : saved) {
-                createDummyInventoryRecord(savedPojo);
-                resultMap.remove(savedPojo.getBarcode());
+                ProductUploadResult r = resultMap.get(savedPojo.getBarcode());
+                r.setStatus("SUCCESS");
+                r.setMessage("SUCCESS");
             }
 
         } catch (Exception e) {
@@ -173,36 +144,6 @@ public class ProductApiImpl implements ProductApi {
             r.setStatus("FAILED");
             r.setMessage("Database error: " + e.getMessage());
         }
-    }
-
-    public InventoryPojo getDummyInventoryRecord(ProductPojo productPojo) throws ApiException {
-        InventoryPojo dummyInventory = new InventoryPojo();
-        dummyInventory.setBarcode(productPojo.getBarcode());
-        dummyInventory.setQuantity(0);
-        return dummyInventory;
-    }
-
-    public InventoryPojo createDummyInventoryRecord(ProductPojo productPojo) throws ApiException {
-        InventoryPojo dummyInventory = getDummyInventoryRecord(productPojo);
-        logger.info("Adding new inventory for product with barcode: {}", dummyInventory.getBarcode());
-        InventoryPojo saved = inventoryDao.save(dummyInventory);
-        logger.info("Inventory added for product with id: {}", saved.getBarcode());
-        return saved;
-    }
-
-    public Page<ProductPojo> getAllProducts(int page, int size) {
-        logger.info("Fetching products page {} with size {}", page, size);
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return productDao.findAll(pageRequest);
-    }
-
-    public void checkClientExists(ProductPojo productPojo) throws ApiException {
-
-        String clientName = productPojo.getClientName();
-
-        ClientPojo client = clientDao.findByName(clientName);
-
-        if (client == null) { throw new ApiException("Client with the given name does not exist"); }
     }
 
     public void checkBarcodeExists(String barcode) throws ApiException {

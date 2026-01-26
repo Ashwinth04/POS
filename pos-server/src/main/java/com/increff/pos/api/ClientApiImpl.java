@@ -4,6 +4,7 @@ import ch.qos.logback.core.net.server.Client;
 import com.increff.pos.dao.ClientDao;
 import com.increff.pos.dao.UserDao;
 import com.increff.pos.db.ClientPojo;
+import com.increff.pos.db.ProductPojo;
 import com.increff.pos.db.UserPojo;
 import com.increff.pos.exception.ApiException;
 import jakarta.validation.constraints.Null;
@@ -66,11 +67,11 @@ public class ClientApiImpl implements ClientApi {
         return clientDao.save(clientPojo);
     }
 
-    public List<ClientPojo> searchClient(String name) throws ApiException {
+    public List<ClientPojo> searchClient(String name) {
         return clientDao.search(name);
     }
 
-    public List<ClientPojo> searchClientByEmail(String email) throws ApiException {
+    public List<ClientPojo> searchClientByEmail(String email) {
         return clientDao.searchByEmail(email);
     }
 
@@ -98,5 +99,18 @@ public class ClientApiImpl implements ClientApi {
         }
     }
 
+    public void checkClientExists(String clientName) throws ApiException {
+        ClientPojo client = clientDao.findByName(clientName);
+
+        if (client == null) { throw new ApiException("Client with the given name does not exist"); }
+    }
+
+    public List<String> fetchExistingClientNames(List<ProductPojo> pojos) {
+        List<String> requestedClientNames = pojos.stream()
+                .map(ProductPojo::getClientName)
+                .toList();
+
+        return clientDao.findExistingClientNames(requestedClientNames);
+    }
 
 }

@@ -3,6 +3,7 @@ package com.increff.pos.dto;
 import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.flow.ProductFlow;
 import com.increff.pos.helper.ProductHelper;
 import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.*;
@@ -20,15 +21,17 @@ import static com.increff.pos.util.ValidationUtil.validateProductRows;
 public class ProductDto {
 
     private final ProductApiImpl productApi;
+    private final ProductFlow productFlow;
 
-    public ProductDto(ProductApiImpl productApi) {
+    public ProductDto(ProductApiImpl productApi, ProductFlow productFlow) {
         this.productApi = productApi;
+        this.productFlow = productFlow;
     }
 
     public ProductData createProduct(ProductForm productForm) throws ApiException {
         ValidationUtil.validateProductForm(productForm);
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
-        ProductPojo savedProductPojo = productApi.addProduct(productPojo);
+        ProductPojo savedProductPojo = productFlow.addProduct(productPojo);
 
         return ProductHelper.convertToDto(savedProductPojo);
     }
@@ -37,14 +40,14 @@ public class ProductDto {
         System.out.println("Inside DTO");
         ValidationUtil.validateProductForm(productForm);
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
-        ProductPojo editedPojo = productApi.editProduct(productPojo);
+        ProductPojo editedPojo = productFlow.editProduct(productPojo);
 
         return ProductHelper.convertToDto(editedPojo);
     }
 
     public Page<ProductData> getAllProducts(PageForm form) throws ApiException {
         ValidationUtil.validatePageForm(form);
-        Page<ProductPojo> productPage = productApi.getAllProducts(form.getPage(), form.getSize());
+        Page<ProductPojo> productPage = productFlow.getAllProducts(form.getPage(), form.getSize());
         return productPage.map(ProductHelper::convertToDto);
     }
 
@@ -58,7 +61,7 @@ public class ProductDto {
         return convertProductResultsToBase64(results);
     }
 
-    public List<ProductUploadResult> uploadProducts(List<String[]> rows) {
+    public List<ProductUploadResult> uploadProducts(List<String[]> rows) throws ApiException {
 
         Map<String, Integer> barcodeCount = countBarcodes(rows);
 
@@ -129,11 +132,11 @@ public class ProductDto {
         return result;
     }
 
-    private List<ProductUploadResult> getProductUploadResults(List<ProductUploadResult> results, List<ProductPojo> validPojos) {
+    private List<ProductUploadResult> getProductUploadResults(List<ProductUploadResult> results, List<ProductPojo> validPojos) throws ApiException {
 
         if (validPojos.isEmpty()) return results;
 
-        Map<String, ProductUploadResult> apiResults = productApi.addProductsBulk(validPojos);
+        Map<String, ProductUploadResult> apiResults = productFlow.addProductsBulk(validPojos);
 
         for (ProductUploadResult r : results) {
             if ("PENDING".equals(r.getStatus())) {
