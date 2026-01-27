@@ -1,6 +1,8 @@
 package com.increff.pos.api;
 
 import com.increff.pos.dao.OrderDao;
+import com.increff.pos.model.data.MessageData;
+import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.storage.StorageService;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.exception.ApiException;
@@ -39,6 +41,58 @@ public class OrderApiImpl implements OrderApi {
         return statuses;
     }
 
+    @Transactional(rollbackFor = ApiException.class)
+    public Map<String, OrderStatus> editOrder(OrderPojo orderPojo, Map<String, OrderStatus> statuses, boolean isFulFillable) throws ApiException {
+
+        orderPojo.setOrderStatus(isFulFillable ? "FULFILLABLE" : "UNFULFILLABLE");
+
+        OrderPojo record = orderDao.findByOrderId(orderPojo.getOrderId());
+
+        if (record == null) throw new ApiException("Order with the given id does not exist");
+
+        orderPojo.setId(record.getId());
+        orderDao.save(orderPojo);
+
+        return statuses;
+    }
+
+    public MessageData cancelOrder(String orderId) throws ApiException {
+        OrderPojo record = orderDao.findByOrderId(orderId);
+
+        if (record == null) throw new ApiException("Order with the given id does not exist");
+
+        record.setOrderStatus("CANCELLED");
+        orderDao.save(record);
+
+        return new MessageData("Order cancelled successfully!");
+    }
+
+    public void checkOrderEditable(String orderId) throws ApiException {
+        OrderPojo orderPojo = orderDao.findByOrderId(orderId);
+
+        if (orderPojo == null) throw new ApiException("Order with the given id doesnt exist");
+
+        String status = orderPojo.getOrderStatus();
+
+        if (status.equals("CANCELLED")) throw new ApiException("CANCELLED ORDERS CANNOT BE EDITED");
+
+        if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE EDITED");
+    }
+
+    public void checkOrderCancellable(String orderId) throws ApiException {
+
+        OrderPojo orderPojo = orderDao.findByOrderId(orderId);
+
+        if (orderPojo == null) throw new ApiException("Order with the given id doesnt exist");
+
+        String status = orderPojo.getOrderStatus();
+
+        if (status.equals("CANCELLED")) throw new ApiException("ORDER CANCELLED ALREADY");
+
+        if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE CANCELLED");
+
+    }
+
     public byte[] getInvoice(String orderId) throws ApiException {
 
         try {
@@ -53,5 +107,35 @@ public class OrderApiImpl implements OrderApi {
         logger.info("Fetching orders page {} with size {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return orderDao.findAll(pageRequest);
+    }
+
+    public List<OrderPojo> getTodaysOrders() {
+        return orderDao.findTodayFulfillableOrders();
+    }
+
+    public Map<String, Integer> aggregateItems(List<OrderItem> orderItems) {
+
+        Map<String, Integer> aggregatedItems = new HashMap<>();
+
+        for (OrderItem item : orderItems) {
+            String barcode = item.getBarcode();
+            Integer quantity = item.getOrderedQuantity();
+
+            aggregatedItems.merge(barcode, quantity, Integer::sum);
+        }
+
+        return aggregatedItems;
+
+    }
+
+    public Map<String, Integer> aggregateItems(String orderId) {
+
+        OrderPojo orderPojo = getOrderByOrderId(orderId);
+
+        return aggregateItems(orderPojo.getOrderItems());
+    }
+
+    public OrderPojo getOrderByOrderId(String orderId) {
+        return orderDao.findByOrderId(orderId);
     }
 }

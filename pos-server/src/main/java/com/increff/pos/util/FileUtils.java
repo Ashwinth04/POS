@@ -13,7 +13,7 @@ public class FileUtils {
         StringBuilder sb = new StringBuilder();
 
         // Header
-        sb.append("barcode\tclientName\tname\tmrp\tstatus\tmessage\n");
+        sb.append("barcode\tclientName\tname\tstatus\tmessage\n");
 
         for (ProductUploadResult r : results) {
             if (r.getStatus() != "FAILED") continue;
@@ -21,7 +21,6 @@ public class FileUtils {
             sb.append(safe(r.getBarcode())).append("\t")
                     .append(safe(r.getClientName())).append("\t")
                     .append(safe(r.getName())).append("\t")
-                    .append(r.getMrp() == null ? "" : r.getMrp()).append("\t")
                     .append(safe(r.getStatus())).append("\t")
                     .append(safe(r.getMessage()))
                     .append("\n");

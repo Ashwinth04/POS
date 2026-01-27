@@ -27,15 +27,6 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/auth")
 public class AuthController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private UserDao userDao;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
     private final AuthDto authDto;
 
     public AuthController(AuthDto authDto) {

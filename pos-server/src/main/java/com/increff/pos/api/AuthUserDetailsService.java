@@ -9,13 +9,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
-public class CustomUserDetailsService implements UserDetailsService {
+public class AuthUserDetailsService implements UserDetailsService {
 
     private final SupervisorConfig supervisorConfig;
     private final UserDao userDao;
     private final PasswordEncoder encoder;
 
-    public CustomUserDetailsService(SupervisorConfig supervisorConfig, UserDao userDao, PasswordEncoder encoder) {
+    public AuthUserDetailsService(SupervisorConfig supervisorConfig, UserDao userDao, PasswordEncoder encoder) {
         this.supervisorConfig = supervisorConfig;
         this.userDao = userDao;
         this.encoder = encoder;

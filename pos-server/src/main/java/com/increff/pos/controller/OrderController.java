@@ -32,6 +32,18 @@ public class OrderController {
         return orderDto.createOrder(orderForm);
     }
 
+    @Operation(summary = "Edit order")
+    @RequestMapping(value = "/edit/{orderId}", method = RequestMethod.POST)
+    public OrderStatusData editOrder(@RequestBody OrderForm orderForm, @PathVariable String orderId) throws ApiException {
+        return orderDto.editOrder(orderForm, orderId);
+    }
+
+    @Operation(summary = "Cancel order")
+    @RequestMapping(value = "/cancel/{orderId}", method = RequestMethod.PUT)
+    public MessageData cancelOrder(@PathVariable String orderId) throws ApiException {
+        return orderDto.cancelOrder(orderId);
+    }
+
     @Operation(summary = "Get all orders with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
     public Page<OrderData> getAllProducts(@RequestBody PageForm form) throws ApiException {

@@ -16,9 +16,15 @@ import java.util.List;
 public class ValidationUtil {
 
     // User validations
-    public static void validateUserForm(UserForm form) throws ApiException {
-        validateEmail(form.getEmail());
-        validateName(form.getName());
+    public static void validateLoginRequest(LoginRequest request) throws ApiException {
+
+        if (request.getUsername() == null || request.getUsername().isBlank()) {
+            throw new ApiException("Username cannot be empty");
+        }
+
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new ApiException("Password cannot be empty");
+        }
     }
 
     public static void validateClientForm(ClientForm clientForm) throws ApiException {
@@ -44,7 +50,7 @@ public class ValidationUtil {
         validateOrderItems(orderForm.getOrderItems());
     }
 
-    private static void validateOrderItems(List<OrderItemForm> items) throws ApiException {
+    public static void validateOrderItems(List<OrderItemForm> items) throws ApiException {
 
         if (items == null || items.isEmpty()) {
             throw new ApiException("orderItems cannot be empty");

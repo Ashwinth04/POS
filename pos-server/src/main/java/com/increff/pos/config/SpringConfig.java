@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"com.increff.pos"})
-@EnableMongoAuditing(dateTimeProviderRef = "auditingDateTimeProvider")
 @EnableScheduling
 public class SpringConfig {
 

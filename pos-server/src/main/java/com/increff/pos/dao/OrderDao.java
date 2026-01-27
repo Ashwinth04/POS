@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import javax.swing.text.html.StyleSheet;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -25,12 +26,6 @@ public class OrderDao extends AbstractDao<OrderPojo> {
         );
     }
 
-    public List<OrderPojo> findFulfillableOrders() {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("orderStatus").is("FULFILLABLE"));
-        return mongoOperations.find(query, OrderPojo.class);
-    }
-
     public List<OrderPojo> findTodayFulfillableOrders() {
         Instant startOfDay = LocalDate.now()
                 .atStartOfDay(ZoneId.systemDefault())
@@ -43,6 +38,8 @@ public class OrderDao extends AbstractDao<OrderPojo> {
                 .atStartOfDay(ZoneId.systemDefault())
                 .toInstant();
 
+        System.out.println("END OF THE DAY: " + endOfDay);
+
         Query query = new Query();
         query.addCriteria(
                 Criteria.where("orderStatus").is("FULFILLABLE")
@@ -52,5 +49,9 @@ public class OrderDao extends AbstractDao<OrderPojo> {
         return mongoOperations.find(query, OrderPojo.class);
     }
 
+    public OrderPojo findByOrderId(String orderId) {
+        Query query = Query.query(Criteria.where("orderId").is(orderId));
+        return mongoOperations.findOne(query, OrderPojo.class);
+    }
 
 }

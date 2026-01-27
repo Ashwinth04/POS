@@ -2,18 +2,13 @@ package com.increff.pos.api;
 
 import com.increff.pos.dao.InventoryDao;
 import com.increff.pos.db.InventoryPojo;
-import com.increff.pos.db.OrderPojo;
-import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.model.data.OrderStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class InventoryApiImpl implements InventoryApi{
@@ -63,6 +58,38 @@ public class InventoryApiImpl implements InventoryApi{
         }
 
         return resultMap;
+    }
+
+    public boolean reserveInventory(List<OrderItem> items, Map<String, OrderStatus> statuses) throws ApiException {
+
+        boolean isFulfillable = checkOrderFulfillable(items, statuses);
+
+        if (isFulfillable) updateInventory(items);
+        return isFulfillable;
+    }
+
+    public boolean editOrder(List<OrderItem> orderItems, Map<String, Integer> existingItems, Map<String, Integer> incomingItems, Map<String, OrderStatus> statuses) throws ApiException {
+
+        boolean isFulfillable = checkOrderFulfillable(orderItems, statuses);
+
+        if (isFulfillable) {
+
+            Map<String, Integer> delta = calculateDelta(existingItems, incomingItems);
+
+            updateDeltaInventory(delta);
+        }
+
+        return isFulfillable;
+    }
+
+    public void revertInventory(List<OrderItem> orderItems) throws ApiException {
+
+        for (OrderItem item: orderItems) {
+            int quantity = item.getOrderedQuantity();
+            item.setOrderedQuantity(-quantity);
+        }
+
+        updateInventory(orderItems);
     }
 
     public void createDummyInventoryRecord(String barcode) throws ApiException {
@@ -116,16 +143,41 @@ public class InventoryApiImpl implements InventoryApi{
     public void updateInventory(List<OrderItem> orderItems) throws ApiException{
 
         for (OrderItem item : orderItems) {
-            applyInventoryUpdate(item);
+            applyInventoryUpdate(item.getBarcode(), item.getOrderedQuantity());
         }
     }
 
-    private void applyInventoryUpdate(OrderItem item) throws ApiException {
+    public void updateDeltaInventory(Map<String, Integer> delta) throws ApiException {
+
+        for (String barcode: delta.keySet()) {
+            applyInventoryUpdate(barcode, delta.get(barcode));
+        }
+    }
+
+    private void applyInventoryUpdate(String barcode, int quantity) throws ApiException {
         InventoryPojo pojo = new InventoryPojo();
-        pojo.setBarcode(item.getBarcode());
-        pojo.setQuantity(-item.getOrderedQuantity());
+        pojo.setBarcode(barcode);
+        pojo.setQuantity(-quantity);
 
         inventoryDao.updateInventory(pojo);
     }
+
+    private Map<String, Integer> calculateDelta(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) {
+
+        Map<String, Integer> delta = new HashMap<>();
+
+        // Add all incoming (positive)
+        incomingItems.forEach((barcode, qty) ->
+                delta.put(barcode, qty)
+        );
+
+        // Subtract all existing
+        existingItems.forEach((barcode, qty) ->
+                delta.merge(barcode, -qty, Integer::sum)
+        );
+
+        return delta;
+    }
+
 
 }

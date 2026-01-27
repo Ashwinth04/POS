@@ -30,13 +30,7 @@ public class AuthDto {
 
     public LoginResponse login(LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ApiException {
 
-        if (request.getUsername() == null || request.getUsername().isBlank()) {
-            throw new ApiException("Username cannot be empty");
-        }
-
-        if (request.getPassword() == null || request.getPassword().isBlank()) {
-            throw new ApiException("Password cannot be empty");
-        }
+        ValidationUtil.validateLoginRequest(request);
 
         String username = request.getUsername().trim().toLowerCase();
         String password = request.getPassword();

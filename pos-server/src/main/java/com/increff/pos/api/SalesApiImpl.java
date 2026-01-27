@@ -5,12 +5,14 @@ import com.increff.pos.dao.SalesDao;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.SalesPojo;
 import com.increff.pos.model.data.OrderItem;
+import com.increff.pos.model.data.SalesReportRow;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -68,6 +70,10 @@ public class SalesApiImpl {
 
             salesDao.save(sales);
         }
+    }
+
+    public List<SalesReportRow> getSalesForClient(String clientName, ZonedDateTime startDate, ZonedDateTime endDate) {
+        return salesDao.getSalesReport(clientName, startDate, endDate);
     }
 }
 

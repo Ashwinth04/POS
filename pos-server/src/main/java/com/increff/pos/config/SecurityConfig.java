@@ -37,8 +37,6 @@ public class SecurityConfig {
 
                         // Orders accessible by both
                         .requestMatchers("/api/orders/**").hasAnyRole("SUPERVISOR", "OPERATOR")
-
-                        .requestMatchers("/debug/**").permitAll()
                         // Everything else supervisor only
                         .anyRequest().hasRole("SUPERVISOR")
                 )

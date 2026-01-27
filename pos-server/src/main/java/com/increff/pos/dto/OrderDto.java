@@ -37,9 +37,26 @@ public class OrderDto {
         return OrderHelper.convertToDto(orderStatuses, orderPojo.getOrderId());
     }
 
+    public OrderStatusData editOrder(OrderForm orderForm, String orderId) throws ApiException {
+
+        ValidationUtil.validateOrderForm(orderForm);
+        ValidationUtil.validateOrderId(orderId);
+
+        OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
+        orderPojo.setOrderId(orderId);
+        Map<String, OrderStatus> orderStatuses = orderFlow.editOrder(orderPojo, orderId);
+
+        return OrderHelper.convertToDto(orderStatuses, orderPojo.getOrderId());
+    }
+
+    public MessageData cancelOrder(String orderId) throws ApiException {
+        ValidationUtil.validateOrderId(orderId);
+        return orderFlow.cancelOrder(orderId);
+    }
+
     public Page<OrderData> getAllOrders(PageForm form) throws ApiException {
         ValidationUtil.validatePageForm(form);
-        Page<OrderPojo> orderPage = orderApi.getAllOrders(form.getPage(), form.getSize());
+        Page<OrderPojo> orderPage = orderFlow.getAllOrders(form.getPage(), form.getSize());
         return orderPage.map(OrderHelper::convertToOrderDto);
     }
 
@@ -51,6 +68,6 @@ public class OrderDto {
 
     public byte[] fetchInvoice(String orderId) throws ApiException {
         ValidationUtil.validateOrderId(orderId);
-        return orderApi.getInvoice(orderId);
+        return orderFlow.getInvoice(orderId);
     }
 }
