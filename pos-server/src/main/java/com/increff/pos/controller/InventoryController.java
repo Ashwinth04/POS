@@ -8,6 +8,7 @@ import com.increff.pos.model.form.FileForm;
 import com.increff.pos.model.form.InventoryForm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Inventory Management", description = "Manage inventories for products")
@@ -23,7 +24,7 @@ public class InventoryController {
 
     @Operation(summary = "Update inventory for a product")
     @RequestMapping(path = "/update/{barcode}", method = RequestMethod.PUT)
-    public InventoryData updateInventory(@PathVariable String barcode, @RequestBody InventoryForm inventoryForm) throws ApiException {
+    public InventoryData updateInventory(@PathVariable String barcode,@Valid @RequestBody InventoryForm inventoryForm) throws ApiException {
         return inventoryDto.updateInventory(barcode, inventoryForm);
     }
 

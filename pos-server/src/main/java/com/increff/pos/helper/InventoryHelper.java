@@ -18,8 +18,8 @@ public class InventoryHelper {
     public static InventoryPojo convertRowToEntity(String[] row) {
 
         InventoryPojo inventoryPojo = new InventoryPojo();
-        inventoryPojo.setBarcode(row[0]);
-        inventoryPojo.setQuantity(Integer.parseInt(row[1]));
+        inventoryPojo.setBarcode(row[0].trim());
+        inventoryPojo.setQuantity(Integer.parseInt(row[1].trim()));
         return inventoryPojo;
     }
 

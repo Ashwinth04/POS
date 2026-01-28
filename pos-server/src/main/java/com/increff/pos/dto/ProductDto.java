@@ -20,11 +20,9 @@ import static com.increff.pos.util.ValidationUtil.validateProductRows;
 @Service
 public class ProductDto {
 
-    private final ProductApiImpl productApi;
     private final ProductFlow productFlow;
 
-    public ProductDto(ProductApiImpl productApi, ProductFlow productFlow) {
-        this.productApi = productApi;
+    public ProductDto(ProductFlow productFlow) {
         this.productFlow = productFlow;
     }
 
@@ -65,6 +63,8 @@ public class ProductDto {
 
         Map<String, Integer> barcodeCount = countBarcodes(rows);
 
+        System.out.println("ROWSSS" + rows);
+
         List<ProductUploadResult> results = new ArrayList<>();
         List<ProductPojo> validForms = new ArrayList<>();
 
@@ -86,9 +86,11 @@ public class ProductDto {
         return barcodeCount;
     }
 
-    private ProductUploadResult processSingleForm(String[] row, Map<String, Integer> barcodeCount, List<ProductPojo> validForms) {
+    private ProductUploadResult processSingleForm(String[] row, Map<String, Integer> barcodeCount, List<ProductPojo> validForms) throws ApiException {
 
         ProductUploadResult result = createInitialResult(row);
+
+        System.out.println("ROWS: ");
 
         try {
             ValidationUtil.validateProductRow(row);
@@ -122,14 +124,21 @@ public class ProductDto {
         result.setMessage(message);
     }
 
-    private ProductUploadResult createInitialResult(String[] row) {
-        ProductUploadResult result = new ProductUploadResult();
-        result.setBarcode(row[0].toLowerCase());
-        result.setClientName(row[1]);
-        result.setName(row[2]);
-        result.setMrp(Double.parseDouble(row[3]));
-        result.setImageUrl(row[4]);
-        return result;
+    private ProductUploadResult createInitialResult(String[] row) throws ApiException{
+
+        try
+        {
+            ProductUploadResult result = new ProductUploadResult();
+            result.setBarcode(row[0].toLowerCase());
+            result.setClientName(row[1]);
+            result.setName(row[2]);
+            result.setMrp(Double.parseDouble(row[3]));
+            result.setImageUrl(row[4]);
+            return result;
+        } catch (NumberFormatException e) {
+            throw new ApiException("Invalid value for MRP");
+        }
+
     }
 
     private List<ProductUploadResult> getProductUploadResults(List<ProductUploadResult> results, List<ProductPojo> validPojos) throws ApiException {

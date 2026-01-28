@@ -68,18 +68,11 @@ public class InventoryApiImpl implements InventoryApi{
         return isFulfillable;
     }
 
-    public boolean editOrder(List<OrderItem> orderItems, Map<String, Integer> existingItems, Map<String, Integer> incomingItems, Map<String, OrderStatus> statuses) throws ApiException {
-
-        boolean isFulfillable = checkOrderFulfillable(orderItems, statuses);
-
-        if (isFulfillable) {
+    public void editOrder(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) throws ApiException {
 
             Map<String, Integer> delta = calculateDelta(existingItems, incomingItems);
 
             updateDeltaInventory(delta);
-        }
-
-        return isFulfillable;
     }
 
     public void revertInventory(List<OrderItem> orderItems) throws ApiException {

@@ -26,29 +26,6 @@ public class OrderDao extends AbstractDao<OrderPojo> {
         );
     }
 
-    public List<OrderPojo> findTodayFulfillableOrders() {
-        Instant startOfDay = LocalDate.now()
-                .atStartOfDay(ZoneId.systemDefault())
-                .toInstant();
-
-        System.out.println("START OF THE DAY: " + startOfDay);
-
-        Instant endOfDay = LocalDate.now()
-                .plusDays(1)
-                .atStartOfDay(ZoneId.systemDefault())
-                .toInstant();
-
-        System.out.println("END OF THE DAY: " + endOfDay);
-
-        Query query = new Query();
-        query.addCriteria(
-                Criteria.where("orderStatus").is("FULFILLABLE")
-                        .and("orderTime").gte(startOfDay).lt(endOfDay)
-        );
-
-        return mongoOperations.find(query, OrderPojo.class);
-    }
-
     public OrderPojo findByOrderId(String orderId) {
         Query query = Query.query(Criteria.where("orderId").is(orderId));
         return mongoOperations.findOne(query, OrderPojo.class);

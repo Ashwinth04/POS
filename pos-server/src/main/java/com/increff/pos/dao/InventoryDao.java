@@ -3,7 +3,6 @@ package com.increff.pos.dao;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
-import com.increff.pos.model.data.SalesReportRow;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.springframework.data.mongodb.core.BulkOperations;

@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class SalesReportRow {
+public class ProductRow {
     private String product;   // barcode
     private int quantity;
     private double revenue;

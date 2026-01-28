@@ -11,6 +11,7 @@ import com.increff.pos.model.data.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -46,25 +47,33 @@ public class OrderFlow {
 
         createOrderItemIds(orderPojo);
 
-        orderApi.checkOrderEditable(orderId);
-
+        String existingStatus = orderApi.checkAndGetStatus(orderId);
 
         Map<String, OrderStatus> statuses = new LinkedHashMap<>();
 
         boolean hasValidationErrors = productApi.validateAllOrderItems(orderPojo, statuses);
         if (hasValidationErrors) return statuses;
 
-        Map<String, Integer> aggregatedItemsIncoming = orderApi.aggregateItems(orderPojo.getOrderItems());
-        Map<String, Integer> aggregatedItemsExisting = orderApi.aggregateItems(orderId);
+        boolean isFulfillable = inventoryApi.checkOrderFulfillable(orderPojo.getOrderItems(),statuses);
 
-        boolean isFulfillable = inventoryApi.editOrder(orderPojo.getOrderItems(), aggregatedItemsExisting, aggregatedItemsIncoming, statuses);
-
-        if (!isFulfillable) {
-
+        if (existingStatus.equals("UNFULFILLABLE") && !isFulfillable) {
+            return statuses;
         }
 
-        return orderApi.editOrder(orderPojo, statuses, isFulfillable);
+        Map<String, Integer> aggregatedItemsIncoming = new HashMap<>();
+        Map<String, Integer> aggregatedItemsExisting = new HashMap<>();
 
+        if (existingStatus.equals("FULFILLABLE")) {
+            aggregatedItemsExisting = orderApi.aggregateItems(orderId);
+        }
+
+        if (isFulfillable) {
+            aggregatedItemsIncoming = orderApi.aggregateItems(orderPojo.getOrderItems());
+        }
+
+        inventoryApi.editOrder(aggregatedItemsExisting, aggregatedItemsIncoming);
+
+        return orderApi.editOrder(orderPojo, statuses, isFulfillable);
     }
 
     public MessageData cancelOrder(String orderId) throws ApiException {

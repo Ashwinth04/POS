@@ -1,29 +1,20 @@
 package com.increff.pos.dao;
 
-import ch.qos.logback.core.net.server.Client;
-import com.increff.pos.db.ClientPojo;
-import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.SalesPojo;
-import com.increff.pos.exception.ApiException;
-import com.increff.pos.model.data.SalesReportRow;
-import com.mongodb.client.result.UpdateResult;
+import com.increff.pos.model.data.ProductRow;
+import org.bson.BsonNull;
+import org.bson.Document;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.mongodb.repository.support.MongoRepositoryFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Repository
 public class SalesDao extends AbstractDao<SalesPojo> {
@@ -35,15 +26,15 @@ public class SalesDao extends AbstractDao<SalesPojo> {
         );
     }
 
-    public SalesPojo findByDate(LocalDate date) {
+    public SalesPojo findByDate(ZonedDateTime date) {
         Query query = new Query();
         query.addCriteria(Criteria.where("date").is(date));
         return mongoOperations.findOne(query, SalesPojo.class);
     }
 
-    public List<SalesReportRow> getSalesReport(String clientName,
-                                               ZonedDateTime startDate,
-                                               ZonedDateTime endDate) {
+    public List<ProductRow> getSalesReport(String clientName,
+                                           ZonedDateTime startDate,
+                                           ZonedDateTime endDate) {
 
         MatchOperation dateMatch = Aggregation.match(
                 Criteria.where("orderTime")
@@ -90,9 +81,84 @@ public class SalesDao extends AbstractDao<SalesPojo> {
                 project
         );
 
-        AggregationResults<SalesReportRow> results =
-                mongoOperations.aggregate(aggregation, "orders", SalesReportRow.class);
+        AggregationResults<ProductRow> results =
+                mongoOperations.aggregate(aggregation, "orders", ProductRow.class);
 
         return results.getMappedResults();
     }
+
+    public SalesPojo getDailySalesData(ZonedDateTime start, ZonedDateTime end) {
+
+        Date startDate = Date.from(start.toInstant());
+        Date endDate = Date.from(end.toInstant());
+
+        List<Document> pipeline = Arrays.asList(new Document("$match",
+                        new Document("orderStatus", "FULFILLABLE")
+                                .append("orderTime",
+                                        new Document("$gte", startDate)
+                                                .append("$lt", endDate))),
+                new Document("$facet",
+                        new Document("summary", Arrays.asList(new Document("$project",
+                                        new Document("orderItems", 1L)
+                                                .append("orderRevenue",
+                                                        new Document("$sum",
+                                                                new Document("$map",
+                                                                        new Document("input", "$orderItems")
+                                                                                .append("as", "item")
+                                                                                .append("in",
+                                                                                        new Document("$multiply", Arrays.asList("$$item.orderedQuantity", "$$item.sellingPrice"))))))
+                                                .append("totalItemsInOrder",
+                                                        new Document("$sum", "$orderItems.orderedQuantity"))),
+                                new Document("$group",
+                                        new Document("_id",
+                                                new BsonNull())
+                                                .append("totalOrders",
+                                                        new Document("$sum", 1L))
+                                                .append("totalProducts",
+                                                        new Document("$sum", "$totalItemsInOrder"))
+                                                .append("totalRevenue",
+                                                        new Document("$sum", "$orderRevenue"))),
+                                new Document("$project",
+                                        new Document("_id", 0L))))
+                                .append("clients", Arrays.asList(new Document("$unwind", "$orderItems"),
+                                        new Document("$lookup",
+                                                new Document("from", "products")
+                                                        .append("localField", "orderItems.barcode")
+                                                        .append("foreignField", "barcode")
+                                                        .append("as", "product")),
+                                        new Document("$unwind", "$product"),
+                                        new Document("$group",
+                                                new Document("_id", "$product.clientName")
+                                                        .append("totalProducts",
+                                                                new Document("$sum", "$orderItems.orderedQuantity"))
+                                                        .append("totalRevenue",
+                                                                new Document("$sum",
+                                                                        new Document("$multiply", Arrays.asList("$orderItems.orderedQuantity", "$orderItems.sellingPrice"))))),
+                                        new Document("$project",
+                                                new Document("_id", 0L)
+                                                        .append("clientName", "$_id")
+                                                        .append("totalProducts", 1L)
+                                                        .append("totalRevenue", 1L))))),
+                new Document("$project",
+                        new Document("totalOrders",
+                                new Document("$arrayElemAt", Arrays.asList("$summary.totalOrders", 0L)))
+                                .append("totalProducts",
+                                        new Document("$arrayElemAt", Arrays.asList("$summary.totalProducts", 0L)))
+                                .append("totalRevenue",
+                                        new Document("$arrayElemAt", Arrays.asList("$summary.totalRevenue", 0L)))
+                                .append("clients", 1L)));
+
+
+        List<AggregationOperation> operations = pipeline.stream()
+                .map(doc -> (AggregationOperation) context -> doc)
+                .toList();
+
+        Aggregation aggregation = Aggregation.newAggregation(operations);
+
+        AggregationResults<SalesPojo> result =
+                mongoOperations.aggregate(aggregation, "orders", SalesPojo.class);
+
+        return result.getUniqueMappedResult();
+    }
+
 }

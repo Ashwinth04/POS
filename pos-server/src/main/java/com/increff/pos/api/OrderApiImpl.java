@@ -72,7 +72,7 @@ public class OrderApiImpl implements OrderApi {
         return new MessageData("Order cancelled successfully!");
     }
 
-    public void checkOrderEditable(String orderId) throws ApiException {
+    public String checkAndGetStatus(String orderId) throws ApiException {
         OrderPojo orderPojo = orderDao.findByOrderId(orderId);
 
         if (orderPojo == null) throw new ApiException("Order with the given id doesnt exist");
@@ -82,6 +82,8 @@ public class OrderApiImpl implements OrderApi {
         if (status.equals("CANCELLED")) throw new ApiException("CANCELLED ORDERS CANNOT BE EDITED");
 
         if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE EDITED");
+
+        return status;
     }
 
     public void checkOrderCancellable(String orderId) throws ApiException {
@@ -112,10 +114,6 @@ public class OrderApiImpl implements OrderApi {
         logger.info("Fetching orders page {} with size {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return orderDao.findAll(pageRequest);
-    }
-
-    public List<OrderPojo> getTodaysOrders() {
-        return orderDao.findTodayFulfillableOrders();
     }
 
     public Map<String, Integer> aggregateItems(List<OrderItem> orderItems) {

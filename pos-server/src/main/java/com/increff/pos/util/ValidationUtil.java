@@ -29,13 +29,13 @@ public class ValidationUtil {
 
     public static void validateClientForm(ClientForm clientForm) throws ApiException {
         validateName(clientForm.getName());
-        validateName(clientForm.getLocation());
         validateEmail(clientForm.getEmail());
         validatePhoneNumber(clientForm.getPhoneNumber());
     }
 
     public static void validateProductForm(ProductForm productForm) throws ApiException {
         validateName(productForm.getName());
+        validateName(productForm.getClientName());
         validateMrp(productForm.getMrp());
         validateUrl(productForm.getImageUrl());
         validateName(productForm.getBarcode());
@@ -96,6 +96,9 @@ public class ValidationUtil {
         if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             throw new ApiException("Invalid email format");
         }
+        if (email.length() < 3 || email.length() > 21) {
+            throw new ApiException("Number of characters should be between 3 to 21");
+        }
     }
 
     private static void validatePhoneNumber(String phoneNumber) throws ApiException {
@@ -107,6 +110,10 @@ public class ValidationUtil {
     public static void validateName(String name) throws ApiException {
         if (!StringUtils.hasText(name)) {
             throw new ApiException("Name cannot be empty");
+        }
+
+        if (name.length() < 3 || name.length() > 21) {
+            throw new ApiException("Number of characters should be between 3 to 21");
         }
     }
 
@@ -155,11 +162,11 @@ public class ValidationUtil {
 
     public static void validateProductRow(String[] row) throws ApiException {
 
-        validateName(row[0]);
-        validateName(row[1]);
-        validateName(row[2]);
-        validateMrp(Double.parseDouble(row[3]));
-        validateUrl(row[4]);
+        validateName(row[0].trim());
+        validateName(row[1].trim());
+        validateName(row[2].trim());
+        validateMrp(Double.parseDouble(row[3].trim()));
+        validateUrl(row[4].trim());
     }
 
     public static void validateInventoryRow(String[] row) throws ApiException {
@@ -175,6 +182,9 @@ public class ValidationUtil {
     public static void validateProductRows(List<String[]> rows) throws ApiException {
 
         int lineNumber = 1;
+        int totalRows = rows.size();
+        if (totalRows > 5000) throw new ApiException("Maximum limit for the number of rows is 5000");
+
         for (String[] columns: rows) {
 
             if (columns.length != 5) {
@@ -214,6 +224,9 @@ public class ValidationUtil {
     public static void validateInventoryRows(List<String[]> rows) throws ApiException {
 
         int lineNumber = 1;
+        int totalRows = rows.size();
+
+        if (totalRows > 5000) throw new ApiException("Maximum limit for the number of rows is 5000");
 
         for(String[] columns: rows) {
 

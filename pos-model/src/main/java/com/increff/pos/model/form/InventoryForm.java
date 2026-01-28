@@ -1,5 +1,8 @@
 package com.increff.pos.model.form;
 
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -7,5 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class InventoryForm {
-    private int quantity;
+    @NotNull(message = "Quantity is required")
+    @Digits(integer = 10, fraction = 0, message = "quantity must be a whole number")
+    private Integer quantity;
 }

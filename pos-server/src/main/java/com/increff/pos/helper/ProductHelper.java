@@ -26,11 +26,11 @@ public class ProductHelper {
     public static ProductPojo convertRowToEntity(String[] row) {
 
         ProductPojo productPojo = new ProductPojo();
-        productPojo.setName(row[2]);
-        productPojo.setMrp(Double.parseDouble(row[3]));
-        productPojo.setBarcode(row[0].toLowerCase());
-        productPojo.setClientName(row[1]);
-        productPojo.setImageUrl(row[4]);
+        productPojo.setName(row[2].trim());
+        productPojo.setMrp(Double.parseDouble(row[3].trim()));
+        productPojo.setBarcode(row[0].toLowerCase().trim());
+        productPojo.setClientName(row[1].trim());
+        productPojo.setImageUrl(row[4].trim());
         return productPojo;
     }
 
