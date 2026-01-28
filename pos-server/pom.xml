@@ -15,12 +15,7 @@
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>com.increff</groupId>
-            <artifactId>pos-invoice</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
+
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -48,6 +48,7 @@ public class OrderFlow {
 
         orderApi.checkOrderEditable(orderId);
 
+
         Map<String, OrderStatus> statuses = new LinkedHashMap<>();
 
         boolean hasValidationErrors = productApi.validateAllOrderItems(orderPojo, statuses);
@@ -57,6 +58,10 @@ public class OrderFlow {
         Map<String, Integer> aggregatedItemsExisting = orderApi.aggregateItems(orderId);
 
         boolean isFulfillable = inventoryApi.editOrder(orderPojo.getOrderItems(), aggregatedItemsExisting, aggregatedItemsIncoming, statuses);
+
+        if (!isFulfillable) {
+
+        }
 
         return orderApi.editOrder(orderPojo, statuses, isFulfillable);
 
@@ -85,5 +90,22 @@ public class OrderFlow {
 
     public byte[] getInvoice(String orderId) throws ApiException {
         return orderApi.getInvoice(orderId);
+    }
+
+    public OrderPojo getOrder(String orderId) throws ApiException {
+        return orderApi.getOrderByOrderId(orderId);
+    }
+
+    public void updatePlacedStatus(String orderId) throws ApiException {
+        orderApi.updatePlacedStatus(orderId);
+    }
+
+    public void checkInvoiceDownloadable(String orderId) throws ApiException {
+        OrderPojo orderPojo = getOrder(orderId);
+
+        if (orderPojo == null) throw new ApiException("ORDER WITH THE GIVEN ID DOESN'T EXIST");
+
+        String status = orderPojo.getOrderStatus();
+        if (!status.equals("PLACED")) throw new ApiException("ORDER NOT PLACED YET. PLEASE PLACE THE ORDER TO DOWNLOAD INVOICE");
     }
 }

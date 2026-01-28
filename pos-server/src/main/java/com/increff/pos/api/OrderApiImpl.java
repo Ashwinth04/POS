@@ -46,14 +46,19 @@ public class OrderApiImpl implements OrderApi {
 
         orderPojo.setOrderStatus(isFulFillable ? "FULFILLABLE" : "UNFULFILLABLE");
 
+        updateOrder(orderPojo);
+
+        return statuses;
+    }
+
+    public void updateOrder(OrderPojo orderPojo) throws ApiException{
+
         OrderPojo record = orderDao.findByOrderId(orderPojo.getOrderId());
 
         if (record == null) throw new ApiException("Order with the given id does not exist");
 
         orderPojo.setId(record.getId());
         orderDao.save(orderPojo);
-
-        return statuses;
     }
 
     public MessageData cancelOrder(String orderId) throws ApiException {
@@ -137,5 +142,14 @@ public class OrderApiImpl implements OrderApi {
 
     public OrderPojo getOrderByOrderId(String orderId) {
         return orderDao.findByOrderId(orderId);
+    }
+
+    public void updatePlacedStatus(String orderId) throws ApiException {
+        OrderPojo orderPojo = getOrderByOrderId(orderId);
+
+        if (orderPojo == null) throw new ApiException("ORDER WITH THE GIVEN ID DOESN'T EXIST");
+
+        orderPojo.setOrderStatus("PLACED");
+        orderDao.save(orderPojo);
     }
 }

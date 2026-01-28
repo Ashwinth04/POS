@@ -46,26 +46,17 @@ public class OrderController {
 
     @RequestMapping(value = "/generate-invoice/{orderId}", method = RequestMethod.GET)
     public FileData generateInvoice(@PathVariable String orderId) throws ApiException {
-        orderDto.generateInvoice(orderId);
-        return null;
+        return orderDto.generateInvoice(orderId);
+    }
+
+    @RequestMapping(value = "/download-invoice/{orderId}", method = RequestMethod.GET)
+    public FileData downloadInvoice(@PathVariable String orderId) throws ApiException {
+        return orderDto.downloadInvoice(orderId);
     }
 
     @Operation(summary = "Get all orders with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
-    public Page<OrderData> getAllProducts(@RequestBody PageForm form) throws ApiException {
+    public Page<OrderData> getAllOrders(@RequestBody PageForm form) throws ApiException {
         return orderDto.getAllOrders(form);
-    }
-
-    @Operation(summary = "Download invoice PDF for an order")
-    @RequestMapping(value = "/{orderId}/invoice", method = RequestMethod.GET)
-    public ResponseEntity<byte[]> downloadInvoice(@PathVariable String orderId) throws ApiException {
-
-        byte[] pdfBytes = orderDto.fetchInvoice(orderId); // you'll add this in DTO
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=invoice-" + orderId + ".pdf")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdfBytes);
     }
 }
