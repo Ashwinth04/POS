@@ -10,10 +10,11 @@ import java.io.*;
 import java.nio.file.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 
 public class InvoiceGenerator {
 
-    public void generate(OrderData order) {
+    public static String generate(OrderData order) {
         try {
             String foContent = FoBuilder.build(order);
 
@@ -28,26 +29,35 @@ public class InvoiceGenerator {
             Path dir = projectRoot.resolve("data").resolve(folderName);
             Files.createDirectories(dir);
 
-            // 4. Full file path
+            // 2. Full file path
             Path outputPath = dir.resolve(orderId + ".pdf");
 
             System.out.println("Output path: " + outputPath);
 
-            // 5. Generate PDF
+            // 3. Generate PDF into memory (byte array)
+            ByteArrayOutputStream pdfOutputStream = new ByteArrayOutputStream();
+
             FopFactory fopFactory = FopFactory.newInstance(new File(".").toURI());
             FOUserAgent foUserAgent = fopFactory.newFOUserAgent();
 
-            try (OutputStream out = Files.newOutputStream(outputPath)) {
-                Fop fop = fopFactory.newFop(MimeConstants.MIME_PDF, foUserAgent, out);
+            Fop fop = fopFactory.newFop(MimeConstants.MIME_PDF, foUserAgent, pdfOutputStream);
 
-                TransformerFactory factory = TransformerFactory.newInstance();
-                Transformer transformer = factory.newTransformer();
+            TransformerFactory factory = TransformerFactory.newInstance();
+            Transformer transformer = factory.newTransformer();
 
-                Source src = new StreamSource(new StringReader(foContent));
-                Result res = new SAXResult(fop.getDefaultHandler());
+            Source src = new StreamSource(new StringReader(foContent));
+            Result res = new SAXResult(fop.getDefaultHandler());
 
-                transformer.transform(src, res);
-            }
+            transformer.transform(src, res);
+
+            // 4. Get generated PDF bytes
+            byte[] pdfBytes = pdfOutputStream.toByteArray();
+
+            // 5. Write same bytes to file
+            Files.write(outputPath, pdfBytes);
+
+            // 6. Convert to Base64 and return
+            return Base64.getEncoder().encodeToString(pdfBytes);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate invoice", e);

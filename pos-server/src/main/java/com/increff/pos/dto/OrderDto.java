@@ -32,8 +32,6 @@ public class OrderDto {
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
         Map<String, OrderStatus> orderStatuses = orderFlow.createOrder(orderPojo);
 
-        generateInvoice(orderPojo);
-
         return OrderHelper.convertToDto(orderStatuses, orderPojo.getOrderId());
     }
 
@@ -60,10 +58,17 @@ public class OrderDto {
         return orderPage.map(OrderHelper::convertToOrderDto);
     }
 
-    public void generateInvoice(OrderPojo orderPojo) {
-        OrderData orderData = OrderHelper.convertToOrderDto(orderPojo);
-        InvoiceGenerator invoiceGenerator = new InvoiceGenerator();
-        invoiceGenerator.generate(orderData);
+//    public void generateInvoice(OrderPojo orderPojo) {
+//        OrderData orderData = OrderHelper.convertToOrderDto(orderPojo);
+//        InvoiceGenerator invoiceGenerator = new InvoiceGenerator();
+//        invoiceGenerator.generate(orderData);
+//    }
+
+    public void generateInvoice(String orderId) throws ApiException {
+
+        ValidationUtil.validateOrderId(orderId);
+
+        // call client
     }
 
     public byte[] fetchInvoice(String orderId) throws ApiException {

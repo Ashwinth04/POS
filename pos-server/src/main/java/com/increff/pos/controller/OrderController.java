@@ -44,6 +44,12 @@ public class OrderController {
         return orderDto.cancelOrder(orderId);
     }
 
+    @RequestMapping(value = "/generate-invoice/{orderId}", method = RequestMethod.GET)
+    public FileData generateInvoice(@PathVariable String orderId) throws ApiException {
+        orderDto.generateInvoice(orderId);
+        return null;
+    }
+
     @Operation(summary = "Get all orders with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
     public Page<OrderData> getAllProducts(@RequestBody PageForm form) throws ApiException {
