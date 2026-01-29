@@ -3,12 +3,14 @@ package com.increff.pos.api;
 import com.increff.pos.dao.InventoryDao;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.helper.InventoryHelper;
 import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.model.data.OrderStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class InventoryApiImpl implements InventoryApi{
@@ -94,12 +96,33 @@ public class InventoryApiImpl implements InventoryApi{
         inventoryDao.save(dummyRecord);
     }
 
+    public Map<String, InventoryPojo> fetchRecordsForOrderItems(List<OrderItem> orderItems) {
+
+        // 1. Extract barcodes from order items
+        List<String> barcodes = orderItems.stream()
+                .map(OrderItem::getBarcode)
+                .distinct()
+                .toList();
+
+        List<InventoryPojo> inventoryList = inventoryDao.findByBarcodes(barcodes);
+
+        return inventoryList.stream()
+                .collect(Collectors.toMap(
+                        InventoryPojo::getBarcode,
+                        inv -> inv
+                ));
+
+    }
+
     public boolean checkOrderFulfillable(List<OrderItem> items, Map<String, OrderStatus> statuses) throws ApiException {
+
+        Map<String, InventoryPojo> existingRecords = fetchRecordsForOrderItems(items);
 
         boolean allFulfillable = true;
 
         for (OrderItem item : items) {
-            boolean fulfillable = isItemFulfillable(item);
+            String barcode = item.getBarcode();
+            boolean fulfillable = isItemFulfillable(item,existingRecords.get(barcode));
             updateItemAndStatus(item, fulfillable, statuses);
 
             if (!fulfillable) allFulfillable = false;
@@ -108,9 +131,9 @@ public class InventoryApiImpl implements InventoryApi{
         return allFulfillable;
     }
 
-    private boolean isItemFulfillable(OrderItem item) throws ApiException {
+    private boolean isItemFulfillable(OrderItem item, InventoryPojo existingRecord) throws ApiException {
 
-        int available = inventoryDao.getQuantity(item.getBarcode());
+        int available = existingRecord.getQuantity();
         int required = item.getOrderedQuantity();
         return available >= required;
     }
@@ -135,25 +158,16 @@ public class InventoryApiImpl implements InventoryApi{
 
     public void updateInventory(List<OrderItem> orderItems) throws ApiException{
 
-        for (OrderItem item : orderItems) {
-            applyInventoryUpdate(item.getBarcode(), item.getOrderedQuantity());
-        }
+        List<InventoryPojo> pojos = InventoryHelper.getPojosFromOrderItems(orderItems);
+
+        inventoryDao.bulkUpdate(pojos);
     }
 
-    public void updateDeltaInventory(Map<String, Integer> delta) throws ApiException {
+    public void updateDeltaInventory(Map<String, Integer> delta)  {
 
-        for (String barcode: delta.keySet()) {
-            applyInventoryUpdate(barcode, delta.get(barcode));
-        }
-    }
+        List<InventoryPojo> pojos = InventoryHelper.getPojosFromMap(delta);
 
-    private void applyInventoryUpdate(String barcode, int quantity) throws ApiException {
-
-        InventoryPojo pojo = new InventoryPojo();
-        pojo.setBarcode(barcode);
-        pojo.setQuantity(-quantity);
-
-        inventoryDao.updateInventory(pojo);
+        inventoryDao.bulkUpdate(pojos);
     }
 
     private Map<String, Integer> calculateDeltaInventory(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) {

@@ -40,9 +40,11 @@ public class OrderFlow {
         boolean hasValidationErrors = productApi.validateAllOrderItems(orderPojo, statuses);
         if (hasValidationErrors) return statuses;
 
-        boolean isFulfillable = inventoryApi.reserveInventory(orderPojo.getOrderItems(), statuses);
+        boolean isFulfillable = inventoryApi.reserveInventory(orderPojo.getOrderItems(), statuses); //this should just make 2 api calls to the DB
 
-        return orderApi.placeOrder(orderPojo, statuses, isFulfillable);
+        orderApi.placeOrder(orderPojo, isFulfillable);
+
+        return statuses;
     }
 
     public Map<String, OrderStatus> editOrder(OrderPojo orderPojo, String orderId) throws ApiException {
@@ -75,17 +77,18 @@ public class OrderFlow {
         if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE EDITED");
     }
 
-    private void aggregateAndUpdateInventory(String orderId, OrderPojo orderPojo, String existingStatus, boolean isFulfillable) throws ApiException {
+    private void aggregateAndUpdateInventory(String orderId, OrderPojo incomingOrderPojo, String existingStatus, boolean isFulfillable) throws ApiException {
 
         Map<String, Integer> aggregatedItemsIncoming = new HashMap<>();
         Map<String, Integer> aggregatedItemsExisting = new HashMap<>();
 
         if (existingStatus.equals("FULFILLABLE")) {
-            aggregatedItemsExisting = orderApi.aggregateItems(orderId);
+            OrderPojo existingOrderPojo = orderApi.getOrderByOrderId(orderId);
+            aggregatedItemsExisting = orderApi.aggregateItems(existingOrderPojo.getOrderItems());
         }
 
         if (isFulfillable) {
-            aggregatedItemsIncoming = orderApi.aggregateItems(orderPojo.getOrderItems());
+            aggregatedItemsIncoming = orderApi.aggregateItems(incomingOrderPojo.getOrderItems());
         }
 
         inventoryApi.editOrder(aggregatedItemsExisting, aggregatedItemsIncoming);

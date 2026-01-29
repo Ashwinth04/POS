@@ -48,4 +48,12 @@ public class ProductDao extends AbstractDao<ProductPojo> {
                 .toList();
     }
 
+    public List<ProductPojo> findByBarcodes(List<String> barcodes) {
+        Query query = new Query(
+                Criteria.where("barcode").in(barcodes)
+        );
+
+        return mongoOperations.find(query, ProductPojo.class);
+    }
+
 }

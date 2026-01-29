@@ -32,22 +32,19 @@ public class ClientApiImpl implements ClientApi {
 
     @Transactional(rollbackFor = Exception.class)
     public ClientPojo addClient(ClientPojo clientPojo) throws ApiException {
-        logger.info("Creating client with name: {}", clientPojo.getName());
 
         checkNameExists("",clientPojo.getName());
-        checkEmailExists("",clientPojo.getEmail());
-        checkPhoneNumberExists("",clientPojo.getPhoneNumber());
+//        checkEmailExists("",clientPojo.getEmail());
+//        checkPhoneNumberExists("",clientPojo.getPhoneNumber());
 
         // Save the new client
         ClientPojo saved = clientDao.save(clientPojo);
 
-        logger.info("Created client with id: {}", saved.getId());
         return saved;
     }
 
     @Transactional(rollbackFor = ApiException.class)
     public Page<ClientPojo> getAllClients(int page, int size) {
-        logger.info("Fetching clients page {} with size {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return clientDao.findAll(pageRequest);
     }
@@ -59,8 +56,6 @@ public class ClientApiImpl implements ClientApi {
         if (existingRecord == null) {throw new ApiException("Client doesn't exist");}
 
         checkNameExists(existingRecord.getId(),clientPojo.getName());
-        checkEmailExists(existingRecord.getId(),clientPojo.getEmail());
-        checkPhoneNumberExists(existingRecord.getId(),clientPojo.getPhoneNumber());
 
         clientPojo.setId(existingRecord.getId());
 

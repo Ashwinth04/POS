@@ -25,6 +25,8 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         );
     }
 
+    BulkOperations bulkOps = mongoOperations.bulkOps(BulkOperations.BulkMode.UNORDERED, InventoryPojo.class);
+
     public void updateInventory(InventoryPojo inventoryPojo) throws ApiException {
         String barcode = inventoryPojo.getBarcode();
         int quantity = inventoryPojo.getQuantity();
@@ -83,6 +85,14 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         return records.stream()
                 .map(InventoryPojo::getBarcode)
                 .toList();
+    }
+
+    public List<InventoryPojo> findByBarcodes(List<String> barcodes) {
+        Query query = new Query(
+                Criteria.where("barcode").in(barcodes)
+        );
+
+        return mongoOperations.find(query, InventoryPojo.class);
     }
 
 }

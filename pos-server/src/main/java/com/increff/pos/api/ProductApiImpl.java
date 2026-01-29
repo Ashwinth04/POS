@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductApiImpl implements ProductApi {
@@ -160,9 +161,19 @@ public class ProductApiImpl implements ProductApi {
 
         boolean validationFailure = false;
 
+        List<String> barcodes = orderPojo.getOrderItems().stream()
+                .map(OrderItem::getBarcode)
+                .distinct()
+                .toList();
+
+        List<ProductPojo> products = productDao.findByBarcodes(barcodes);
+
+        Map<String, ProductPojo> productMap = products.stream()
+                .collect(Collectors.toMap(ProductPojo::getBarcode, p -> p));
+
         for (OrderItem item : orderPojo.getOrderItems()) {
             try {
-                validateItem(item);
+                validateItem(item, productMap);
                 addValidItemStatus(item, statuses);
             } catch (ApiException e) {
                 addInvalidItemStatus(item, e.getMessage(), statuses);
@@ -173,10 +184,12 @@ public class ProductApiImpl implements ProductApi {
         return validationFailure;
     }
 
-    public void validateItem(OrderItem item) throws ApiException {
-        String barcode = item.getBarcode();
 
-        ProductPojo product = productDao.findByBarcode(barcode);
+    public void validateItem(OrderItem item, Map<String, ProductPojo> productMap) throws ApiException {
+
+        String barcode = item.getBarcode();
+        ProductPojo product = productMap.get(barcode);
+
         if (product == null) {
             throw new ApiException("Invalid barcode: " + barcode);
         }

@@ -32,13 +32,11 @@ public class OrderApiImpl implements OrderApi {
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public Map<String, OrderStatus> placeOrder(OrderPojo orderPojo, Map<String, OrderStatus> statuses, boolean isFulFillable) throws ApiException {
+    public void placeOrder(OrderPojo orderPojo, boolean isFulFillable) throws ApiException {
 
         orderPojo.setOrderStatus(isFulFillable ? "FULFILLABLE" : "UNFULFILLABLE");
 
         orderDao.save(orderPojo);
-
-        return statuses;
     }
 
     @Transactional(rollbackFor = ApiException.class)
@@ -119,13 +117,6 @@ public class OrderApiImpl implements OrderApi {
 
         return aggregatedItems;
 
-    }
-
-    public Map<String, Integer> aggregateItems(String orderId) throws ApiException {
-
-        OrderPojo orderPojo = getOrderByOrderId(orderId);
-
-        return aggregateItems(orderPojo.getOrderItems());
     }
 
     public OrderPojo getOrderByOrderId(String orderId) throws ApiException {
