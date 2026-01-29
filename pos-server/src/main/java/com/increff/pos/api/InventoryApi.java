@@ -11,6 +11,6 @@ import java.util.Map;
 
 public interface InventoryApi {
     public Map<String, String> bulkInventoryUpdate(List<InventoryPojo> inventoryPojos);
-    public InventoryPojo updateInventory(InventoryPojo inventoryPojo) throws ApiException;
+    public InventoryPojo updateSingleInventory(InventoryPojo inventoryPojo) throws ApiException;
 
 }

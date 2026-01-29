@@ -1,7 +1,6 @@
 package com.increff.pos.dao;
 
 import com.increff.pos.db.InventoryPojo;
-import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.result.UpdateResult;
@@ -12,12 +11,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.mongodb.repository.support.MongoRepositoryFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.time.ZonedDateTime;
-import java.util.Date;
 import java.util.List;
 
 @Repository

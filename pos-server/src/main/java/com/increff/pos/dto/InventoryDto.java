@@ -32,7 +32,7 @@ public class InventoryDto {
     public InventoryData updateInventory(String barcode, InventoryForm inventoryForm) throws ApiException {
         ValidationUtil.validateInventoryForm(inventoryForm);
         InventoryPojo inventoryPojo = InventoryHelper.convertToEntity(barcode, inventoryForm);
-        InventoryPojo updatedInventoryPojo = inventoryApi.updateInventory(inventoryPojo);
+        InventoryPojo updatedInventoryPojo = inventoryApi.updateSingleInventory(inventoryPojo);
         return InventoryHelper.convertToDto(updatedInventoryPojo);
     }
 
@@ -45,17 +45,17 @@ public class InventoryDto {
         List<InventoryPojo> validPojos = new ArrayList<>();
         Map<String, String> invalidPojos = new HashMap<>();
 
-        validateAndSplit(rows, validPojos, invalidPojos);
+        validateAndSplitInventoryRows(rows, validPojos, invalidPojos);
 
         if (!validPojos.isEmpty()) {
             Map<String, String> dbInvalid = inventoryApi.bulkInventoryUpdate(validPojos);
             invalidPojos.putAll(dbInvalid);
         }
 
-        return buildResponse(invalidPojos);
+        return buildBulkUpdateResponse(invalidPojos);
     }
 
-    private void validateAndSplit(List<String[]> rows, List<InventoryPojo> valid, Map<String, String> invalid) {
+    private void validateAndSplitInventoryRows(List<String[]> rows, List<InventoryPojo> valid, Map<String, String> invalid) {
 
         for (String[] row : rows) {
 
@@ -69,7 +69,7 @@ public class InventoryDto {
         }
     }
 
-    private FileData buildResponse(Map<String, String> invalidForms) {
+    private FileData buildBulkUpdateResponse(Map<String, String> invalidForms) {
 
         FileData fileData = new FileData();
         fileData.setBase64file(FileUtils.generateInventoryUpdateResults(invalidForms));

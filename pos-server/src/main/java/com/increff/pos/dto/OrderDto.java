@@ -15,17 +15,18 @@ import jdk.jshell.spi.ExecutionControlProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 @Service
 public class OrderDto {
 
-    private final OrderApiImpl orderApi;
     private final OrderFlow orderFlow;
     private final InvoiceClient invoiceClient;
 
-    public OrderDto(OrderApiImpl orderApi, OrderFlow orderFlow, InvoiceClient invoiceClient) {
-        this.orderApi = orderApi;
+    public OrderDto(OrderFlow orderFlow, InvoiceClient invoiceClient) {
         this.orderFlow = orderFlow;
         this.invoiceClient = invoiceClient;
     }
@@ -61,12 +62,6 @@ public class OrderDto {
         return orderPage.map(OrderHelper::convertToOrderDto);
     }
 
-//    public void generateInvoice(OrderPojo orderPojo) {
-//        OrderData orderData = OrderHelper.convertToOrderDto(orderPojo);
-//        InvoiceGenerator invoiceGenerator = new InvoiceGenerator();
-//        invoiceGenerator.generate(orderData);
-//    }
-
     public FileData generateInvoice(String orderId) throws ApiException {
 
         ValidationUtil.validateOrderId(orderId);
@@ -75,8 +70,6 @@ public class OrderDto {
         String status = orderPojo.getOrderStatus();
 
         if (!status.equals("FULFILLABLE")) throw new ApiException("ORDER CANNOT BE PLACED");
-
-        if (orderPojo == null) throw new ApiException("ORDER WITH THE GIVEN ID DOESNT EXIST");
 
         OrderData orderData = OrderHelper.convertToOrderDto(orderPojo);
 
@@ -93,8 +86,23 @@ public class OrderDto {
         return invoiceClient.downloadInvoice(orderId);
     }
 
-    public byte[] fetchInvoice(String orderId) throws ApiException {
-        ValidationUtil.validateOrderId(orderId);
-        return orderFlow.getInvoice(orderId);
+    public Page<OrderData> filterOrders(LocalDate startDate, LocalDate endDate, int page, int size) throws ApiException {
+
+        if (startDate == null || endDate == null) {
+            throw new ApiException("Start date and end date are required");
+        }
+
+        if (endDate.isBefore(startDate)) {
+            throw new ApiException("End date cannot be before start date");
+        }
+
+        ZoneId zone = ZoneId.systemDefault(); // or ZoneId.of("UTC")
+
+        ZonedDateTime start = startDate.atStartOfDay(zone);
+        ZonedDateTime end = endDate.atTime(23, 59, 59, 999_000_000).atZone(zone);
+
+        Page<OrderPojo> orderPage =  orderFlow.filterOrders(start, end, page, size);
+
+        return orderPage.map(OrderHelper::convertToOrderDto);
     }
 }

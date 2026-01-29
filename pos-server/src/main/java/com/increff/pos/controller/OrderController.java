@@ -8,12 +8,16 @@ import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.PageForm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.apache.coyote.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @Tag(name = "Order Management", description = "Create, view and filter orders")
 @RestController
@@ -52,6 +56,11 @@ public class OrderController {
     @RequestMapping(value = "/download-invoice/{orderId}", method = RequestMethod.GET)
     public FileData downloadInvoice(@PathVariable String orderId) throws ApiException {
         return orderDto.downloadInvoice(orderId);
+    }
+
+    @RequestMapping(value = "/filter-orders", method = RequestMethod.GET)
+    public Page<OrderData> filterOrders(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate, @RequestParam int page,@RequestParam int size) throws ApiException {
+        return orderDto.filterOrders(startDate, endDate, page, size);
     }
 
     @Operation(summary = "Get all orders with pagination")

@@ -20,7 +20,7 @@ public class InventoryApiImpl implements InventoryApi{
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public InventoryPojo updateInventory(InventoryPojo inventoryPojo) throws ApiException {
+    public InventoryPojo updateSingleInventory(InventoryPojo inventoryPojo) throws ApiException {
 
         inventoryDao.updateInventory(inventoryPojo);
         return inventoryPojo;
@@ -70,7 +70,7 @@ public class InventoryApiImpl implements InventoryApi{
 
     public void editOrder(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) throws ApiException {
 
-            Map<String, Integer> delta = calculateDelta(existingItems, incomingItems);
+            Map<String, Integer> delta = calculateDeltaInventory(existingItems, incomingItems);
 
             updateDeltaInventory(delta);
     }
@@ -148,6 +148,7 @@ public class InventoryApiImpl implements InventoryApi{
     }
 
     private void applyInventoryUpdate(String barcode, int quantity) throws ApiException {
+
         InventoryPojo pojo = new InventoryPojo();
         pojo.setBarcode(barcode);
         pojo.setQuantity(-quantity);
@@ -155,7 +156,7 @@ public class InventoryApiImpl implements InventoryApi{
         inventoryDao.updateInventory(pojo);
     }
 
-    private Map<String, Integer> calculateDelta(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) {
+    private Map<String, Integer> calculateDeltaInventory(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) {
 
         Map<String, Integer> delta = new HashMap<>();
 
@@ -171,6 +172,5 @@ public class InventoryApiImpl implements InventoryApi{
 
         return delta;
     }
-
 
 }

@@ -44,8 +44,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .sessionFixation().migrateSession()   // 👈 IMPORTANT
-                )
-                .securityContext(context -> context.requireExplicitSave(false));
+                );
 
         return http.build();
     }

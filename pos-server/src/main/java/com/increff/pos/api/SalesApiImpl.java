@@ -30,13 +30,15 @@ public class SalesApiImpl {
 
     public void storeDailySales(ZonedDateTime start, ZonedDateTime end) {
 
-        SalesPojo existing = salesDao.findByDate(start);
-
-        if (existing != null) return;
-
         SalesPojo data = salesDao.getDailySalesData(start,end);
         ZoneId zone = ZoneId.of("Asia/Kolkata");
         data.setDate(LocalDate.now(zone).atStartOfDay(zone));
+
+        SalesPojo existing = salesDao.findByDate(start);
+
+        if (existing != null) {
+            data.setId(existing.getId());
+        }
         salesDao.save(data);
     }
 }

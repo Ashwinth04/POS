@@ -2,6 +2,7 @@ package com.increff.pos.api;
 
 import com.increff.pos.dao.OrderDao;
 import com.increff.pos.model.data.MessageData;
+import com.increff.pos.model.data.OrderData;
 import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.storage.StorageService;
 import com.increff.pos.db.OrderPojo;
@@ -9,6 +10,7 @@ import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.OrderStatus;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import org.slf4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 @Service
@@ -24,11 +27,8 @@ public class OrderApiImpl implements OrderApi {
 
     private final OrderDao orderDao;
 
-    private final StorageService storageService;
-
-    public OrderApiImpl(OrderDao orderDao, StorageService storageService) {
+    public OrderApiImpl(OrderDao orderDao) {
         this.orderDao = orderDao;
-        this.storageService = storageService;
     }
 
     @Transactional(rollbackFor = ApiException.class)
@@ -100,16 +100,6 @@ public class OrderApiImpl implements OrderApi {
 
     }
 
-    public byte[] getInvoice(String orderId) throws ApiException {
-
-        try {
-            return storageService.readInvoice(orderId);
-        } catch (IOException e) {
-            throw new ApiException("Failed to fetch invoice for order: " + orderId);
-        }
-
-    }
-
     public Page<OrderPojo> getAllOrders(int page, int size) {
         logger.info("Fetching orders page {} with size {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -131,15 +121,19 @@ public class OrderApiImpl implements OrderApi {
 
     }
 
-    public Map<String, Integer> aggregateItems(String orderId) {
+    public Map<String, Integer> aggregateItems(String orderId) throws ApiException {
 
         OrderPojo orderPojo = getOrderByOrderId(orderId);
 
         return aggregateItems(orderPojo.getOrderItems());
     }
 
-    public OrderPojo getOrderByOrderId(String orderId) {
-        return orderDao.findByOrderId(orderId);
+    public OrderPojo getOrderByOrderId(String orderId) throws ApiException {
+
+        OrderPojo pojo = orderDao.findByOrderId(orderId);
+        if (pojo == null) throw new ApiException("ORDER WITH THE GIVEN ID DOESN'T EXIST");
+
+        return pojo;
     }
 
     public void updatePlacedStatus(String orderId) throws ApiException {
@@ -149,5 +143,19 @@ public class OrderApiImpl implements OrderApi {
 
         orderPojo.setOrderStatus("PLACED");
         orderDao.save(orderPojo);
+    }
+
+    public Page<OrderPojo> filterOrders(ZonedDateTime start, ZonedDateTime end, int page, int size) {
+        // Fetch paginated results from DAO
+        Page<OrderPojo> pojoPage = orderDao.findOrdersBetween(start, end, page, size);
+
+        List<OrderPojo> dataList = pojoPage.getContent().stream()
+                .toList();
+
+        return new PageImpl<>(dataList, pojoPage.getPageable(), pojoPage.getTotalElements());
+    }
+
+    public String getOrderStatus(String orderId) throws ApiException {
+        return getOrderByOrderId(orderId).getOrderStatus();
     }
 }

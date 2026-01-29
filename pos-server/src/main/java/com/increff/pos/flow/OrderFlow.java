@@ -6,11 +6,13 @@ import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.MessageData;
+import com.increff.pos.model.data.OrderData;
 import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.model.data.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -47,7 +49,8 @@ public class OrderFlow {
 
         createOrderItemIds(orderPojo);
 
-        String existingStatus = orderApi.checkAndGetStatus(orderId);
+        String existingStatus = orderApi.getOrderStatus(orderId);
+        checkOrderEditable(existingStatus);
 
         Map<String, OrderStatus> statuses = new LinkedHashMap<>();
 
@@ -59,6 +62,20 @@ public class OrderFlow {
         if (existingStatus.equals("UNFULFILLABLE") && !isFulfillable) {
             return statuses;
         }
+
+        aggregateAndUpdateInventory(orderId, orderPojo, existingStatus, isFulfillable);
+
+        return orderApi.editOrder(orderPojo, statuses, isFulfillable);
+    }
+
+    public void checkOrderEditable(String status) throws ApiException {
+
+        if (status.equals("CANCELLED")) throw new ApiException("CANCELLED ORDERS CANNOT BE EDITED");
+
+        if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE EDITED");
+    }
+
+    private void aggregateAndUpdateInventory(String orderId, OrderPojo orderPojo, String existingStatus, boolean isFulfillable) throws ApiException {
 
         Map<String, Integer> aggregatedItemsIncoming = new HashMap<>();
         Map<String, Integer> aggregatedItemsExisting = new HashMap<>();
@@ -72,19 +89,27 @@ public class OrderFlow {
         }
 
         inventoryApi.editOrder(aggregatedItemsExisting, aggregatedItemsIncoming);
-
-        return orderApi.editOrder(orderPojo, statuses, isFulfillable);
     }
 
     public MessageData cancelOrder(String orderId) throws ApiException {
 
         OrderPojo orderPojo = orderApi.getOrderByOrderId(orderId);
 
-        orderApi.checkOrderCancellable(orderId);
+        String status = orderApi.getOrderStatus(orderId);
+        checkOrderCancellable(status);
 
-        inventoryApi.revertInventory(orderPojo.getOrderItems());
+        if (status.equals("FULFILLABLE")) {
+            inventoryApi.revertInventory(orderPojo.getOrderItems());
+        }
 
         return orderApi.cancelOrder(orderId);
+    }
+
+    public void checkOrderCancellable(String status) throws ApiException {
+
+        if (status.equals("CANCELLED")) throw new ApiException("ORDER CANCELLED ALREADY");
+
+        if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE CANCELLED");
     }
 
     private void createOrderItemIds(OrderPojo orderPojo) {
@@ -95,10 +120,6 @@ public class OrderFlow {
 
     public Page<OrderPojo> getAllOrders(int page, int size) {
         return orderApi.getAllOrders(page, size);
-    }
-
-    public byte[] getInvoice(String orderId) throws ApiException {
-        return orderApi.getInvoice(orderId);
     }
 
     public OrderPojo getOrder(String orderId) throws ApiException {
@@ -116,5 +137,9 @@ public class OrderFlow {
 
         String status = orderPojo.getOrderStatus();
         if (!status.equals("PLACED")) throw new ApiException("ORDER NOT PLACED YET. PLEASE PLACE THE ORDER TO DOWNLOAD INVOICE");
+    }
+
+    public Page<OrderPojo> filterOrders(ZonedDateTime startDate, ZonedDateTime endDate, int page, int size) {
+        return orderApi.filterOrders(startDate, endDate, page, size);
     }
 }
