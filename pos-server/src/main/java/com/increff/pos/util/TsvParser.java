@@ -15,16 +15,10 @@ public class TsvParser {
         String content = new String(decodedBytes, StandardCharsets.UTF_8);
 
         List<String[]> rows = new ArrayList<>();
-        boolean isHeader = true;
 
         try (BufferedReader reader = new BufferedReader(new StringReader(content))) {
             String line;
             while ((line = reader.readLine()) != null) {
-
-                if (isHeader) {
-                    isHeader = false;
-                    continue;
-                }
 
                 rows.add(line.split("\t"));
             }

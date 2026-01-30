@@ -35,7 +35,6 @@ public class ProductDto {
     }
 
     public ProductData editProduct(ProductForm productForm) throws ApiException {
-        System.out.println("Inside DTO");
         ValidationUtil.validateProductForm(productForm);
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
         ProductPojo editedPojo = productFlow.editProduct(productPojo);
@@ -55,15 +54,15 @@ public class ProductDto {
 
         validateProductRows(rows);
 
-        List<ProductUploadResult> results = uploadProducts(rows);
+        List<String[]> dataRows = rows.subList(1, rows.size());
+
+        List<ProductUploadResult> results = uploadProducts(dataRows);
         return convertProductResultsToBase64(results);
     }
 
     public List<ProductUploadResult> uploadProducts(List<String[]> rows) throws ApiException {
 
         Map<String, Integer> barcodeCount = countBarcodes(rows);
-
-        System.out.println("ROWSSS" + rows);
 
         List<ProductUploadResult> results = new ArrayList<>();
         List<ProductPojo> validForms = new ArrayList<>();
@@ -89,8 +88,6 @@ public class ProductDto {
     private ProductUploadResult processSingleForm(String[] row, Map<String, Integer> barcodeCount, List<ProductPojo> validForms) throws ApiException {
 
         ProductUploadResult result = createInitialResult(row);
-
-        System.out.println("ROWS: ");
 
         try {
             ValidationUtil.validateProductRow(row);

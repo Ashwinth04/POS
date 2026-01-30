@@ -1,5 +1,7 @@
 package com.increff.pos.util;
 
+import ch.qos.logback.core.net.SyslogOutputStream;
+import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.OrderItem;
@@ -15,7 +17,6 @@ import java.util.List;
 
 public class ValidationUtil {
 
-    // User validations
     public static void validateLoginRequest(LoginRequest request) throws ApiException {
 
         if (request.getUsername() == null || request.getUsername().isBlank()) {
@@ -187,10 +188,18 @@ public class ValidationUtil {
         int totalRows = rows.size();
         if (totalRows > 5000) throw new ApiException("Maximum limit for the number of rows is 5000");
 
+        boolean isHeader = true;
+
         for (String[] columns: rows) {
 
             if (columns.length != 5) {
                 throw new ApiException("Line " + lineNumber + ": Expected 5 columns but found " + columns.length);
+            }
+
+            if (isHeader) {
+                validateProductUploadHeader(columns);
+                isHeader = false;
+                continue;
             }
 
             String barcode = columns[0].trim();
@@ -198,6 +207,8 @@ public class ValidationUtil {
             String name = columns[2].trim();
             String mrpStr = columns[3].trim();
             String imageUrl = columns[4].trim();
+
+            System.out.println(barcode + " " + clientName + " " + name + " " + mrpStr + " " + imageUrl);
 
             if (barcode.isBlank()) {
                 throw new ApiException("Line " + lineNumber + ": Barcode cannot be empty");
@@ -223,17 +234,39 @@ public class ValidationUtil {
         }
     }
 
+    public static void validateProductUploadHeader(String[] header) throws ApiException {
+
+        String barcode = header[0].trim();
+        String clientName = header[1].trim();
+        String name = header[2].trim();
+        String mrpStr = header[3].trim();
+        String imageUrl = header[4].trim();
+
+        if (!barcode.equals("barcode")) throw new ApiException("Headers are incorrect!");
+        if (!clientName.equals("clientName")) throw new ApiException("Headers are incorrect!");
+        if (!name.equals("name")) throw new ApiException("Headers are incorrect!");
+        if (!mrpStr.equals("mrp")) throw new ApiException("Headers are incorrect!");
+    }
+
     public static void validateInventoryRows(List<String[]> rows) throws ApiException {
 
-        int lineNumber = 1;
+        int lineNumber = 2;
         int totalRows = rows.size();
 
         if (totalRows > 5000) throw new ApiException("Maximum limit for the number of rows is 5000");
+
+        boolean isHeader = true;
 
         for(String[] columns: rows) {
 
             if (columns.length != 2) {
                 throw new ApiException("Line " + lineNumber + ": Expected 2 columns but found " + columns.length);
+            }
+
+            if (isHeader) {
+                validateInventoryUploadHeader(columns);
+                isHeader = false;
+                continue;
             }
 
             String barcode = columns[0].trim();
@@ -253,5 +286,15 @@ public class ValidationUtil {
             }
             lineNumber++;
         }
+    }
+
+    public static void validateInventoryUploadHeader(String[] header) throws ApiException {
+
+        String barcode = header[0].trim();
+        String quantity = header[1].trim();
+
+        if (!barcode.equals("barcode")) throw new ApiException("Headers are incorrect!");
+        if (!quantity.equals("quantity")) throw new ApiException("Headers are incorrect");
+
     }
 } 

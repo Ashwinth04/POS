@@ -46,7 +46,9 @@ public class InventoryDto {
         List<InventoryPojo> validPojos = new ArrayList<>();
         Map<String, String> invalidPojos = new HashMap<>();
 
-        validateAndSplitInventoryRows(rows, validPojos, invalidPojos);
+        List<String[]> dataRows = rows.subList(1, rows.size());
+
+        validateAndSplitInventoryRows(dataRows, validPojos, invalidPojos);
 
         if (!validPojos.isEmpty()) {
             Map<String, String> dbInvalid = inventoryApi.bulkInventoryUpdate(validPojos);
