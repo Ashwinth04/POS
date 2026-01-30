@@ -27,15 +27,16 @@ public class ProductDto {
     }
 
     public ProductData createProduct(ProductForm productForm) throws ApiException {
-        ValidationUtil.validateProductForm(productForm);
+//        ValidationUtil.validateProductForm(productForm);
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
         ProductPojo savedProductPojo = productFlow.addProduct(productPojo);
 
         return ProductHelper.convertToDto(savedProductPojo);
     }
 
+    // dto -> call api layer -> get check methods or get some data
     public ProductData editProduct(ProductForm productForm) throws ApiException {
-        ValidationUtil.validateProductForm(productForm);
+//        ValidationUtil.validateProductForm(productForm);
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
         ProductPojo editedPojo = productFlow.editProduct(productPojo);
 
@@ -43,7 +44,6 @@ public class ProductDto {
     }
 
     public Page<ProductData> getAllProducts(PageForm form) throws ApiException {
-        ValidationUtil.validatePageForm(form);
         Page<ProductPojo> productPage = productFlow.getAllProducts(form.getPage(), form.getSize());
         return productPage.map(ProductHelper::convertToDto);
     }

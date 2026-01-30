@@ -26,11 +26,8 @@ import java.util.List;
 @RequestMapping("/api/products")
 public class ProductController {
 
-    private final ProductDto productDto;
-
-    public ProductController(ProductDto productDto) {
-        this.productDto = productDto;
-    }
+    @Autowired
+    private ProductDto productDto;
 
     @Operation(summary = "Create a new product")
     @RequestMapping(path = "/add", method = RequestMethod.POST)
@@ -46,13 +43,13 @@ public class ProductController {
 
     @Operation(summary = "Upload a list of products")
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
-    public FileData createProductsBulk(@RequestBody FileForm fileForm) throws ApiException { // Use base64 string
+    public FileData createProductsBulk(@Valid @RequestBody FileForm fileForm) throws ApiException { // Use base64 string
         return productDto.createProducts(fileForm);
     }
 
     @Operation(summary = "Get all products with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
-    public Page<ProductData> getAllProducts(@RequestBody PageForm form) throws ApiException {
+    public Page<ProductData> getAllProducts(@Valid @RequestBody PageForm form) throws ApiException {
         return productDto.getAllProducts(form);
     }
 }

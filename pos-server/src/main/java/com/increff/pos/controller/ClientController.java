@@ -8,6 +8,7 @@ import com.increff.pos.model.form.ClientForm;
 import com.increff.pos.model.form.PageForm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,27 +22,25 @@ import java.util.List;
 @RequestMapping("/api/clients")
 public class ClientController {
 
-    private final ClientDto clientDto;
-
-    public ClientController(ClientDto clientDto) {
-        this.clientDto = clientDto;
-    }
+    @Autowired
+    private ClientDto clientDto;
 
     @Operation(summary = "Create a new client")
     @RequestMapping(value = "/add",method = RequestMethod.POST)
-    public ClientData createNewClient(@RequestBody ClientForm clientForm) throws ApiException {
+    public ClientData createNewClient(@Valid @RequestBody ClientForm clientForm) throws ApiException {
         return clientDto.createClient(clientForm);
     }
 
+    // form -> meaning -> client form/ client search form
     @Operation(summary = "Get all clients with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
-    public Page<ClientData> getAllClients(@RequestBody PageForm form) throws ApiException {
+    public Page<ClientData> getAllClients(@Valid @RequestBody PageForm form) throws ApiException {
         return clientDto.getAllClients(form);
     }
 
     @Operation(summary = "Update client details")
     @RequestMapping(path = "/update", method = RequestMethod.PUT)
-    public ClientData updateClient(@RequestBody ClientForm clientForm) throws ApiException {
+    public ClientData updateClient(@Valid @RequestBody ClientForm clientForm) throws ApiException {
         return clientDto.updateClientDetails(clientForm);
     }
 

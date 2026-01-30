@@ -30,7 +30,6 @@ public class InventoryDto {
     }
 
     public InventoryData updateInventory(String barcode, InventoryForm inventoryForm) throws ApiException {
-        ValidationUtil.validateInventoryForm(inventoryForm);
         InventoryPojo inventoryPojo = InventoryHelper.convertToEntity(barcode, inventoryForm);
         InventoryPojo normalizedInventoryPojo = InventoryHelper.normalizeInventoryPojo(inventoryPojo);
         InventoryPojo updatedInventoryPojo = inventoryApi.updateSingleInventory(normalizedInventoryPojo);
@@ -39,6 +38,7 @@ public class InventoryDto {
 
     public FileData updateInventoryBulk(FileForm fileForm) throws ApiException {
 
+        //TODO change this this is wrong
         List<String[]> rows = TsvParser.parseBase64Tsv(fileForm.getBase64file());
 
         validateInventoryRows(rows);

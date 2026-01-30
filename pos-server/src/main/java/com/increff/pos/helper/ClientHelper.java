@@ -25,9 +25,8 @@ public class ClientHelper {
     }
 
     public static ClientPojo normalizeClient(ClientPojo clientPojo) {
-        String email = clientPojo.getEmail().toLowerCase();
         String location = clientPojo.getLocation().toLowerCase();
-        clientPojo.setEmail(email);
+        clientPojo.setEmail(clientPojo.getEmail().toLowerCase());
         clientPojo.setLocation(location);
 
         return clientPojo;

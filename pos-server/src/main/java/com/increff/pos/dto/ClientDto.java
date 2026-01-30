@@ -26,7 +26,6 @@ public class ClientDto {
     }
 
     public ClientData createClient(ClientForm clientForm) throws ApiException {
-        ValidationUtil.validateClientForm(clientForm);
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
         ClientPojo normalizedClientPojo = ClientHelper.normalizeClient(clientPojo);
         ClientPojo savedClientPojo = clientApi.addClient(normalizedClientPojo);
@@ -34,19 +33,18 @@ public class ClientDto {
     }
 
     public Page<ClientData> getAllClients(PageForm form) throws ApiException {
-        ValidationUtil.validatePageForm(form);
         Page<ClientPojo> clientPage = clientApi.getAllClients(form.getPage(), form.getSize());
         return clientPage.map(ClientHelper::convertToDto);
     }
 
     public ClientData updateClientDetails(ClientForm clientForm) throws ApiException {
-        ValidationUtil.validateClientForm(clientForm);
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
         ClientPojo normalizedClientPojo = ClientHelper.normalizeClient(clientPojo);
         ClientPojo updatedClientPojo = clientApi.updateClient(normalizedClientPojo);
         return ClientHelper.convertToDto(updatedClientPojo);
     }
 
+    //TODO this api needs to paginated.
     public List<ClientData> searchClient(String name) throws ApiException {
         ValidationUtil.validateName(name);
         List<ClientPojo> results = clientApi.searchClient(name);
@@ -59,6 +57,7 @@ public class ClientDto {
         return response;
     }
 
+    //TODO this api needs to paginated.
     public List<ClientData> searchClientByEmail(String email) throws ApiException {
         ValidationUtil.validateEmail(email);
         List<ClientPojo> results = clientApi.searchClientByEmail(email);

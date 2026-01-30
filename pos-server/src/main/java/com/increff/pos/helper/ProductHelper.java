@@ -5,6 +5,7 @@ import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.InventoryData;
 import com.increff.pos.model.data.ProductData;
+import com.increff.pos.model.data.ProductDisplayData;
 import com.increff.pos.model.form.InventoryForm;
 import com.increff.pos.model.form.ProductForm;
 
@@ -46,5 +47,4 @@ public class ProductHelper {
 
         return productData;
     }
-
 }

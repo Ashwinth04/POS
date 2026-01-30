@@ -32,7 +32,7 @@ public class OrderDto {
     }
 
     public OrderStatusData createOrder(OrderForm orderForm) throws ApiException {
-        ValidationUtil.validateOrderForm(orderForm);
+//        ValidationUtil.validateOrderForm(orderForm);
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
         Map<String, OrderStatus> orderStatuses = orderFlow.createOrder(orderPojo);
 
@@ -41,7 +41,7 @@ public class OrderDto {
 
     public OrderStatusData editOrder(OrderForm orderForm, String orderId) throws ApiException {
 
-        ValidationUtil.validateOrderForm(orderForm);
+//        ValidationUtil.validateOrderForm(orderForm);
         ValidationUtil.validateOrderId(orderId);
 
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
@@ -57,7 +57,6 @@ public class OrderDto {
     }
 
     public Page<OrderData> getAllOrders(PageForm form) throws ApiException {
-        ValidationUtil.validatePageForm(form);
         Page<OrderPojo> orderPage = orderFlow.getAllOrders(form.getPage(), form.getSize());
         return orderPage.map(OrderHelper::convertToOrderDto);
     }

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ClientApiImpl implements ClientApi {
@@ -29,6 +30,8 @@ public class ClientApiImpl implements ClientApi {
         this.clientDao = clientDao;
     }
 
+    // api -> get()
+    // -> getCheck()
     @Transactional(rollbackFor = Exception.class)
     public ClientPojo addClient(ClientPojo clientPojo) throws ApiException {
 
@@ -38,6 +41,10 @@ public class ClientApiImpl implements ClientApi {
 
         return saved;
     }
+
+//    public ClientPojo getCheckByName(String name) {
+//        ClientPojo clientPojo = clientDao.
+//    }
 
     @Transactional(rollbackFor = ApiException.class)
     public Page<ClientPojo> getAllClients(int page, int size) {
@@ -58,28 +65,13 @@ public class ClientApiImpl implements ClientApi {
         return clientDao.save(clientPojo);
     }
 
+    // getByClientName
     public List<ClientPojo> searchClient(String name) {
         return clientDao.search(name);
     }
 
     public List<ClientPojo> searchClientByEmail(String email) {
         return clientDao.searchByEmail(email);
-    }
-
-    private void checkEmailExists(String id, String email) throws ApiException {
-        ClientPojo existing = clientDao.findByEmail(email);
-
-        if (existing != null && !existing.getId().equals(id)) {
-            throw new ApiException("Email already exists");
-        }
-    }
-
-    private void checkPhoneNumberExists(String id, String phoneNumber) throws ApiException {
-        ClientPojo existing = clientDao.findByPhoneNumber(phoneNumber);
-
-        if (existing != null && !existing.getId().equals(id)) {
-            throw new ApiException("Phone Number already exists");
-        }
     }
 
     private void checkNameExists(String name) throws ApiException {
@@ -93,7 +85,8 @@ public class ClientApiImpl implements ClientApi {
     public void checkClientExists(String clientName) throws ApiException {
         ClientPojo client = clientDao.findByName(clientName);
 
-        if (client == null) { throw new ApiException("Client with the given name does not exist"); }
+        // Objects.isNull
+        if (Objects.isNull(client)) { throw new ApiException("Client with the given name does not exist"); }
     }
 
     public List<String> fetchExistingClientNames(List<ProductPojo> pojos) {

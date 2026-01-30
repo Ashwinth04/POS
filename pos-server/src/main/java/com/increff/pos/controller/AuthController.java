@@ -27,11 +27,8 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final AuthDto authDto;
-
-    public AuthController(AuthDto authDto) {
-        this.authDto = authDto;
-    }
+    @Autowired
+    private AuthDto authDto;
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ApiException {

@@ -17,6 +17,8 @@ import java.util.List;
 
 public class ValidationUtil {
 
+    // Reflections -> runtime you can modify any classes
+    // jakarta annotations -> validator factory
     public static void validateLoginRequest(LoginRequest request) throws ApiException {
 
         if (request.getUsername() == null || request.getUsername().isBlank()) {
@@ -26,12 +28,6 @@ public class ValidationUtil {
         if (request.getPassword() == null || request.getPassword().isBlank()) {
             throw new ApiException("Password cannot be empty");
         }
-    }
-
-    public static void validateClientForm(ClientForm clientForm) throws ApiException {
-        validateName(clientForm.getName());
-        validateEmail(clientForm.getEmail());
-        validatePhoneNumber(clientForm.getPhoneNumber());
     }
 
     public static void validateProductForm(ProductForm productForm) throws ApiException {
@@ -82,10 +78,6 @@ public class ValidationUtil {
         }
     }
 
-    public static void validateInventoryForm(InventoryForm inventoryForm) throws ApiException {
-        validateQuantity(inventoryForm.getQuantity());
-    }
-
     public static void validateOrderId(String orderId) throws ApiException {
 
         if (orderId.length() != 24) throw new ApiException("Not a valid order id");
@@ -104,12 +96,6 @@ public class ValidationUtil {
         }
     }
 
-    private static void validatePhoneNumber(String phoneNumber) throws ApiException {
-        if (phoneNumber == null || phoneNumber.length() != 10 || !phoneNumber.matches("\\d{10}")) {
-            throw new ApiException("Not a valid phone number");
-        }
-    }
-
     public static void validateName(String name) throws ApiException {
         if (!StringUtils.hasText(name)) {
             throw new ApiException("Name cannot be empty");
@@ -120,21 +106,9 @@ public class ValidationUtil {
         }
     }
 
-    public static void validateLocation(String location) throws ApiException {
-        if (!StringUtils.hasText(location)) {
-            throw new ApiException("Location cannot be empty");
-        }
-    }
-
     private static void validateMrp(Double mrp) throws ApiException {
         if (mrp <= 0) {
             throw new ApiException("MRP cannot be less than or equal to zero");
-        }
-    }
-
-    private static void validateQuantity(int quantity) throws ApiException {
-        if (quantity <= 0) {
-            throw new ApiException("Quantity cannot be less than or equal to zero");
         }
     }
 

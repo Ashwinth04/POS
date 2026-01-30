@@ -8,6 +8,7 @@ import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.PageForm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.apache.coyote.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,11 +25,8 @@ import java.time.LocalDate;
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    private final OrderDto orderDto;
-
-    public OrderController(OrderDto orderDto) {
-        this.orderDto = orderDto;
-    }
+    @Autowired
+    private OrderDto orderDto;
 
     @Operation(summary = "Create new order")
     @RequestMapping(value = "/create", method = RequestMethod.POST)
@@ -65,7 +63,7 @@ public class OrderController {
 
     @Operation(summary = "Get all orders with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
-    public Page<OrderData> getAllOrders(@RequestBody PageForm form) throws ApiException {
+    public Page<OrderData> getAllOrders(@Valid @RequestBody PageForm form) throws ApiException {
         return orderDto.getAllOrders(form);
     }
 }

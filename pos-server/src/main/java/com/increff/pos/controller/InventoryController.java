@@ -9,6 +9,7 @@ import com.increff.pos.model.form.InventoryForm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Inventory Management", description = "Manage inventories for products")
@@ -16,11 +17,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/inventory")
 public class InventoryController {
 
-    private final InventoryDto inventoryDto;
-
-    public InventoryController(InventoryDto inventoryDto) {
-        this.inventoryDto = inventoryDto;
-    }
+    @Autowired
+    private InventoryDto inventoryDto;
 
     @Operation(summary = "Update inventory for a product")
     @RequestMapping(path = "/update/{barcode}", method = RequestMethod.PUT)

@@ -15,6 +15,7 @@ import com.increff.pos.model.form.PageForm;
 import com.increff.pos.util.ValidationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -22,11 +23,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthDto {
 
-    private final AuthApiImpl authApi;
-
-    public AuthDto(AuthApiImpl authApi) {
-        this.authApi = authApi;
-    }
+    @Autowired
+    private AuthApiImpl authApi;
 
     public LoginResponse login(LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ApiException {
 
@@ -72,7 +70,6 @@ public class AuthDto {
     }
 
     public Page<OperatorData> getAllOperators(PageForm form) throws ApiException {
-        ValidationUtil.validatePageForm(form);
         Page<UserPojo> operatorPage = authApi.getAllOperators(form.getPage(), form.getSize());
         return operatorPage.map(AuthHelper::convertToDto);
     }

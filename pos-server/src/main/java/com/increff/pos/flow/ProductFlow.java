@@ -28,8 +28,8 @@ public class ProductFlow {
     public ProductPojo addProduct(ProductPojo productPojo) throws ApiException {
 
         String clientName = productPojo.getClientName();
-        clientApi.checkClientExists(clientName);
 
+        clientApi.checkClientExists(clientName);
         ProductPojo res = productApi.addProduct(productPojo);
         inventoryApi.createDummyInventoryRecord(productPojo.getBarcode());
 
