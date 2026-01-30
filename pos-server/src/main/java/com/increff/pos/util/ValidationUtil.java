@@ -37,8 +37,10 @@ public class ValidationUtil {
         validateName(productForm.getName());
         validateName(productForm.getClientName());
         validateMrp(productForm.getMrp());
-        validateUrl(productForm.getImageUrl());
         validateName(productForm.getBarcode());
+        String imageUrl = productForm.getImageUrl();
+
+        if (!imageUrl.isBlank()) validateUrl(productForm.getImageUrl());
     }
 
     public static void validateOrderForm(OrderForm orderForm) throws ApiException {
@@ -181,7 +183,7 @@ public class ValidationUtil {
 
     public static void validateProductRows(List<String[]> rows) throws ApiException {
 
-        int lineNumber = 1;
+        int lineNumber = 2;
         int totalRows = rows.size();
         if (totalRows > 5000) throw new ApiException("Maximum limit for the number of rows is 5000");
 

@@ -22,7 +22,6 @@ import java.util.List;
 
 @Service
 public class ClientApiImpl implements ClientApi {
-    private static final Logger logger = LoggerFactory.getLogger(ClientApiImpl.class);
 
     private final ClientDao clientDao;
 
@@ -33,11 +32,8 @@ public class ClientApiImpl implements ClientApi {
     @Transactional(rollbackFor = Exception.class)
     public ClientPojo addClient(ClientPojo clientPojo) throws ApiException {
 
-        checkNameExists("",clientPojo.getName());
-//        checkEmailExists("",clientPojo.getEmail());
-//        checkPhoneNumberExists("",clientPojo.getPhoneNumber());
+        checkNameExists(clientPojo.getName());
 
-        // Save the new client
         ClientPojo saved = clientDao.save(clientPojo);
 
         return saved;
@@ -50,12 +46,12 @@ public class ClientApiImpl implements ClientApi {
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public ClientPojo updateClient(String oldName, ClientPojo clientPojo) throws ApiException {
-        ClientPojo existingRecord = clientDao.findByName(oldName);
+    public ClientPojo updateClient(ClientPojo clientPojo) throws ApiException {
 
-        if (existingRecord == null) {throw new ApiException("Client doesn't exist");}
+        String clientName = clientPojo.getName();
+        ClientPojo existingRecord = clientDao.findByName(clientName);
 
-        checkNameExists(existingRecord.getId(),clientPojo.getName());
+        if (existingRecord == null) {throw new ApiException("Client with the given name doesn't exist");}
 
         clientPojo.setId(existingRecord.getId());
 
@@ -86,10 +82,10 @@ public class ClientApiImpl implements ClientApi {
         }
     }
 
-    private void checkNameExists(String id, String name) throws ApiException {
+    private void checkNameExists(String name) throws ApiException {
         ClientPojo existing = clientDao.findByName(name);
 
-        if (existing != null && !existing.getId().equals(id)) {
+        if (existing != null) {
             throw new ApiException("Client already exists");
         }
     }

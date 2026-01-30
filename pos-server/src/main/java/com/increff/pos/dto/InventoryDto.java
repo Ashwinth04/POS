@@ -32,7 +32,8 @@ public class InventoryDto {
     public InventoryData updateInventory(String barcode, InventoryForm inventoryForm) throws ApiException {
         ValidationUtil.validateInventoryForm(inventoryForm);
         InventoryPojo inventoryPojo = InventoryHelper.convertToEntity(barcode, inventoryForm);
-        InventoryPojo updatedInventoryPojo = inventoryApi.updateSingleInventory(inventoryPojo);
+        InventoryPojo normalizedInventoryPojo = InventoryHelper.normalizeInventoryPojo(inventoryPojo);
+        InventoryPojo updatedInventoryPojo = inventoryApi.updateSingleInventory(normalizedInventoryPojo);
         return InventoryHelper.convertToDto(updatedInventoryPojo);
     }
 
@@ -66,6 +67,7 @@ public class InventoryDto {
             } catch (ApiException e) {
                 invalid.put(row[0], e.getMessage());
             }
+
         }
     }
 

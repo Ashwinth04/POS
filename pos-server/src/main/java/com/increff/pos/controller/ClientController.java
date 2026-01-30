@@ -40,9 +40,9 @@ public class ClientController {
     }
 
     @Operation(summary = "Update client details")
-    @RequestMapping(path = "/update/{oldName}", method = RequestMethod.PUT)
-    public ClientData updateClient(@PathVariable String oldName, @RequestBody ClientForm clientForm) throws ApiException {
-        return clientDto.updateClientDetails(oldName, clientForm);
+    @RequestMapping(path = "/update", method = RequestMethod.PUT)
+    public ClientData updateClient(@RequestBody ClientForm clientForm) throws ApiException {
+        return clientDto.updateClientDetails(clientForm);
     }
 
     @Operation(summary = "Search by name")

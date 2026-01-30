@@ -8,8 +8,8 @@ public class ClientHelper {
     public static ClientPojo convertToEntity(ClientForm clientForm) {
         ClientPojo clientPojo = new ClientPojo();
         clientPojo.setName(clientForm.getName());
-        clientPojo.setEmail(clientForm.getEmail().toLowerCase());
-        clientPojo.setLocation(clientForm.getLocation().toLowerCase());
+        clientPojo.setEmail(clientForm.getEmail());
+        clientPojo.setLocation(clientForm.getLocation());
         clientPojo.setPhoneNumber(clientForm.getPhoneNumber());
         return clientPojo;
     }
@@ -22,5 +22,14 @@ public class ClientHelper {
         clientData.setLocation(clientPojo.getLocation());
         clientData.setPhoneNumber(clientPojo.getPhoneNumber());
         return clientData;
+    }
+
+    public static ClientPojo normalizeClient(ClientPojo clientPojo) {
+        String email = clientPojo.getEmail().toLowerCase();
+        String location = clientPojo.getLocation().toLowerCase();
+        clientPojo.setEmail(email);
+        clientPojo.setLocation(location);
+
+        return clientPojo;
     }
 }

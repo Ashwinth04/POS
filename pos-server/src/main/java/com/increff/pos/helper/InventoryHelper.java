@@ -37,6 +37,13 @@ public class InventoryHelper {
         return inventoryData;
     }
 
+    public static InventoryPojo normalizeInventoryPojo(InventoryPojo inventoryPojo) {
+        String barcode = inventoryPojo.getBarcode().toLowerCase();
+        inventoryPojo.setBarcode(barcode);
+
+        return inventoryPojo;
+    }
+
     public static List<InventoryPojo> getPojosFromMap(Map<String, Integer> delta) {
         List<InventoryPojo> pojos = new ArrayList<>();
 
@@ -56,7 +63,7 @@ public class InventoryHelper {
 
         for (OrderItem item: orderItems) {
             InventoryPojo pojo = new InventoryPojo();
-            pojo.setQuantity(-item.getOrderedQuantity());
+            pojo.setQuantity(-item.getOrderedQuantity()); // negative because inventory needs to be reduced
             pojo.setBarcode(item.getBarcode());
             pojos.add(pojo);
         }

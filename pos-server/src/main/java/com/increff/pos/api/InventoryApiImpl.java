@@ -156,7 +156,7 @@ public class InventoryApiImpl implements InventoryApi{
         statuses.put(item.getOrderItemId(), status);
     }
 
-    public void updateInventory(List<OrderItem> orderItems) throws ApiException{
+    public void updateInventory(List<OrderItem> orderItems) throws ApiException {
 
         List<InventoryPojo> pojos = InventoryHelper.getPojosFromOrderItems(orderItems);
 

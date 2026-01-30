@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 public class ProductPojo extends AbstractPojo{
     @Indexed(unique = true)
     private String barcode;
-    private String clientName; // replace this with client name
+    private String clientName;
     private String name;
     private Double mrp;
     private String imageUrl;
