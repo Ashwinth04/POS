@@ -1,6 +1,5 @@
 package com.increff.pos.controller;
 
-import com.increff.pos.config.SupervisorConfig;
 import com.increff.pos.dto.ClientDto;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.ClientData;
@@ -11,8 +10,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,9 +42,9 @@ public class ClientController {
     }
 
     @Operation(summary = "Search by name")
-    @RequestMapping(path = "/search/name/{name}", method = RequestMethod.GET)
-    public List<ClientData> searchByName(@PathVariable String name) throws ApiException {
-        return clientDto.searchClient(name);
+    @RequestMapping(path = "/search/{value}", method = RequestMethod.GET)
+    public List<ClientData> searchByName(@PathVariable String value) throws ApiException {
+        return clientDto.searchClient(value);
     }
 
     @Operation(summary = "Search by email")

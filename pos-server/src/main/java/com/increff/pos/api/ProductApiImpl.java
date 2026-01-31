@@ -61,19 +61,9 @@ public class ProductApiImpl implements ProductApi {
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public Map<String, ProductUploadResult> addProductsBulk(List<ProductPojo> pojos, List<String> existingClientNames) {
+    public void addProductsBulk(List<ProductPojo> pojos) throws ApiException {
 
-        Map<String, ProductUploadResult> resultMap = initializeResultMap(pojos);
-
-        if (pojos == null || pojos.isEmpty()) {
-            return resultMap;
-        }
-
-        List<ProductPojo> validForInsert = filterValidClients(pojos, existingClientNames, resultMap); // no change needed
-
-        persistValidProducts(validForInsert, resultMap);
-
-        return resultMap;
+        persistValidProducts(pojos);
     }
 
     private Map<String, ProductUploadResult> initializeResultMap(List<ProductPojo> pojos) {
@@ -124,19 +114,12 @@ public class ProductApiImpl implements ProductApi {
         return valid;
     }
 
-    private void persistValidProducts(List<ProductPojo> validForInsert, Map<String, ProductUploadResult> resultMap) {
+    private void persistValidProducts(List<ProductPojo> validForInsert) throws ApiException {
 
         try {
             List<ProductPojo> saved = productDao.saveAll(validForInsert);
-
-            for (ProductPojo savedPojo : saved) {
-                ProductUploadResult r = resultMap.get(savedPojo.getBarcode());
-                r.setStatus("SUCCESS");
-                r.setMessage("SUCCESS");
-            }
-
         } catch (Exception e) {
-            markDatabaseFailure(validForInsert, resultMap, e);
+            throw new ApiException("Failed to insert valid products");
         }
 
     }
@@ -184,7 +167,6 @@ public class ProductApiImpl implements ProductApi {
         return validationFailure;
     }
 
-
     public void validateItem(OrderItem item, Map<String, ProductPojo> productMap) throws ApiException {
 
         String barcode = item.getBarcode();
@@ -218,4 +200,7 @@ public class ProductApiImpl implements ProductApi {
         statuses.put(item.getOrderItemId(), status);
     }
 
+    public List<String> findExistingProducts(List<String> barcodes) {
+        return productDao.findExistingBarcodes(barcodes);
+    }
 }

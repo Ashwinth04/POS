@@ -116,7 +116,6 @@ public class OrderApiImpl implements OrderApi {
         }
 
         return aggregatedItems;
-
     }
 
     public OrderPojo getOrderByOrderId(String orderId) throws ApiException {

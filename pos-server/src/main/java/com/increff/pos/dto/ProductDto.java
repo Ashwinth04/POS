@@ -1,6 +1,9 @@
 package com.increff.pos.dto;
 
+import com.increff.pos.api.ClientApiImpl;
+import com.increff.pos.api.ProductApi;
 import com.increff.pos.api.ProductApiImpl;
+import com.increff.pos.controller.ProductController;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.ProductFlow;
@@ -9,25 +12,31 @@ import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.*;
 import com.increff.pos.util.TsvParser;
 import com.increff.pos.util.ValidationUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static com.increff.pos.helper.ProductHelper.toProductPojo;
 import static com.increff.pos.util.FileUtils.*;
 import static com.increff.pos.util.ValidationUtil.validateProductRows;
 
 @Service
 public class ProductDto {
 
-    private final ProductFlow productFlow;
+    @Autowired
+    private ProductFlow productFlow;
 
-    public ProductDto(ProductFlow productFlow) {
-        this.productFlow = productFlow;
-    }
+    @Autowired
+    private ClientApiImpl clientApi;
+
+    @Autowired
+    private ProductApiImpl productApi;
 
     public ProductData createProduct(ProductForm productForm) throws ApiException {
-//        ValidationUtil.validateProductForm(productForm);
+        clientApi.checkClientExists(productForm.getClientName());
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
         ProductPojo savedProductPojo = productFlow.addProduct(productPojo);
 
@@ -36,7 +45,7 @@ public class ProductDto {
 
     // dto -> call api layer -> get check methods or get some data
     public ProductData editProduct(ProductForm productForm) throws ApiException {
-//        ValidationUtil.validateProductForm(productForm);
+        clientApi.checkClientExists(productForm.getClientName());
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
         ProductPojo editedPojo = productFlow.editProduct(productPojo);
 
@@ -48,119 +57,98 @@ public class ProductDto {
         return productPage.map(ProductHelper::convertToDto);
     }
 
+    public static Map<String, Integer> extractHeaderIndexMap(String[] headerRow) {
+        Map<String, Integer> headerIndexMap = new HashMap<>();
+
+        for (int i = 0; i < headerRow.length; i++) {
+            headerIndexMap.put(headerRow[i], i);
+        }
+
+        return headerIndexMap;
+    }
+
     public FileData createProducts(FileForm fileForm) throws ApiException {
 
         List<String[]> rows = TsvParser.parseBase64Tsv(fileForm.getBase64file());
 
-        validateProductRows(rows);
+        List<ProductPojo> validProducts = new ArrayList<>();
+        List<RowError> invalidProducts = new ArrayList<>();
 
-        List<String[]> dataRows = rows.subList(1, rows.size());
+        Map<String, Integer> headerIndexMap = extractHeaderIndexMap(rows.get(0));
+        ProductHelper.validateHeaders(headerIndexMap);
 
-        List<ProductUploadResult> results = uploadProducts(dataRows);
-        return convertProductResultsToBase64(results);
-    }
-
-    public List<ProductUploadResult> uploadProducts(List<String[]> rows) throws ApiException {
-
-        Map<String, Integer> barcodeCount = countBarcodes(rows);
-
-        List<ProductUploadResult> results = new ArrayList<>();
-        List<ProductPojo> validForms = new ArrayList<>();
-
-        for (String[] row : rows) {
-            ProductUploadResult result = processSingleForm(row, barcodeCount, validForms);
-            results.add(result);
-        }
-
-        return getProductUploadResults(results, validForms);
-    }
-
-    private Map<String, Integer> countBarcodes(List<String[]> rows) {
-        Map<String, Integer> barcodeCount = new HashMap<>();
-
-        for (String[] row : rows) {
-            barcodeCount.merge(row[0].toLowerCase(), 1, Integer::sum);
-        }
-
-        return barcodeCount;
-    }
-
-    private ProductUploadResult processSingleForm(String[] row, Map<String, Integer> barcodeCount, List<ProductPojo> validForms) throws ApiException {
-
-        ProductUploadResult result = createInitialResult(row);
-
-        try {
-            ValidationUtil.validateProductRow(row);
-            ProductPojo pojo = ProductHelper.convertRowToEntity(row);
-
-            if (barcodeCount.get(pojo.getBarcode().toLowerCase()) > 1) {
-                markDuplicate(result);
-            } else {
-                markValid(result);
-                validForms.add(pojo);
-            }
-
-        } catch (ApiException e) {
-            markFailed(result, e.getMessage());
-        }
-
-        return result;
-    }
-
-    private void markDuplicate(ProductUploadResult result) {
-        result.setStatus("FAILED");
-        result.setMessage("Duplicate barcode in file");
-    }
-
-    private void markValid(ProductUploadResult result) {
-        result.setStatus("PENDING");
-    }
-
-    private void markFailed(ProductUploadResult result, String message) {
-        result.setStatus("FAILED");
-        result.setMessage(message);
-    }
-
-    private ProductUploadResult createInitialResult(String[] row) throws ApiException{
-
-        try
-        {
-            ProductUploadResult result = new ProductUploadResult();
-            result.setBarcode(row[0].toLowerCase());
-            result.setClientName(row[1]);
-            result.setName(row[2]);
-            result.setMrp(Double.parseDouble(row[3]));
-            result.setImageUrl(row[4]);
-            return result;
-        } catch (NumberFormatException e) {
-            throw new ApiException("Invalid value for MRP");
-        }
-
-    }
-
-    private List<ProductUploadResult> getProductUploadResults(List<ProductUploadResult> results, List<ProductPojo> validPojos) throws ApiException {
-
-        if (validPojos.isEmpty()) return results;
-
-        Map<String, ProductUploadResult> apiResults = productFlow.addProductsBulk(validPojos);
-
-        for (ProductUploadResult r : results) {
-            if ("PENDING".equals(r.getStatus())) {
-
-                ProductUploadResult apiResult = apiResults.get(r.getBarcode());
-
-                if (apiResult != null) {
-                    r.setStatus(apiResult.getStatus());
-                    r.setMessage(apiResult.getMessage());
-                    r.setProductId(apiResult.getProductId());
-                }
+        for (int i = 1; i < rows.size(); i++) {
+            try {
+                ProductPojo pojo = toProductPojo(rows.get(i), headerIndexMap);
+                validProducts.add(pojo);
+            } catch (Exception e) {
+                invalidProducts.add(new RowError(rows.get(i)[0], e.getMessage()));
             }
         }
 
-        return results;
+        Set<String> validClientSet = getValidClients(validProducts);
+        Set<String> existingBarcodeSet = getValidBarcodes(validProducts);
+
+        List<ProductPojo> finalValidProducts = getFinalValidProducts(validProducts, invalidProducts, validClientSet, existingBarcodeSet);
+
+         productFlow.addProductsBulk(finalValidProducts);
+
+        return convertProductResultsToBase64(invalidProducts);
     }
 
-    public FileData convertProductResultsToBase64(List<ProductUploadResult> results) {
+    List<ProductPojo> getFinalValidProducts(List<ProductPojo> validProducts, List<RowError> invalidProducts, Set<String> validClientSet, Set<String> existingBarcodeSet) {
+
+        List<ProductPojo> finalValidProducts = new ArrayList<>();
+
+        for (int i = 0; i < validProducts.size(); i++) {
+            ProductPojo product = validProducts.get(i);
+
+            String clientName = product.getClientName();
+            String barcode = product.getBarcode();
+
+            if (!validClientSet.contains(clientName)) {
+                invalidProducts.add(
+                        new RowError(barcode, "Client does not exist: " + clientName)
+                );
+                continue;
+            }
+
+            if (existingBarcodeSet.contains(barcode)) {
+                invalidProducts.add(
+                        new RowError(barcode, "Product with barcode already exists: " + barcode)
+                );
+                continue;
+            }
+
+            finalValidProducts.add(product);
+        }
+
+        return finalValidProducts;
+    }
+
+    Set<String> getValidClients(List<ProductPojo> validProducts) {
+
+        List<String> clientNames = validProducts.stream()
+                .map(ProductPojo::getClientName)
+                .toList();
+
+        List<String> validClients = clientApi.fetchExistingClientNames(clientNames);
+
+        return new HashSet<>(validClients);
+    }
+
+    Set<String> getValidBarcodes(List<ProductPojo> validProducts) {
+
+        List<String> barcodes = validProducts.stream()
+                .map(ProductPojo::getBarcode)
+                .toList();
+
+        List<String> validBarcodes = productApi.findExistingProducts(barcodes);
+
+        return new HashSet<>(validBarcodes);
+    }
+
+    public FileData convertProductResultsToBase64(List<RowError> results) {
 
         String resultFile = generateProductUploadResults(results);
 

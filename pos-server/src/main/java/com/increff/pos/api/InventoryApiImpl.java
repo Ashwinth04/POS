@@ -6,6 +6,7 @@ import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.InventoryHelper;
 import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.model.data.OrderStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,11 +16,8 @@ import java.util.stream.Collectors;
 @Service
 public class InventoryApiImpl implements InventoryApi{
 
-    private final InventoryDao inventoryDao;
-
-    public InventoryApiImpl(InventoryDao inventoryDao) {
-        this.inventoryDao = inventoryDao;
-    }
+    @Autowired
+    private InventoryDao inventoryDao;
 
     @Transactional(rollbackFor = ApiException.class)
     public InventoryPojo updateSingleInventory(InventoryPojo inventoryPojo) throws ApiException {

@@ -1,10 +1,6 @@
 package com.increff.pos.util;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
-import com.increff.pos.db.ClientPojo;
-import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.exception.ApiException;
-import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.model.form.OrderItemForm;
 import com.increff.pos.model.form.*;
 import org.springframework.util.StringUtils;
@@ -30,58 +26,9 @@ public class ValidationUtil {
         }
     }
 
-    public static void validateProductForm(ProductForm productForm) throws ApiException {
-        validateName(productForm.getName());
-        validateName(productForm.getClientName());
-        validateMrp(productForm.getMrp());
-        validateName(productForm.getBarcode());
-        String imageUrl = productForm.getImageUrl();
-
-        if (!imageUrl.isBlank()) validateUrl(productForm.getImageUrl());
-    }
-
-    public static void validateOrderForm(OrderForm orderForm) throws ApiException {
-
-        if (orderForm == null) {
-            throw new ApiException("OrderForm cannot be null");
-        }
-
-        validateOrderItems(orderForm.getOrderItems());
-    }
-
-    public static void validateOrderItems(List<OrderItemForm> items) throws ApiException {
-
-        if (items == null || items.isEmpty()) {
-            throw new ApiException("orderItems cannot be empty");
-        }
-
-        for (int i = 0; i < items.size(); i++) {
-            validateOrderItem(items.get(i), i);
-        }
-    }
-
-    private static void validateOrderItem(OrderItemForm item, int index) throws ApiException {
-        if (item == null) {
-            throw new ApiException("orderItems[" + index + "] cannot be null");
-        }
-
-        if (item.getBarcode() == null) {
-            throw new ApiException("orderItems[" + index + "].barcode cannot be null");
-        }
-
-        if (item.getOrderedQuantity() == null || item.getOrderedQuantity() <= 0) {
-            throw new ApiException("orderItems[" + index + "].orderedQuantity must be > 0");
-        }
-
-        if (item.getSellingPrice() == null || item.getSellingPrice() <= 0) {
-            throw new ApiException("orderItems[" + index + "].sellingPrice must be > 0");
-        }
-    }
-
     public static void validateOrderId(String orderId) throws ApiException {
 
         if (orderId.length() != 24) throw new ApiException("Not a valid order id");
-
     }
 
     public static void validateEmail(String email) throws ApiException {
@@ -121,19 +68,6 @@ public class ValidationUtil {
             throw new ApiException("Not a valid URL");
         } catch (IOException e) {
             throw new ApiException("Connection couldn't be established to the URL");
-        }
-    }
-
-    // Pagination validations
-    public static void validatePageForm(PageForm form) throws ApiException {
-        if (form.getPage() < 0) {
-            throw new ApiException("Page number cannot be negative");
-        }
-        if (form.getSize() <= 0) {
-            throw new ApiException("Page size must be positive");
-        }
-        if (form.getSize() > 100) {
-            throw new ApiException("Page size cannot be greater than 100");
         }
     }
 
@@ -181,8 +115,6 @@ public class ValidationUtil {
             String name = columns[2].trim();
             String mrpStr = columns[3].trim();
             String imageUrl = columns[4].trim();
-
-            System.out.println(barcode + " " + clientName + " " + name + " " + mrpStr + " " + imageUrl);
 
             if (barcode.isBlank()) {
                 throw new ApiException("Line " + lineNumber + ": Barcode cannot be empty");

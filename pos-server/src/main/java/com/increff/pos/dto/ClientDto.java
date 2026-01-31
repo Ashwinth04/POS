@@ -28,6 +28,7 @@ public class ClientDto {
     public ClientData createClient(ClientForm clientForm) throws ApiException {
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
         ClientPojo normalizedClientPojo = ClientHelper.normalizeClient(clientPojo);
+        clientApi.checkNameExists(clientPojo.getName());
         ClientPojo savedClientPojo = clientApi.addClient(normalizedClientPojo);
         return ClientHelper.convertToDto(savedClientPojo);
     }
@@ -40,6 +41,7 @@ public class ClientDto {
     public ClientData updateClientDetails(ClientForm clientForm) throws ApiException {
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
         ClientPojo normalizedClientPojo = ClientHelper.normalizeClient(clientPojo);
+
         ClientPojo updatedClientPojo = clientApi.updateClient(normalizedClientPojo);
         return ClientHelper.convertToDto(updatedClientPojo);
     }

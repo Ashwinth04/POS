@@ -27,9 +27,6 @@ public class ProductFlow {
 
     public ProductPojo addProduct(ProductPojo productPojo) throws ApiException {
 
-        String clientName = productPojo.getClientName();
-
-        clientApi.checkClientExists(clientName);
         ProductPojo res = productApi.addProduct(productPojo);
         inventoryApi.createDummyInventoryRecord(productPojo.getBarcode());
 
@@ -38,9 +35,6 @@ public class ProductFlow {
 
     public ProductPojo editProduct(ProductPojo productPojo) throws ApiException {
 
-        String clientName = productPojo.getClientName();
-        clientApi.checkClientExists(clientName);
-
         return productApi.editProduct(productPojo);
     }
 
@@ -48,19 +42,13 @@ public class ProductFlow {
         return productApi.getAllProducts(page, size);
     }
 
-    public Map<String, ProductUploadResult> addProductsBulk(List<ProductPojo> productPojos) throws ApiException {
+    public void addProductsBulk(List<ProductPojo> productPojos) throws ApiException {
 
-        List<String> existingClientNames = clientApi.fetchExistingClientNames(productPojos);
+        productApi.addProductsBulk(productPojos);
 
-        Map<String, ProductUploadResult> resultMap = productApi.addProductsBulk(productPojos, existingClientNames);
-
-        for (String barcode: resultMap.keySet()) {
-            ProductUploadResult r = resultMap.get(barcode);
-            if (r.getStatus().equals("SUCCESS")) {
-                inventoryApi.createDummyInventoryRecord(barcode);
-            }
+        for (ProductPojo pojo: productPojos) {
+            String barcode = pojo.getBarcode();
+            inventoryApi.createDummyInventoryRecord(barcode);
         }
-
-        return resultMap;
     }
 }

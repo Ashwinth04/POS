@@ -1,6 +1,8 @@
 package com.increff.pos.util;
 
 import com.increff.pos.model.data.ProductUploadResult;
+import com.increff.pos.model.data.RowError;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
@@ -8,20 +10,17 @@ import java.util.Map;
 
 public class FileUtils {
 
-    public static String generateProductUploadResults(List<ProductUploadResult> results) {
+    public static String generateProductUploadResults(List<RowError> results) {
 
         StringBuilder sb = new StringBuilder();
 
         // Header
-        sb.append("barcode\tclientName\tname\tstatus\tmessage\n");
+        sb.append("barcode\tstatus\tmessage\n");
 
-        for (ProductUploadResult r : results) {
-            if (r.getStatus() != "FAILED") continue;
+        for (RowError r : results) {
 
-            sb.append(safe(r.getBarcode())).append("\t")
-                    .append(safe(r.getClientName())).append("\t")
-                    .append(safe(r.getName())).append("\t")
-                    .append(safe(r.getStatus())).append("\t")
+            sb.append(r.getBarcode()).append("\t")
+                    .append("FAILED").append("\t")
                     .append(safe(r.getMessage()))
                     .append("\n");
         }

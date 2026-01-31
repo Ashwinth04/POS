@@ -11,6 +11,6 @@ import java.util.Map;
 
 public interface ProductApi {
     ProductPojo addProduct(ProductPojo productPojo) throws ApiException;
-    Map<String, ProductUploadResult> addProductsBulk(List<ProductPojo> pojos, List<String> existingClientNames) throws ApiException;
+    void addProductsBulk(List<ProductPojo> pojos) throws ApiException;
     Page<ProductPojo> getAllProducts(int page, int size);
 }

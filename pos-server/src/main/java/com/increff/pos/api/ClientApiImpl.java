@@ -35,8 +35,6 @@ public class ClientApiImpl implements ClientApi {
     @Transactional(rollbackFor = Exception.class)
     public ClientPojo addClient(ClientPojo clientPojo) throws ApiException {
 
-        checkNameExists(clientPojo.getName());
-
         ClientPojo saved = clientDao.save(clientPojo);
 
         return saved;
@@ -74,7 +72,7 @@ public class ClientApiImpl implements ClientApi {
         return clientDao.searchByEmail(email);
     }
 
-    private void checkNameExists(String name) throws ApiException {
+    public void checkNameExists(String name) throws ApiException {
         ClientPojo existing = clientDao.findByName(name);
 
         if (existing != null) {
@@ -89,12 +87,9 @@ public class ClientApiImpl implements ClientApi {
         if (Objects.isNull(client)) { throw new ApiException("Client with the given name does not exist"); }
     }
 
-    public List<String> fetchExistingClientNames(List<ProductPojo> pojos) {
-        List<String> requestedClientNames = pojos.stream()
-                .map(ProductPojo::getClientName)
-                .toList();
+    public List<String> fetchExistingClientNames(List<String> clientNames) {
 
-        return clientDao.findExistingClientNames(requestedClientNames);
+        return clientDao.findExistingClientNames(clientNames);
     }
 
 }
