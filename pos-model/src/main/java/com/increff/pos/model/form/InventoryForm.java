@@ -10,6 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class InventoryForm {
+    private String productId;
     @NotNull(message = "Quantity is required")
     @Digits(integer = 10, fraction = 0, message = "quantity must be a whole number")
     @Min(value = 0, message = "Page number cannot be negative")

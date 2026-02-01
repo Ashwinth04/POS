@@ -30,13 +30,13 @@ public class OrderController {
 
     @Operation(summary = "Create new order")
     @RequestMapping(value = "/create", method = RequestMethod.POST)
-    public OrderStatusData createOrder(@RequestBody OrderForm orderForm) throws ApiException {
+    public OrderData createOrder(@RequestBody OrderForm orderForm) throws ApiException {
         return orderDto.createOrder(orderForm);
     }
 
     @Operation(summary = "Edit order")
     @RequestMapping(value = "/edit/{orderId}", method = RequestMethod.POST)
-    public OrderStatusData editOrder(@RequestBody OrderForm orderForm, @PathVariable String orderId) throws ApiException {
+    public OrderData editOrder(@RequestBody OrderForm orderForm, @PathVariable String orderId) throws ApiException {
         return orderDto.editOrder(orderForm, orderId);
     }
 

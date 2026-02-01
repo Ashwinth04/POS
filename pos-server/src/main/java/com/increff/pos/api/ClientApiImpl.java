@@ -1,15 +1,8 @@
 package com.increff.pos.api;
 
-import ch.qos.logback.core.net.server.Client;
 import com.increff.pos.dao.ClientDao;
-import com.increff.pos.dao.UserDao;
 import com.increff.pos.db.ClientPojo;
-import com.increff.pos.db.ProductPojo;
-import com.increff.pos.db.UserPojo;
 import com.increff.pos.exception.ApiException;
-import jakarta.validation.constraints.Null;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,25 +17,14 @@ import java.util.Objects;
 @Service
 public class ClientApiImpl implements ClientApi {
 
-    private final ClientDao clientDao;
+    @Autowired
+    private ClientDao clientDao;
 
-    public ClientApiImpl(ClientDao clientDao) {
-        this.clientDao = clientDao;
-    }
-
-    // api -> get()
-    // -> getCheck()
     @Transactional(rollbackFor = Exception.class)
     public ClientPojo addClient(ClientPojo clientPojo) throws ApiException {
 
-        ClientPojo saved = clientDao.save(clientPojo);
-
-        return saved;
+        return clientDao.save(clientPojo);
     }
-
-//    public ClientPojo getCheckByName(String name) {
-//        ClientPojo clientPojo = clientDao.
-//    }
 
     @Transactional(rollbackFor = ApiException.class)
     public Page<ClientPojo> getAllClients(int page, int size) {
@@ -54,42 +36,57 @@ public class ClientApiImpl implements ClientApi {
     public ClientPojo updateClient(ClientPojo clientPojo) throws ApiException {
 
         String clientName = clientPojo.getName();
-        ClientPojo existingRecord = clientDao.findByName(clientName);
-
-        if (existingRecord == null) {throw new ApiException("Client with the given name doesn't exist");}
-
+        ClientPojo existingRecord = getCheckByClientName(clientName);
         clientPojo.setId(existingRecord.getId());
 
         return clientDao.save(clientPojo);
     }
 
-    // getByClientName
-    public List<ClientPojo> searchClient(String name) {
-        return clientDao.search(name);
-    }
-
-    public List<ClientPojo> searchClientByEmail(String email) {
-        return clientDao.searchByEmail(email);
-    }
-
     public void checkNameExists(String name) throws ApiException {
         ClientPojo existing = clientDao.findByName(name);
 
-        if (existing != null) {
+        if (Objects.nonNull(existing)) {
             throw new ApiException("Client already exists");
         }
     }
 
-    public void checkClientExists(String clientName) throws ApiException {
-        ClientPojo client = clientDao.findByName(clientName);
-
-        // Objects.isNull
-        if (Objects.isNull(client)) { throw new ApiException("Client with the given name does not exist"); }
-    }
-
     public List<String> fetchExistingClientNames(List<String> clientNames) {
 
-        return clientDao.findExistingClientNames(clientNames);
+        List<ClientPojo> clientPojos = clientDao.findExistingClientNames(clientNames);
+
+        return clientPojos.stream().map(ClientPojo::getName).toList();
+    }
+
+    public Page<ClientPojo> search(String type, String query, int page, int size)
+            throws ApiException {
+
+        if (type == null || query == null || query.isBlank()) {
+            throw new ApiException("Search type and query must be provided");
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return switch (type.toLowerCase()) {
+            case "name" ->
+                    clientDao.searchByName(query, pageable);
+
+            case "email" ->
+                    clientDao.searchByEmail(query, pageable);
+
+            case "phone", "phonenumber" ->
+                    clientDao.searchByPhoneNumber(query, pageable);
+
+            default ->
+                    throw new ApiException("Invalid search type: " + type);
+        };
+    }
+
+    public ClientPojo getCheckByClientName(String clientName) throws ApiException {
+        ClientPojo record = clientDao.findByName(clientName);
+
+        if (Objects.isNull(record)) {throw new ApiException("Client with the given name doesn't exist");}
+
+        return record;
     }
 
 }

@@ -2,6 +2,7 @@ package com.increff.pos.api;
 
 import com.increff.pos.dao.InventoryDao;
 import com.increff.pos.db.InventoryPojo;
+import com.increff.pos.db.OrderPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.InventoryHelper;
 import com.increff.pos.model.data.OrderItem;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,102 +28,82 @@ public class InventoryApiImpl implements InventoryApi{
         return inventoryPojo;
     }
 
-    public Map<String, String> bulkInventoryUpdate(List<InventoryPojo> inventoryPojos) {
+    public void bulkInventoryUpdate(List<InventoryPojo> inventoryPojos) {
 
-        Map<String, String> resultMap = new HashMap<>();
-
-        if (inventoryPojos == null || inventoryPojos.isEmpty()) {
-            return resultMap;
+        if (!inventoryPojos.isEmpty()) {
+            inventoryDao.bulkUpdate(inventoryPojos);
         }
 
-        List<String> incomingBarcodes = inventoryPojos.stream()
-                .map(InventoryPojo::getBarcode)
-                .toList();
-
-        List<String> existingBarcodes = inventoryDao.findExistingBarcodes(incomingBarcodes);
-
-        List<InventoryPojo> valid = new ArrayList<>();
-
-        for (InventoryPojo pojo : inventoryPojos) {
-            if (existingBarcodes.contains(pojo.getBarcode())) {
-                valid.add(pojo);
-            } else {
-                resultMap.put(
-                        pojo.getBarcode(),
-                        "Product with the given barcode doesn't exist"
-                );
-            }
-        }
-
-        if (!valid.isEmpty()) {
-            inventoryDao.bulkUpdate(valid);
-        }
-
-        return resultMap;
     }
 
-    public boolean reserveInventory(List<OrderItem> items, Map<String, OrderStatus> statuses) throws ApiException {
+    public boolean reserveInventory(List<InventoryPojo> items) throws ApiException {
 
-        boolean isFulfillable = checkOrderFulfillable(items, statuses);
+        boolean isFulfillable = checkOrderFulfillable(items);
 
-        if (isFulfillable) updateInventory(items);
+        if (isFulfillable) {
+
+            for (InventoryPojo item: items) {
+                item.setQuantity(-item.getQuantity());
+            }
+
+            updateInventory(items);
+        }
         return isFulfillable;
     }
 
     public void editOrder(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) throws ApiException {
 
-            Map<String, Integer> delta = calculateDeltaInventory(existingItems, incomingItems);
+        Map<String, Integer> delta = calculateDeltaInventory(existingItems, incomingItems);
+        updateDeltaInventory(delta);
 
-            updateDeltaInventory(delta);
     }
 
-    public void revertInventory(List<OrderItem> orderItems) throws ApiException {
+    public void revertInventory(List<InventoryPojo> orderInventoryPojos) throws ApiException {
 
-        for (OrderItem item: orderItems) {
-            int quantity = item.getOrderedQuantity();
-            item.setOrderedQuantity(-quantity);
+        for (InventoryPojo pojo: orderInventoryPojos) {
+            int quantity = pojo.getQuantity();
+            pojo.setQuantity(quantity);
         }
 
-        updateInventory(orderItems);
+        updateInventory(orderInventoryPojos);
     }
 
-    public void createDummyInventoryRecord(String barcode) throws ApiException {
+    public void createDummyInventoryRecord(String productId) {
 
         InventoryPojo dummyRecord = new InventoryPojo();
-        dummyRecord.setBarcode(barcode);
+        dummyRecord.setProductId(productId);
         dummyRecord.setQuantity(0);
 
         inventoryDao.save(dummyRecord);
     }
 
-    public Map<String, InventoryPojo> fetchRecordsForOrderItems(List<OrderItem> orderItems) {
+    public Map<String, InventoryPojo> fetchRecordsForOrderItems(List<InventoryPojo> items) {
 
         // 1. Extract barcodes from order items
-        List<String> barcodes = orderItems.stream()
-                .map(OrderItem::getBarcode)
+        List<String> productIds = items.stream()
+                .map(InventoryPojo::getProductId)
                 .distinct()
                 .toList();
 
-        List<InventoryPojo> inventoryList = inventoryDao.findByBarcodes(barcodes);
+        List<InventoryPojo> inventoryList = inventoryDao.findByProductIds(productIds);
 
         return inventoryList.stream()
                 .collect(Collectors.toMap(
-                        InventoryPojo::getBarcode,
+                        InventoryPojo::getProductId,
                         inv -> inv
                 ));
 
     }
 
-    public boolean checkOrderFulfillable(List<OrderItem> items, Map<String, OrderStatus> statuses) throws ApiException {
+    public boolean checkOrderFulfillable(List<InventoryPojo> items) throws ApiException {
 
         Map<String, InventoryPojo> existingRecords = fetchRecordsForOrderItems(items);
 
         boolean allFulfillable = true;
 
-        for (OrderItem item : items) {
-            String barcode = item.getBarcode();
-            boolean fulfillable = isItemFulfillable(item,existingRecords.get(barcode));
-            updateItemAndStatus(item, fulfillable, statuses);
+        for (InventoryPojo item : items) {
+            String productId = item.getProductId();
+            boolean fulfillable = isItemFulfillable(item,existingRecords.get(productId));
 
             if (!fulfillable) allFulfillable = false;
         }
@@ -129,34 +111,14 @@ public class InventoryApiImpl implements InventoryApi{
         return allFulfillable;
     }
 
-    private boolean isItemFulfillable(OrderItem item, InventoryPojo existingRecord) throws ApiException {
+    private boolean isItemFulfillable(InventoryPojo item, InventoryPojo existingRecord) throws ApiException {
 
         int available = existingRecord.getQuantity();
-        int required = item.getOrderedQuantity();
+        int required = item.getQuantity();
         return available >= required;
     }
 
-    private void updateItemAndStatus(OrderItem item, boolean fulfillable, Map<String, OrderStatus> statuses) {
-
-        OrderStatus status = new OrderStatus();
-        status.setOrderItemId(item.getOrderItemId());
-
-        if (fulfillable) {
-            item.setOrderItemStatus("FULFILLABLE");
-            status.setStatus("FULFILLABLE");
-            status.setMessage("OK");
-        } else {
-            item.setOrderItemStatus("UNFULFILLABLE");
-            status.setStatus("UNFULFILLABLE");
-            status.setMessage("Insufficient inventory");
-        }
-
-        statuses.put(item.getOrderItemId(), status);
-    }
-
-    public void updateInventory(List<OrderItem> orderItems) throws ApiException {
-
-        List<InventoryPojo> pojos = InventoryHelper.getPojosFromOrderItems(orderItems);
+    public void updateInventory(List<InventoryPojo> pojos) throws ApiException {
 
         inventoryDao.bulkUpdate(pojos);
     }
@@ -164,8 +126,8 @@ public class InventoryApiImpl implements InventoryApi{
     public void updateDeltaInventory(Map<String, Integer> delta)  {
 
         List<InventoryPojo> pojos = InventoryHelper.getPojosFromMap(delta);
-
         inventoryDao.bulkUpdate(pojos);
+
     }
 
     private Map<String, Integer> calculateDeltaInventory(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) {
@@ -185,4 +147,31 @@ public class InventoryApiImpl implements InventoryApi{
         return delta;
     }
 
+    public Map<String, Integer> aggregateItemsByProductId(List<InventoryPojo> inventoryPojos) {
+
+        Map<String, Integer> aggregatedItems = new HashMap<>();
+
+        for (InventoryPojo pojo : inventoryPojos) {
+            String productId = pojo.getProductId();
+            Integer quantity = pojo.getQuantity();
+
+            aggregatedItems.merge(productId, quantity, Integer::sum);
+        }
+
+        return aggregatedItems;
+    }
+
+    public Map<String, InventoryPojo> getInventoryForProductIds(List<String> productIds) {
+
+        Map<String, InventoryPojo> productIdToInventory =
+                inventoryDao.findByProductIds(productIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                InventoryPojo::getProductId,
+                                Function.identity()
+                        ));
+
+        return productIdToInventory;
+
+    }
 }

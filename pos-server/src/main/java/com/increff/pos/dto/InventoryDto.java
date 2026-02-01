@@ -1,83 +1,99 @@
 package com.increff.pos.dto;
 
 import com.increff.pos.api.InventoryApiImpl;
+import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.InventoryPojo;
+import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.InventoryHelper;
+import com.increff.pos.helper.ProductHelper;
 import com.increff.pos.model.data.FileData;
 import com.increff.pos.model.data.InventoryData;
+import com.increff.pos.model.data.RowError;
 import com.increff.pos.model.form.FileForm;
 import com.increff.pos.model.form.InventoryForm;
 import com.increff.pos.util.FileUtils;
 import com.increff.pos.util.TsvParser;
 import com.increff.pos.util.ValidationUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import static com.increff.pos.util.ValidationUtil.validateInventoryRow;
-import static com.increff.pos.util.ValidationUtil.validateInventoryRows;
+import java.util.*;
+
+import static com.increff.pos.helper.InventoryHelper.extractInventoryHeaderIndexMap;
+import static com.increff.pos.helper.ProductHelper.toProductPojo;
+import static com.increff.pos.util.ValidationUtil.*;
 
 @Service
 public class InventoryDto {
 
-    private final InventoryApiImpl inventoryApi;
+    @Autowired
+    private InventoryApiImpl inventoryApi;
 
-    public InventoryDto(InventoryApiImpl inventoryApi) {
-        this.inventoryApi = inventoryApi;
-    }
+    @Autowired
+    private ProductApiImpl productApi;
 
-    public InventoryData updateInventory(String barcode, InventoryForm inventoryForm) throws ApiException {
-        InventoryPojo inventoryPojo = InventoryHelper.convertToEntity(barcode, inventoryForm);
-        InventoryPojo normalizedInventoryPojo = InventoryHelper.normalizeInventoryPojo(inventoryPojo);
-        InventoryPojo updatedInventoryPojo = inventoryApi.updateSingleInventory(normalizedInventoryPojo);
-        return InventoryHelper.convertToDto(updatedInventoryPojo);
+    public InventoryData updateInventory(InventoryForm inventoryForm) throws ApiException {
+
+        InventoryPojo inventoryPojo = InventoryHelper.convertToEntity(inventoryForm);
+        inventoryApi.updateSingleInventory(inventoryPojo);
+        return InventoryHelper.convertToDto(inventoryPojo);
+
     }
 
     public FileData updateInventoryBulk(FileForm fileForm) throws ApiException {
 
-        //TODO change this this is wrong
         List<String[]> rows = TsvParser.parseBase64Tsv(fileForm.getBase64file());
 
-        validateInventoryRows(rows);
+        List<InventoryPojo> validInventory = new ArrayList<>();
+        List<RowError> invalidInventory = new ArrayList<>();
 
-        List<InventoryPojo> validPojos = new ArrayList<>();
-        Map<String, String> invalidPojos = new HashMap<>();
+        Map<String, Integer> headerIndexMap = extractInventoryHeaderIndexMap(rows.get(0));
+        InventoryHelper.validateHeaders(headerIndexMap);
 
-        List<String[]> dataRows = rows.subList(1, rows.size());
+        if (rows.size() > 5000) throw new ApiException("Maximum row limit exceeded!");
 
-        validateAndSplitInventoryRows(dataRows, validPojos, invalidPojos);
+        List<String> barcodes = new ArrayList<>();
 
-        if (!validPojos.isEmpty()) {
-            Map<String, String> dbInvalid = inventoryApi.bulkInventoryUpdate(validPojos);
-            invalidPojos.putAll(dbInvalid);
-        }
+        for (int i = 1; i < rows.size(); i++) {
+            String[] row = rows.get(i);
 
-        return buildBulkUpdateResponse(invalidPojos);
-    }
-
-    private void validateAndSplitInventoryRows(List<String[]> rows, List<InventoryPojo> valid, Map<String, String> invalid) {
-
-        for (String[] row : rows) {
-
-            try {
-                validateInventoryRow(row);
-                InventoryPojo inventoryPojo = InventoryHelper.convertRowToEntity(row);
-                valid.add(inventoryPojo);
-            } catch (ApiException e) {
-                invalid.put(row[0], e.getMessage());
+            Integer barcodeIndex = headerIndexMap.get("barcode");
+            if (barcodeIndex != null && barcodeIndex < row.length) {
+                String barcode = row[barcodeIndex].trim();
+                if (!barcode.isEmpty()) {
+                    barcodes.add(barcode);
+                }
             }
-
         }
+
+        Map<String, String> barcodeToProductId = productApi.mapBarcodesToProductIds(new ArrayList<>(barcodes));
+
+        for (int i = 1; i < rows.size(); i++) {
+            try {
+                InventoryPojo pojo = InventoryHelper.toInventoryPojo(
+                        rows.get(i),
+                        headerIndexMap,
+                        barcodeToProductId
+                );
+                validInventory.add(pojo);
+            } catch (Exception e) {
+                invalidInventory.add(
+                        new RowError(rows.get(i)[0], e.getMessage())
+                );
+            }
+        }
+
+        inventoryApi.bulkInventoryUpdate(validInventory);
+
+        return buildBulkUpdateResponse(invalidInventory);
     }
 
-    private FileData buildBulkUpdateResponse(Map<String, String> invalidForms) {
+    private FileData buildBulkUpdateResponse(List<RowError> invalidInventory) {
 
         FileData fileData = new FileData();
-        fileData.setBase64file(FileUtils.generateInventoryUpdateResults(invalidForms));
-        fileData.setStatus(invalidForms.isEmpty() ? "SUCCESS" : "UNSUCCESSFUL");
+        fileData.setBase64file(FileUtils.generateInventoryUpdateResults(invalidInventory));
+        fileData.setStatus(invalidInventory.isEmpty() ? "SUCCESS" : "UNSUCCESSFUL");
 
         return fileData;
     }

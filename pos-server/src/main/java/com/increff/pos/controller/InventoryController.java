@@ -21,9 +21,9 @@ public class InventoryController {
     private InventoryDto inventoryDto;
 
     @Operation(summary = "Update inventory for a product")
-    @RequestMapping(path = "/update/{barcode}", method = RequestMethod.PUT)
-    public InventoryData updateInventory(@PathVariable String barcode,@Valid @RequestBody InventoryForm inventoryForm) throws ApiException {
-        return inventoryDto.updateInventory(barcode, inventoryForm);
+    @RequestMapping(path = "/update", method = RequestMethod.PUT)
+    public InventoryData updateInventory(@Valid @RequestBody InventoryForm inventoryForm) throws ApiException {
+        return inventoryDto.updateInventory(inventoryForm);
     }
 
     @Operation(summary = "Update inventory for multiple products at once")

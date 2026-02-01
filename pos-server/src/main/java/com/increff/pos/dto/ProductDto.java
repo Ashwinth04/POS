@@ -1,9 +1,8 @@
 package com.increff.pos.dto;
 
 import com.increff.pos.api.ClientApiImpl;
-import com.increff.pos.api.ProductApi;
 import com.increff.pos.api.ProductApiImpl;
-import com.increff.pos.controller.ProductController;
+import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.ProductFlow;
@@ -11,17 +10,14 @@ import com.increff.pos.helper.ProductHelper;
 import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.*;
 import com.increff.pos.util.TsvParser;
-import com.increff.pos.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.increff.pos.helper.ProductHelper.toProductPojo;
 import static com.increff.pos.util.FileUtils.*;
-import static com.increff.pos.util.ValidationUtil.validateProductRows;
 
 @Service
 public class ProductDto {
@@ -36,16 +32,17 @@ public class ProductDto {
     private ProductApiImpl productApi;
 
     public ProductData createProduct(ProductForm productForm) throws ApiException {
-        clientApi.checkClientExists(productForm.getClientName());
+
+        clientApi.getCheckByClientName(productForm.getClientName());
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
         ProductPojo savedProductPojo = productFlow.addProduct(productPojo);
 
         return ProductHelper.convertToDto(savedProductPojo);
     }
 
-    // dto -> call api layer -> get check methods or get some data
     public ProductData editProduct(ProductForm productForm) throws ApiException {
-        clientApi.checkClientExists(productForm.getClientName());
+
+        clientApi.getCheckByClientName(productForm.getClientName());
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
         ProductPojo editedPojo = productFlow.editProduct(productPojo);
 
@@ -54,7 +51,11 @@ public class ProductDto {
 
     public Page<ProductData> getAllProducts(PageForm form) throws ApiException {
         Page<ProductPojo> productPage = productFlow.getAllProducts(form.getPage(), form.getSize());
-        return productPage.map(ProductHelper::convertToDto);
+        Map<String, InventoryPojo> productIdToInventoryPojo = productFlow.getInventoryForProducts(productPage);
+
+        return productPage.map(
+                product -> ProductHelper.convertToDto(product, productIdToInventoryPojo)
+        );
     }
 
     public static Map<String, Integer> extractHeaderIndexMap(String[] headerRow) {
@@ -77,6 +78,8 @@ public class ProductDto {
         Map<String, Integer> headerIndexMap = extractHeaderIndexMap(rows.get(0));
         ProductHelper.validateHeaders(headerIndexMap);
 
+        if (rows.size() > 5000) throw new ApiException("Maximum row limit exceeded!");
+
         for (int i = 1; i < rows.size(); i++) {
             try {
                 ProductPojo pojo = toProductPojo(rows.get(i), headerIndexMap);
@@ -96,7 +99,7 @@ public class ProductDto {
         return convertProductResultsToBase64(invalidProducts);
     }
 
-    List<ProductPojo> getFinalValidProducts(List<ProductPojo> validProducts, List<RowError> invalidProducts, Set<String> validClientSet, Set<String> existingBarcodeSet) {
+    public List<ProductPojo> getFinalValidProducts(List<ProductPojo> validProducts, List<RowError> invalidProducts, Set<String> validClientSet, Set<String> existingBarcodeSet) {
 
         List<ProductPojo> finalValidProducts = new ArrayList<>();
 
@@ -126,7 +129,7 @@ public class ProductDto {
         return finalValidProducts;
     }
 
-    Set<String> getValidClients(List<ProductPojo> validProducts) {
+    public Set<String> getValidClients(List<ProductPojo> validProducts) {
 
         List<String> clientNames = validProducts.stream()
                 .map(ProductPojo::getClientName)
@@ -137,7 +140,7 @@ public class ProductDto {
         return new HashSet<>(validClients);
     }
 
-    Set<String> getValidBarcodes(List<ProductPojo> validProducts) {
+    public Set<String> getValidBarcodes(List<ProductPojo> validProducts) {
 
         List<String> barcodes = validProducts.stream()
                 .map(ProductPojo::getBarcode)
@@ -153,6 +156,7 @@ public class ProductDto {
         String resultFile = generateProductUploadResults(results);
 
         FileData fileData = new FileData();
+        fileData.setStatus(results.isEmpty() ? "SUCCESS" : "UNSUCCESSFUL");
         fileData.setBase64file(resultFile);
 
         return fileData;

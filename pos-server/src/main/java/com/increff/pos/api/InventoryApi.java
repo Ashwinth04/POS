@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface InventoryApi {
-    public Map<String, String> bulkInventoryUpdate(List<InventoryPojo> inventoryPojos);
+    public void bulkInventoryUpdate(List<InventoryPojo> inventoryPojos);
     public InventoryPojo updateSingleInventory(InventoryPojo inventoryPojo) throws ApiException;
 
 }

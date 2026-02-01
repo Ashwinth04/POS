@@ -38,17 +38,16 @@ public class OrderHelper {
         return orderPojo;
     }
 
-    public static OrderStatusData convertToDto(Map<String, OrderStatus> orderStatuses, String orderId) {
-        OrderStatusData orderStatusData = new OrderStatusData();
-        List<OrderStatus> statuses = new ArrayList<>();
+    public static OrderData convertToDto(OrderPojo orderPojo) {
 
-        orderStatuses.forEach((orderItemId, status) -> {
-            statuses.add(status);
-        });
+        OrderData orderData = new OrderData();
 
-        orderStatusData.setOrderItems(statuses);
-        orderStatusData.setOrderId(orderId);
-        return orderStatusData;
+        orderData.setOrderId(orderPojo.getOrderId());
+        orderData.setOrderTime(orderPojo.getOrderTime());
+        orderData.setOrderStatus(orderPojo.getOrderStatus());
+        orderData.setOrderItems(orderPojo.getOrderItems());
+
+        return orderData;
     }
 
     public static OrderData convertToOrderDto(OrderPojo orderPojo) {
@@ -56,7 +55,6 @@ public class OrderHelper {
         orderData.setOrderTime(orderPojo.getOrderTime());
         orderData.setOrderItems(orderPojo.getOrderItems());
         orderData.setOrderStatus(orderPojo.getOrderStatus());
-        orderData.setId(orderPojo.getOrderId());
 
         return orderData;
     }

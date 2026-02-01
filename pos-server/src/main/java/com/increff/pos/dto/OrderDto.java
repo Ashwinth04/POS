@@ -1,6 +1,7 @@
 package com.increff.pos.dto;
 
 import com.increff.pos.api.OrderApiImpl;
+import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.client.InvoiceClient;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.exception.ApiException;
@@ -12,6 +13,7 @@ import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.PageForm;
 import com.increff.pos.util.ValidationUtil;
 import jdk.jshell.spi.ExecutionControlProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -23,32 +25,35 @@ import java.util.Map;
 @Service
 public class OrderDto {
 
-    private final OrderFlow orderFlow;
-    private final InvoiceClient invoiceClient;
+    @Autowired
+    private OrderFlow orderFlow;
 
-    public OrderDto(OrderFlow orderFlow, InvoiceClient invoiceClient) {
-        this.orderFlow = orderFlow;
-        this.invoiceClient = invoiceClient;
-    }
+    @Autowired
+    private InvoiceClient invoiceClient;
 
-    public OrderStatusData createOrder(OrderForm orderForm) throws ApiException {
+    @Autowired
+    private ProductApiImpl productApi;
+
+    public OrderData createOrder(OrderForm orderForm) throws ApiException {
 //        ValidationUtil.validateOrderForm(orderForm);
-        OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
-        Map<String, OrderStatus> orderStatuses = orderFlow.createOrder(orderPojo);
 
-        return OrderHelper.convertToDto(orderStatuses, orderPojo.getOrderId());
+        OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
+        productApi.validateAllOrderItems(orderPojo);
+        OrderPojo resultOrderPojo = orderFlow.createOrder(orderPojo);
+
+        return OrderHelper.convertToDto(resultOrderPojo);
     }
 
-    public OrderStatusData editOrder(OrderForm orderForm, String orderId) throws ApiException {
+    public OrderData editOrder(OrderForm orderForm, String orderId) throws ApiException {
 
 //        ValidationUtil.validateOrderForm(orderForm);
         ValidationUtil.validateOrderId(orderId);
-
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
         orderPojo.setOrderId(orderId);
-        Map<String, OrderStatus> orderStatuses = orderFlow.editOrder(orderPojo, orderId);
+        productApi.validateAllOrderItems(orderPojo);
+        OrderPojo resultOrderPojo = orderFlow.editOrder(orderPojo, orderId);
 
-        return OrderHelper.convertToDto(orderStatuses, orderPojo.getOrderId());
+        return OrderHelper.convertToDto(resultOrderPojo);
     }
 
     public MessageData cancelOrder(String orderId) throws ApiException {
@@ -56,9 +61,9 @@ public class OrderDto {
         return orderFlow.cancelOrder(orderId);
     }
 
-    public Page<OrderData> getAllOrders(PageForm form) throws ApiException {
+    public Page<OrderData> getAllOrders(PageForm form) {
         Page<OrderPojo> orderPage = orderFlow.getAllOrders(form.getPage(), form.getSize());
-        return orderPage.map(OrderHelper::convertToOrderDto);
+        return orderPage.map(OrderHelper::convertToDto);
     }
 
     public FileData generateInvoice(String orderId) throws ApiException {
@@ -70,7 +75,7 @@ public class OrderDto {
 
         if (!status.equals("FULFILLABLE")) throw new ApiException("ORDER CANNOT BE PLACED");
 
-        OrderData orderData = OrderHelper.convertToOrderDto(orderPojo);
+        OrderData orderData = OrderHelper.convertToDto(orderPojo);
 
         FileData response = invoiceClient.generateInvoice(orderData);
 
@@ -87,21 +92,15 @@ public class OrderDto {
 
     public Page<OrderData> filterOrders(LocalDate startDate, LocalDate endDate, int page, int size) throws ApiException {
 
-        if (startDate == null || endDate == null) {
-            throw new ApiException("Start date and end date are required");
-        }
+        ValidationUtil.validateDates(startDate, endDate);
 
-        if (endDate.isBefore(startDate)) {
-            throw new ApiException("End date cannot be before start date");
-        }
-
-        ZoneId zone = ZoneId.systemDefault(); // or ZoneId.of("UTC")
+        ZoneId zone = ZoneId.systemDefault();
 
         ZonedDateTime start = startDate.atStartOfDay(zone);
         ZonedDateTime end = endDate.atTime(23, 59, 59, 999_000_000).atZone(zone);
 
         Page<OrderPojo> orderPage =  orderFlow.filterOrders(start, end, page, size);
 
-        return orderPage.map(OrderHelper::convertToOrderDto);
+        return orderPage.map(OrderHelper::convertToDto);
     }
 }

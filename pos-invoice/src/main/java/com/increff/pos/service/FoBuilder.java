@@ -30,7 +30,7 @@ public class FoBuilder {
           <!-- Order info -->
           <fo:block font-size="10pt" space-after="2pt">Order ID: %s</fo:block>
           <fo:block font-size="10pt" space-after="10pt">Status: %s</fo:block>
-    """.formatted(order.getId(), order.getOrderStatus()));
+    """.formatted(order.getOrderId(), order.getOrderStatus()));
 
         fo.append("""
           <!-- Table -->

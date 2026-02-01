@@ -9,5 +9,4 @@ public class ValidationUtil {
         if (orderId.length() != 24) throw new ApiException("Not a valid order id");
 
     }
-
 }

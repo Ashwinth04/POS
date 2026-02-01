@@ -14,7 +14,9 @@ public class SalesScheduler {
     @Autowired
     private SalesApiImpl salesApi;
 
-    @Scheduled(fixedDelay = 10000)
+//    @Scheduled(fixedDelay = 10000)
+    // second minute hour day-of-month month day-of-week
+    @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Kolkata")
     public void run() {
         ZoneId zone = ZoneId.of("Asia/Kolkata");
         ZonedDateTime start = LocalDate.now(zone).atStartOfDay(zone);

@@ -2,14 +2,11 @@ package com.increff.pos.dao;
 
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.repository.support.MongoRepositoryFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import javax.swing.text.html.StyleSheet;
@@ -35,18 +32,27 @@ public class OrderDao extends AbstractDao<OrderPojo> {
     }
 
     public Page<OrderPojo> findOrdersBetween(ZonedDateTime start, ZonedDateTime end, int page, int size) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("orderTime").gte(start.toInstant()).lte(end.toInstant()));
 
-        // Total count for pagination
+        Query query = new Query();
+
+        query.addCriteria(
+                Criteria.where("orderTime")
+                        .gte(start.toInstant())
+                        .lte(end.toInstant())
+        );
+
         long total = mongoOperations.count(query, OrderPojo.class);
 
-        // Apply pagination
+        query.with(Sort.by(Sort.Direction.DESC, "orderTime"));
         query.skip((long) page * size).limit(size);
 
         List<OrderPojo> orders = mongoOperations.find(query, OrderPojo.class);
 
-        return new PageImpl<>(orders, PageRequest.of(page, size), total);
+        return new PageImpl<>(
+                orders,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderTime")),
+                total
+        );
     }
 
 }

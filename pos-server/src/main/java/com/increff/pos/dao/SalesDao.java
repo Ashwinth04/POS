@@ -16,6 +16,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
+
 @Repository
 public class SalesDao extends AbstractDao<SalesPojo> {
     public SalesDao(MongoOperations mongoOperations) {
@@ -36,7 +38,7 @@ public class SalesDao extends AbstractDao<SalesPojo> {
                                            ZonedDateTime startDate,
                                            ZonedDateTime endDate) {
 
-        MatchOperation dateMatch = Aggregation.match(
+        MatchOperation dateMatch = match(
                 Criteria.where("orderTime")
                         .gte(Date.from(startDate.toInstant()))
                         .lte(Date.from(endDate.toInstant()))
@@ -53,11 +55,11 @@ public class SalesDao extends AbstractDao<SalesPojo> {
 
         UnwindOperation unwindProduct = Aggregation.unwind("product");
 
-        MatchOperation clientMatch = Aggregation.match(
+        MatchOperation clientMatch = match(
                 Criteria.where("product.clientName").is(clientName)
         );
 
-        GroupOperation group = Aggregation.group("product.barcode")
+        GroupOperation group = group("product.barcode")
                 .sum("orderItems.orderedQuantity").as("quantity")
                 .sum(
                         ArithmeticOperators.Multiply
@@ -65,7 +67,7 @@ public class SalesDao extends AbstractDao<SalesPojo> {
                                 .multiplyBy("orderItems.sellingPrice")
                 ).as("revenue");
 
-        ProjectionOperation project = Aggregation.project()
+        ProjectionOperation project = project()
                 .and("_id").as("product")
                 .and("quantity").as("quantity")
                 .and("revenue").as("revenue")
@@ -92,73 +94,98 @@ public class SalesDao extends AbstractDao<SalesPojo> {
         Date startDate = Date.from(start.toInstant());
         Date endDate = Date.from(end.toInstant());
 
-        List<Document> pipeline = Arrays.asList(new Document("$match",
-                        new Document("orderStatus", "FULFILLABLE")
-                                .append("orderTime",
-                                        new Document("$gte", startDate)
-                                                .append("$lt", endDate))),
-                new Document("$facet",
-                        new Document("summary", Arrays.asList(new Document("$project",
-                                        new Document("orderItems", 1L)
-                                                .append("orderRevenue",
-                                                        new Document("$sum",
-                                                                new Document("$map",
-                                                                        new Document("input", "$orderItems")
-                                                                                .append("as", "item")
-                                                                                .append("in",
-                                                                                        new Document("$multiply", Arrays.asList("$$item.orderedQuantity", "$$item.sellingPrice"))))))
-                                                .append("totalItemsInOrder",
-                                                        new Document("$sum", "$orderItems.orderedQuantity"))),
-                                new Document("$group",
-                                        new Document("_id",
-                                                new BsonNull())
-                                                .append("totalOrders",
-                                                        new Document("$sum", 1L))
-                                                .append("totalProducts",
-                                                        new Document("$sum", "$totalItemsInOrder"))
-                                                .append("totalRevenue",
-                                                        new Document("$sum", "$orderRevenue"))),
-                                new Document("$project",
-                                        new Document("_id", 0L))))
-                                .append("clients", Arrays.asList(new Document("$unwind", "$orderItems"),
-                                        new Document("$lookup",
-                                                new Document("from", "products")
-                                                        .append("localField", "orderItems.barcode")
-                                                        .append("foreignField", "barcode")
-                                                        .append("as", "product")),
-                                        new Document("$unwind", "$product"),
-                                        new Document("$group",
-                                                new Document("_id", "$product.clientName")
-                                                        .append("totalProducts",
-                                                                new Document("$sum", "$orderItems.orderedQuantity"))
-                                                        .append("totalRevenue",
-                                                                new Document("$sum",
-                                                                        new Document("$multiply", Arrays.asList("$orderItems.orderedQuantity", "$orderItems.sellingPrice"))))),
-                                        new Document("$project",
-                                                new Document("_id", 0L)
-                                                        .append("clientName", "$_id")
-                                                        .append("totalProducts", 1L)
-                                                        .append("totalRevenue", 1L))))),
-                new Document("$project",
-                        new Document("totalOrders",
-                                new Document("$arrayElemAt", Arrays.asList("$summary.totalOrders", 0L)))
-                                .append("totalProducts",
-                                        new Document("$arrayElemAt", Arrays.asList("$summary.totalProducts", 0L)))
-                                .append("totalRevenue",
-                                        new Document("$arrayElemAt", Arrays.asList("$summary.totalRevenue", 0L)))
-                                .append("clients", 1L)));
+        // 1️⃣ Match valid orders
+        MatchOperation matchOrders = match(
+                Criteria.where("orderStatus").is("FULFILLABLE")
+                        .and("orderTime").gte(startDate).lt(endDate)
+        );
 
+        // 2️⃣ Break orderItems into rows
+        UnwindOperation unwindItems = unwind("orderItems");
 
-        List<AggregationOperation> operations = pipeline.stream()
-                .map(doc -> (AggregationOperation) context -> doc)
-                .toList();
+        // 3️⃣ Compute item-level revenue
+        ProjectionOperation itemRevenueProjection = project()
+                .andExpression("$_id").as("orderId")
+                .and("orderItems.orderedQuantity").as("quantity")
+                .and(
+                        ArithmeticOperators.Multiply.valueOf("orderItems.orderedQuantity")
+                                .multiplyBy("orderItems.sellingPrice")
+                ).as("itemRevenue")
+                .and("orderItems.barcode").as("barcode");
 
-        Aggregation aggregation = Aggregation.newAggregation(operations);
+        // =========================
+        // SUMMARY PIPELINE
+        // =========================
 
-        AggregationResults<SalesPojo> result =
-                mongoOperations.aggregate(aggregation, "orders", SalesPojo.class);
+        GroupOperation perOrderGroup = group("orderId")
+                .sum("quantity").as("totalItemsInOrder")
+                .sum("itemRevenue").as("orderRevenue");
 
-        return result.getUniqueMappedResult();
+        GroupOperation summaryGroup = group()
+                .count().as("totalOrders")
+                .sum("totalItemsInOrder").as("totalProducts")
+                .sum("orderRevenue").as("totalRevenue");
+
+        // =========================
+        // CLIENT PIPELINE
+        // =========================
+
+        AggregationOperation lookupProduct = lookup(
+                "products", "barcode", "barcode", "product"
+        );
+
+        UnwindOperation unwindProduct = unwind("product");
+
+        GroupOperation clientGroup = group("product.clientName")
+                .sum("quantity").as("totalProducts")
+                .sum("itemRevenue").as("totalRevenue");
+
+        ProjectionOperation clientProjection = project()
+                .and("_id").as("clientName")
+                .andInclude("totalProducts", "totalRevenue")
+                .andExclude("_id");
+
+        // =========================
+        // FACET
+        // =========================
+
+        FacetOperation facet = facet(
+                perOrderGroup,
+                summaryGroup
+        ).as("summary")
+                .and(
+                        lookupProduct,
+                        unwindProduct,
+                        clientGroup,
+                        clientProjection
+                ).as("clients");
+
+        // =========================
+        // FINAL SHAPE
+        // =========================
+
+        ProjectionOperation finalProjection = project()
+                .and(ArrayOperators.ArrayElemAt.arrayOf("summary.totalOrders").elementAt(0))
+                .as("totalOrders")
+                .and(ArrayOperators.ArrayElemAt.arrayOf("summary.totalProducts").elementAt(0))
+                .as("totalProducts")
+                .and(ArrayOperators.ArrayElemAt.arrayOf("summary.totalRevenue").elementAt(0))
+                .as("totalRevenue")
+                .and("clients").as("clients");
+
+        Aggregation aggregation = newAggregation(
+                matchOrders,
+                unwindItems,
+                itemRevenueProjection,
+                facet,
+                finalProjection
+        );
+
+        return mongoOperations
+                .aggregate(aggregation, "orders", SalesPojo.class)
+                .getUniqueMappedResult();
     }
+
+
 
 }

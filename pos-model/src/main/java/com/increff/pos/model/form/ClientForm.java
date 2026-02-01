@@ -12,14 +12,23 @@ public class ClientForm {
     @Size(min = 3, max = 21, message = "Number of characters should be between 3 to 21")
     private String name;
     @NotBlank(message = "Email cannot be empty")
-    @Email(message = "Invalid email format")
+    @Pattern(
+            regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$",
+            message = "Invalid email format"
+    )
     private String email;
     @NotBlank(message = "Location cannot be empty")
     private String location;
-    @NotBlank(message = "Phone number cannot be empty")
+    @NotBlank(message = "Phone number is required")
+
     @Pattern(
-            regexp = "^[0-9]{10}$",
-            message = "Phone number must be 10 digits"
+            regexp = "^[0-9]+$",
+            message = "Phone number must contain only digits"
+    )
+    @Size(
+            min = 10,
+            max = 10,
+            message = "Phone number must be exactly 10 digits"
     )
     private String phoneNumber;
 }

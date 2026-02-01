@@ -28,7 +28,6 @@ public class ClientController {
         return clientDto.createClient(clientForm);
     }
 
-    // form -> meaning -> client form/ client search form
     @Operation(summary = "Get all clients with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
     public Page<ClientData> getAllClients(@Valid @RequestBody PageForm form) throws ApiException {
@@ -41,16 +40,9 @@ public class ClientController {
         return clientDto.updateClientDetails(clientForm);
     }
 
-    @Operation(summary = "Search by name")
-    @RequestMapping(path = "/search/{value}", method = RequestMethod.GET)
-    public List<ClientData> searchByName(@PathVariable String value) throws ApiException {
-        return clientDto.searchClient(value);
-    }
-
-    @Operation(summary = "Search by email")
-    @RequestMapping(path = "/search/email/{email}", method = RequestMethod.GET)
-    public List<ClientData> searchByEmail(@PathVariable String email) throws ApiException {
-        return clientDto.searchClientByEmail(email);
+    @RequestMapping(path = "/search", method = RequestMethod.POST)
+    public Page<ClientData> searchClients(@RequestParam String type, @RequestParam String query, @RequestBody PageForm pageForm) throws ApiException {
+        return clientDto.search(type, query, pageForm);
     }
 
 }

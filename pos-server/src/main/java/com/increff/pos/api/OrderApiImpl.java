@@ -2,61 +2,49 @@ package com.increff.pos.api;
 
 import com.increff.pos.dao.OrderDao;
 import com.increff.pos.model.data.MessageData;
-import com.increff.pos.model.data.OrderData;
-import com.increff.pos.model.data.OrderItem;
-import com.increff.pos.storage.StorageService;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.exception.ApiException;
-import com.increff.pos.model.data.OrderStatus;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.*;
 
 @Service
 public class OrderApiImpl implements OrderApi {
-    private static final Logger logger = LoggerFactory.getLogger(OrderApiImpl.class);
 
-    private final OrderDao orderDao;
-
-    public OrderApiImpl(OrderDao orderDao) {
-        this.orderDao = orderDao;
-    }
+    @Autowired
+    private OrderDao orderDao;
 
     @Transactional(rollbackFor = ApiException.class)
-    public void placeOrder(OrderPojo orderPojo, boolean isFulFillable) throws ApiException {
+    public OrderPojo placeOrder(OrderPojo orderPojo, boolean isFulFillable) {
 
         orderPojo.setOrderStatus(isFulFillable ? "FULFILLABLE" : "UNFULFILLABLE");
 
-        orderDao.save(orderPojo);
+        return orderDao.save(orderPojo);
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public Map<String, OrderStatus> editOrder(OrderPojo orderPojo, Map<String, OrderStatus> statuses, boolean isFulFillable) throws ApiException {
+    public OrderPojo editOrder(OrderPojo orderPojo, boolean isFulFillable) throws ApiException {
 
         orderPojo.setOrderStatus(isFulFillable ? "FULFILLABLE" : "UNFULFILLABLE");
 
-        updateOrder(orderPojo);
-
-        return statuses;
+        return updateOrder(orderPojo);
     }
 
-    public void updateOrder(OrderPojo orderPojo) throws ApiException{
+    public OrderPojo updateOrder(OrderPojo orderPojo) throws ApiException{
 
         OrderPojo record = orderDao.findByOrderId(orderPojo.getOrderId());
 
         if (record == null) throw new ApiException("Order with the given id does not exist");
 
         orderPojo.setId(record.getId());
-        orderDao.save(orderPojo);
+        return orderDao.save(orderPojo);
     }
 
     public MessageData cancelOrder(String orderId) throws ApiException {
@@ -70,52 +58,10 @@ public class OrderApiImpl implements OrderApi {
         return new MessageData("Order cancelled successfully!");
     }
 
-    public String checkAndGetStatus(String orderId) throws ApiException {
-        OrderPojo orderPojo = orderDao.findByOrderId(orderId);
-
-        if (orderPojo == null) throw new ApiException("Order with the given id doesnt exist");
-
-        String status = orderPojo.getOrderStatus();
-
-        if (status.equals("CANCELLED")) throw new ApiException("CANCELLED ORDERS CANNOT BE EDITED");
-
-        if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE EDITED");
-
-        return status;
-    }
-
-    public void checkOrderCancellable(String orderId) throws ApiException {
-
-        OrderPojo orderPojo = orderDao.findByOrderId(orderId);
-
-        if (orderPojo == null) throw new ApiException("Order with the given id doesnt exist");
-
-        String status = orderPojo.getOrderStatus();
-
-        if (status.equals("CANCELLED")) throw new ApiException("ORDER CANCELLED ALREADY");
-
-        if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE CANCELLED");
-
-    }
-
     public Page<OrderPojo> getAllOrders(int page, int size) {
-        logger.info("Fetching orders page {} with size {}", page, size);
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderTime"));
         return orderDao.findAll(pageRequest);
-    }
-
-    public Map<String, Integer> aggregateItems(List<OrderItem> orderItems) {
-
-        Map<String, Integer> aggregatedItems = new HashMap<>();
-
-        for (OrderItem item : orderItems) {
-            String barcode = item.getBarcode();
-            Integer quantity = item.getOrderedQuantity();
-
-            aggregatedItems.merge(barcode, quantity, Integer::sum);
-        }
-
-        return aggregatedItems;
     }
 
     public OrderPojo getOrderByOrderId(String orderId) throws ApiException {
@@ -136,7 +82,7 @@ public class OrderApiImpl implements OrderApi {
     }
 
     public Page<OrderPojo> filterOrders(ZonedDateTime start, ZonedDateTime end, int page, int size) {
-        // Fetch paginated results from DAO
+
         Page<OrderPojo> pojoPage = orderDao.findOrdersBetween(start, end, page, size);
 
         List<OrderPojo> dataList = pojoPage.getContent().stream()

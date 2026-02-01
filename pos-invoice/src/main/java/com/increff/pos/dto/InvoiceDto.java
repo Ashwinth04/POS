@@ -5,6 +5,8 @@ import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.FileData;
 import com.increff.pos.model.data.OrderData;
 import com.increff.pos.util.ValidationUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -12,11 +14,8 @@ import java.io.IOException;
 @Service
 public class InvoiceDto {
 
-    private final InvoiceApiImpl invoiceApi;
-
-    public InvoiceDto(InvoiceApiImpl invoiceApi) {
-        this.invoiceApi = invoiceApi;
-    }
+    @Autowired
+    private InvoiceApiImpl invoiceApi;
 
     public FileData generateInvoice(OrderData orderData) throws ApiException {
         return invoiceApi.generateInvoice(orderData);

@@ -25,42 +25,34 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         );
     }
 
-    BulkOperations bulkOps = mongoOperations.bulkOps(BulkOperations.BulkMode.UNORDERED, InventoryPojo.class);
-
     public void updateInventory(InventoryPojo inventoryPojo) throws ApiException {
-        String barcode = inventoryPojo.getBarcode();
+
+        String productId = inventoryPojo.getProductId();
         int quantity = inventoryPojo.getQuantity();
 
-        Query query = Query.query(Criteria.where("barcode").is(barcode));
+        Query query = Query.query(Criteria.where("productId").is(productId));
         Update update = new Update().inc("quantity", quantity);
 
         UpdateResult result = mongoOperations.updateFirst(query, update, InventoryPojo.class);
 
         if (result.getMatchedCount() == 0) {
-            throw new ApiException("No matching product found for the given barcode");
+            throw new ApiException("No matching product found for the given productId");
         }
-    }
-
-    public int getQuantity(String barcode) throws ApiException {
-        Query query = Query.query(Criteria.where("barcode").is(barcode));
-
-        InventoryPojo pojo = mongoOperations.findOne(query, InventoryPojo.class);
-
-        if (pojo == null) {
-            throw new ApiException("Inventory not found for barcode: " + barcode);
-        }
-
-        return pojo.getQuantity();
     }
 
     public BulkWriteResult bulkUpdate(List<InventoryPojo> validPojos) {
+
+        if (validPojos == null || validPojos.isEmpty()) {
+            return null; // or throw, or return a dummy result (see below)
+        }
+
         BulkOperations bulkOps = mongoOperations.bulkOps(
                 BulkOperations.BulkMode.UNORDERED,
                 InventoryPojo.class
         );
 
         for (InventoryPojo pojo : validPojos) {
-            Query query = Query.query(Criteria.where("barcode").is(pojo.getBarcode()));
+            Query query = Query.query(Criteria.where("productId").is(pojo.getProductId()));
             Update update = new Update().inc("quantity", pojo.getQuantity());
 
             bulkOps.updateOne(query, update);
@@ -69,27 +61,10 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         return bulkOps.execute();
     }
 
-    public List<String> findExistingBarcodes(List<String> barcodes) {
+    public List<InventoryPojo> findByProductIds(List<String> productIds) {
 
-        if (barcodes == null || barcodes.isEmpty()) {
-            return List.of();
-        }
-
-        Query query = new Query();
-        query.addCriteria(Criteria.where("barcode").in(barcodes));
-
-        query.fields().include("barcode");
-
-        List<InventoryPojo> records = mongoOperations.find(query, InventoryPojo.class);
-
-        return records.stream()
-                .map(InventoryPojo::getBarcode)
-                .toList();
-    }
-
-    public List<InventoryPojo> findByBarcodes(List<String> barcodes) {
         Query query = new Query(
-                Criteria.where("barcode").in(barcodes)
+                Criteria.where("productId").in(productIds)
         );
 
         return mongoOperations.find(query, InventoryPojo.class);

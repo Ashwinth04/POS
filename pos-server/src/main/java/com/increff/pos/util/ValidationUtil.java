@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.time.LocalDate;
 import java.util.List;
 
 public class ValidationUtil {
@@ -201,6 +202,44 @@ public class ValidationUtil {
 
         if (!barcode.equals("barcode")) throw new ApiException("Headers are incorrect!");
         if (!quantity.equals("quantity")) throw new ApiException("Headers are incorrect");
+
+    }
+
+    public static void validatePhoneNumber(String phoneNumber) throws ApiException {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            throw new ApiException("Phone number is required");
+        }
+
+        if (!phoneNumber.matches("^[0-9]{10}$")) {
+            throw new ApiException("Phone number must be exactly 10 digits");
+        }
+    }
+
+
+    public static void validateSearchParams(String type, String query) throws ApiException {
+        if (type.equals("name")) {
+            validateName(query);
+        }
+        else if (type.equals("email")) {
+            validateEmail(query);
+        }
+        else if (type.equals("phone")) {
+            validatePhoneNumber(query);
+        }
+        else {
+            throw new ApiException("Not a valid type");
+        }
+    }
+
+    public static void validateDates(LocalDate startDate, LocalDate endDate) throws ApiException {
+
+        if (startDate == null || endDate == null) {
+            throw new ApiException("Start date and end date are required");
+        }
+
+        if (endDate.isBefore(startDate)) {
+            throw new ApiException("End date cannot be before start date");
+        }
 
     }
 } 

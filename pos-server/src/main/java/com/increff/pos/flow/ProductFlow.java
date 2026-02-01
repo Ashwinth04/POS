@@ -3,9 +3,11 @@ package com.increff.pos.flow;
 import com.increff.pos.api.ClientApiImpl;
 import com.increff.pos.api.InventoryApiImpl;
 import com.increff.pos.api.ProductApiImpl;
+import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.ProductUploadResult;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -15,20 +17,16 @@ import java.util.Map;
 @Service
 public class ProductFlow {
 
-    private final ProductApiImpl productApi;
-    private final InventoryApiImpl inventoryApi;
-    private final ClientApiImpl clientApi;
+    @Autowired
+    private ProductApiImpl productApi;
 
-    public ProductFlow(ProductApiImpl productApi, InventoryApiImpl inventoryApi, ClientApiImpl clientApi) {
-        this.productApi = productApi;
-        this.inventoryApi = inventoryApi;
-        this.clientApi = clientApi;
-    }
+    @Autowired
+    private InventoryApiImpl inventoryApi;
 
     public ProductPojo addProduct(ProductPojo productPojo) throws ApiException {
 
         ProductPojo res = productApi.addProduct(productPojo);
-        inventoryApi.createDummyInventoryRecord(productPojo.getBarcode());
+        inventoryApi.createDummyInventoryRecord(productPojo.getId());
 
         return res;
     }
@@ -42,13 +40,23 @@ public class ProductFlow {
         return productApi.getAllProducts(page, size);
     }
 
+    public Map<String, InventoryPojo> getInventoryForProducts(Page<ProductPojo> page) {
+        List<String> productIds = page.getContent()
+                .stream()
+                .map(ProductPojo::getId)
+                .toList();
+
+        return inventoryApi.getInventoryForProductIds(productIds);
+    }
+
+
     public void addProductsBulk(List<ProductPojo> productPojos) throws ApiException {
 
-        productApi.addProductsBulk(productPojos);
+        List<ProductPojo> savedProducts = productApi.addProductsBulk(productPojos);
 
-        for (ProductPojo pojo: productPojos) {
-            String barcode = pojo.getBarcode();
-            inventoryApi.createDummyInventoryRecord(barcode);
+        for (ProductPojo pojo: savedProducts) {
+            String productId = pojo.getId();
+            inventoryApi.createDummyInventoryRecord(productId);
         }
     }
 }

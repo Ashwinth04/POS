@@ -8,6 +8,7 @@ import com.increff.pos.model.data.LoginResponse;
 import com.increff.pos.security.Roles;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -25,15 +26,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthApiImpl {
 
-    private final AuthenticationManager authenticationManager;
-    private final PasswordEncoder passwordEncoder;
-    private final UserDao userDao;
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
-    public AuthApiImpl(AuthenticationManager authenticationManager, UserDao userDao, PasswordEncoder passwordEncoder)  {
-        this.authenticationManager = authenticationManager;
-        this.userDao = userDao;
-        this.passwordEncoder = passwordEncoder;
-    }
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserDao userDao;
 
     public LoginResponse login(String username, String password, HttpServletRequest request, HttpServletResponse response) throws ApiException {
 
@@ -42,16 +42,13 @@ public class AuthApiImpl {
                     new UsernamePasswordAuthenticationToken(username, password)
             );
 
-            // Set authentication into context
             SecurityContext context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(auth);
             SecurityContextHolder.setContext(context);
 
-            // Persist session
             HttpSessionSecurityContextRepository repo = new HttpSessionSecurityContextRepository();
             repo.saveContext(context, request, response);
 
-            // Build response
             String role = auth.getAuthorities()
                     .iterator()
                     .next()
@@ -78,8 +75,6 @@ public class AuthApiImpl {
         user.setStatus("ACTIVE");
 
         userDao.save(user);
-
-        System.out.println("USER SAVED SUCCESSFULLY");
     }
 
     public LoginResponse me(Authentication authentication) {
@@ -95,6 +90,7 @@ public class AuthApiImpl {
 
     @Transactional(rollbackFor = ApiException.class)
     public Page<UserPojo> getAllOperators(int page, int size) {
+
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return userDao.findAll(pageRequest);
     }

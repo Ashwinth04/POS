@@ -1,8 +1,13 @@
 package com.increff.pos.api;
 
 import com.increff.pos.dao.SalesDao;
+import com.increff.pos.db.ProductPojo;
 import com.increff.pos.db.SalesPojo;
 import com.increff.pos.model.data.ProductRow;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -13,18 +18,16 @@ import java.util.List;
 @Service
 public class SalesApiImpl {
 
-    private final SalesDao salesDao;
-
-    public SalesApiImpl(SalesDao salesDao) {
-        this.salesDao = salesDao;
-    }
+    @Autowired
+    private SalesDao salesDao;
 
     public List<ProductRow> getSalesForClient(String clientName, ZonedDateTime startDate, ZonedDateTime endDate) {
-        System.out.println("Inside API");
+
         return salesDao.getSalesReport(clientName, startDate, endDate);
     }
 
     public SalesPojo getDailySales(ZonedDateTime start, ZonedDateTime end) {
+
         return salesDao.getDailySalesData(start, end);
     }
 
@@ -40,6 +43,12 @@ public class SalesApiImpl {
             data.setId(existing.getId());
         }
         salesDao.save(data);
+    }
+
+    public Page<SalesPojo> getAllSales(int page, int size) {
+
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return salesDao.findAll(pageRequest);
     }
 }
 

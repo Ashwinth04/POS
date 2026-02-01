@@ -42,6 +42,7 @@ public class InvoiceClient {
             }
         }
         catch (Exception e) {
+            e.printStackTrace();
             throw new ApiException("Invoice service unavailable");
         }
     }

@@ -19,7 +19,7 @@ public class InvoiceGenerator {
             String foContent = FoBuilder.build(order);
 
             // 1. Extract date from orderId (ORD-20260120-XXXX)
-            String orderId = order.getId();
+            String orderId = order.getOrderId();
             String rawDate = orderId.split("-")[1]; // 20260120
 
             LocalDate date = LocalDate.parse(rawDate, DateTimeFormatter.BASIC_ISO_DATE);
@@ -31,8 +31,6 @@ public class InvoiceGenerator {
 
             // 2. Full file path
             Path outputPath = dir.resolve(orderId + ".pdf");
-
-            System.out.println("Output path: " + outputPath);
 
             // 3. Generate PDF into memory (byte array)
             ByteArrayOutputStream pdfOutputStream = new ByteArrayOutputStream();

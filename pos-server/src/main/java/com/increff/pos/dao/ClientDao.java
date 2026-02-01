@@ -5,6 +5,7 @@ import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.exception.ApiException;
 import com.mongodb.client.result.UpdateResult;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -34,17 +35,7 @@ public class ClientDao extends AbstractDao<ClientPojo> {
         return mongoOperations.findOne(query, ClientPojo.class);
     }
 
-    public ClientPojo findByEmail(String email) {
-        Query query = Query.query(Criteria.where("email").is(email));
-        return mongoOperations.findOne(query, ClientPojo.class);
-    }
-
-    public ClientPojo findByPhoneNumber(String phoneNumber) {
-        Query query = Query.query(Criteria.where("phoneNumber").is(phoneNumber));
-        return mongoOperations.findOne(query, ClientPojo.class);
-    }
-
-    public List<String> findExistingClientNames(List<String> clientNames) {
+    public List<ClientPojo> findExistingClientNames(List<String> clientNames) {
 
         if (clientNames == null || clientNames.isEmpty()) {
             return List.of();
@@ -55,26 +46,49 @@ public class ClientDao extends AbstractDao<ClientPojo> {
 
         query.fields().include("name");
 
-        List<ClientPojo> clients = mongoOperations.find(query, ClientPojo.class);
-
-        return clients.stream()
-                .map(ClientPojo::getName)
-                .toList();
-    }
-
-    public List<ClientPojo> search(String name) {
-        Query query = new Query(
-                Criteria.where("name").regex("^" + name, "i")
-        );
-
         return mongoOperations.find(query, ClientPojo.class);
     }
 
-    public List<ClientPojo> searchByEmail(String email) {
+    public Page<ClientPojo> searchByName(String name, Pageable pageable) {
         Query query = new Query(
-                Criteria.where("email").regex("^" + email, "i")
+                Criteria.where("name").regex(name, "i")
         );
 
-        return mongoOperations.find(query, ClientPojo.class);
+        long total = mongoOperations.count(query, ClientPojo.class);
+        query.with(pageable);
+
+        List<ClientPojo> results =
+                mongoOperations.find(query, ClientPojo.class);
+
+        return new PageImpl<>(results, pageable, total);
     }
+
+    public Page<ClientPojo> searchByEmail(String email, Pageable pageable) {
+        Query query = new Query(
+                Criteria.where("email").is(email)
+        );
+
+        long total = mongoOperations.count(query, ClientPojo.class);
+        query.with(pageable);
+
+        List<ClientPojo> results =
+                mongoOperations.find(query, ClientPojo.class);
+
+        return new PageImpl<>(results, pageable, total);
+    }
+
+    public Page<ClientPojo> searchByPhoneNumber(String phoneNumber, Pageable pageable) {
+        Query query = new Query(
+                Criteria.where("phoneNumber").is(phoneNumber)
+        );
+
+        long total = mongoOperations.count(query, ClientPojo.class);
+        query.with(pageable);
+
+        List<ClientPojo> results =
+                mongoOperations.find(query, ClientPojo.class);
+
+        return new PageImpl<>(results, pageable, total);
+    }
+
 }

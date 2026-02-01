@@ -13,4 +13,5 @@ public class ProductData {
     private String name;
     private Double mrp;
     private String imageUrl;
+    private int quantity;
 }

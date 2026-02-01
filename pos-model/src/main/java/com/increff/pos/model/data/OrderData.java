@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 public class OrderData {
-    private String id;
+    private String orderId;
     private Instant orderTime;
     private String orderStatus;
     private List<OrderItem> orderItems;

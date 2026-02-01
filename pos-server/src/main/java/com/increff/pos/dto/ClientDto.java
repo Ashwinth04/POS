@@ -1,5 +1,6 @@
 package com.increff.pos.dto;
 
+import ch.qos.logback.core.net.server.Client;
 import com.increff.pos.api.ClientApiImpl;
 import com.increff.pos.db.ClientPojo;
 import com.increff.pos.exception.ApiException;
@@ -8,6 +9,7 @@ import com.increff.pos.model.data.ClientData;
 import com.increff.pos.model.form.ClientForm;
 import com.increff.pos.model.form.PageForm;
 import com.increff.pos.util.ValidationUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,11 +21,8 @@ import java.util.List;
 @Service
 public class ClientDto {
 
-    private final ClientApiImpl clientApi;
-
-    public ClientDto(ClientApiImpl clientApi) {
-        this.clientApi = clientApi;
-    }
+    @Autowired
+    private ClientApiImpl clientApi;
 
     public ClientData createClient(ClientForm clientForm) throws ApiException {
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
@@ -46,29 +45,9 @@ public class ClientDto {
         return ClientHelper.convertToDto(updatedClientPojo);
     }
 
-    //TODO this api needs to paginated.
-    public List<ClientData> searchClient(String name) throws ApiException {
-        ValidationUtil.validateName(name);
-        List<ClientPojo> results = clientApi.searchClient(name);
-        List<ClientData> response = new ArrayList<>();
-
-        for (ClientPojo pojo : results) {
-            response.add(ClientHelper.convertToDto(pojo));
-        }
-
-        return response;
-    }
-
-    //TODO this api needs to paginated.
-    public List<ClientData> searchClientByEmail(String email) throws ApiException {
-        ValidationUtil.validateEmail(email);
-        List<ClientPojo> results = clientApi.searchClientByEmail(email);
-        List<ClientData> response = new ArrayList<>();
-
-        for (ClientPojo pojo : results) {
-            response.add(ClientHelper.convertToDto(pojo));
-        }
-
-        return response;
+    public Page<ClientData> search(String type, String query, PageForm pageForm) throws ApiException {
+        ValidationUtil.validateSearchParams(type, query);
+        Page<ClientPojo> clientPage = clientApi.search(type, query, pageForm.getPage(), pageForm.getSize());
+        return clientPage.map(ClientHelper::convertToDto);
     }
 }

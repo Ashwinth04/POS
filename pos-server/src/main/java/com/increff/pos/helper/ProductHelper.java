@@ -75,7 +75,7 @@ public class ProductHelper {
 
         ProductPojo pojo = new ProductPojo();
 
-        pojo.setBarcode(getValue(row, headerIndexMap, BARCODE));
+        pojo.setBarcode(getValue(row, headerIndexMap, BARCODE).toLowerCase());
         pojo.setName(getValue(row, headerIndexMap, PRODUCT_NAME).toLowerCase());
         pojo.setClientName(getValue(row, headerIndexMap, CLIENT_NAME));
 
@@ -93,4 +93,25 @@ public class ProductHelper {
         return pojo;
     }
 
+
+    public static ProductData convertToDto(
+            ProductPojo product,
+            Map<String, InventoryPojo> inventoryByProductId
+    ) {
+        ProductData data = new ProductData();
+
+        data.setId(product.getId());
+        data.setName(product.getName());
+        data.setMrp(product.getMrp());
+        data.setClientName(product.getClientName());
+        data.setBarcode(product.getBarcode());
+        data.setImageUrl(product.getImageUrl());
+
+        InventoryPojo inventory = inventoryByProductId.get(product.getId());
+        if (inventory != null) {
+            data.setQuantity(inventory.getQuantity());
+        }
+
+        return data;
+    }
 }

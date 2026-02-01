@@ -17,7 +17,7 @@ public class LocalStorageService implements StorageService {
 
     @Override
     public String readInvoice(String orderId) throws IOException {
-        System.out.println("Order id: " + orderId);
+
         String orderDate = orderId.split("-")[1];
 
         DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -28,11 +28,7 @@ public class LocalStorageService implements StorageService {
 
         Path filePath = Path.of("..", "data", formattedDate, orderId + ".pdf");
 
-        System.out.println("Working directory: " + Paths.get("").toAbsolutePath());
-        System.out.println("Trying to read: " + filePath.toAbsolutePath());
-
         if (!Files.exists(filePath)) {
-            System.out.println("File doesnt exist in the given path");
             throw new IOException("Invoice file not found: " + filePath);
         }
 
