@@ -10,7 +10,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+
+import static com.increff.pos.constants.Constants.*;
+import static com.increff.pos.constants.Constants.MRP;
 
 public class ValidationUtil {
 
@@ -241,5 +246,28 @@ public class ValidationUtil {
             throw new ApiException("End date cannot be before start date");
         }
 
+    }
+
+    public static void validateProductHeaders(Map<String, Integer> headerIndexMap) throws ApiException {
+
+        List<String> requiredHeaders = List.of(
+                BARCODE,
+                PRODUCT_NAME,
+                CLIENT_NAME,
+                MRP
+        );
+
+        List<String> missing = requiredHeaders.stream()
+                .filter(h -> !headerIndexMap.containsKey(h))
+                .toList();
+
+        if (!missing.isEmpty()) {
+            throw new ApiException("Missing required columns: " + missing);
+        }
+    }
+
+    public static boolean isRowEmpty(String[] row) {
+        return row == null || row.length == 0 ||
+                Arrays.stream(row).allMatch(cell -> cell == null || cell.trim().isEmpty());
     }
 } 

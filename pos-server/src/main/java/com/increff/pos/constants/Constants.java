@@ -6,5 +6,7 @@ public class Constants {
     public static final String CLIENT_NAME = "clientName";
     public static final String MRP = "mrp";
     public static final String IMAGE_URL = "imageUrl";
-    public static final String INVENTORY = "quantity";
+    public static final String QUANTITY = "quantity";
+    public static final String SUPERVISOR = "SUPERVISOR";
+    public static final String OPERATOR = "OPERATOR";
 }

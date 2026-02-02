@@ -1,12 +1,9 @@
 package com.increff.pos.dto;
 
 import com.increff.pos.api.AuthApiImpl;
-import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.UserPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.AuthHelper;
-import com.increff.pos.helper.ClientHelper;
-import com.increff.pos.model.data.ClientData;
 import com.increff.pos.model.data.LoginResponse;
 import com.increff.pos.model.data.OperatorData;
 import com.increff.pos.model.form.CreateUserRequest;
@@ -71,6 +68,6 @@ public class AuthDto {
 
     public Page<OperatorData> getAllOperators(PageForm form) throws ApiException {
         Page<UserPojo> operatorPage = authApi.getAllOperators(form.getPage(), form.getSize());
-        return operatorPage.map(AuthHelper::convertToDto);
+        return operatorPage.map(AuthHelper::convertToData);
     }
 }

@@ -1,6 +1,5 @@
 package com.increff.pos.dto;
 
-import com.increff.pos.api.OrderApiImpl;
 import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.client.InvoiceClient;
 import com.increff.pos.db.OrderPojo;
@@ -8,11 +7,11 @@ import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.OrderFlow;
 import com.increff.pos.helper.OrderHelper;
 import com.increff.pos.model.data.*;
-import com.increff.pos.model.data.OrderStatusData;
 import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.PageForm;
+import com.increff.pos.util.FormValidator;
+import com.increff.pos.util.NormalizationUtil;
 import com.increff.pos.util.ValidationUtil;
-import jdk.jshell.spi.ExecutionControlProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Map;
 
 @Service
 public class OrderDto {
@@ -34,26 +32,31 @@ public class OrderDto {
     @Autowired
     private ProductApiImpl productApi;
 
-    public OrderData createOrder(OrderForm orderForm) throws ApiException {
-//        ValidationUtil.validateOrderForm(orderForm);
+    @Autowired
+    private FormValidator formValidator;
 
+    public OrderData createOrder(OrderForm orderForm) throws ApiException {
+
+        formValidator.validate(orderForm);
+        NormalizationUtil.normalizeOrderForm(orderForm);
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
         productApi.validateAllOrderItems(orderPojo);
         OrderPojo resultOrderPojo = orderFlow.createOrder(orderPojo);
 
-        return OrderHelper.convertToDto(resultOrderPojo);
+        return OrderHelper.convertToData(resultOrderPojo);
     }
 
     public OrderData editOrder(OrderForm orderForm, String orderId) throws ApiException {
 
-//        ValidationUtil.validateOrderForm(orderForm);
+        formValidator.validate(orderForm);
         ValidationUtil.validateOrderId(orderId);
+        NormalizationUtil.normalizeOrderForm(orderForm);
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
         orderPojo.setOrderId(orderId);
         productApi.validateAllOrderItems(orderPojo);
         OrderPojo resultOrderPojo = orderFlow.editOrder(orderPojo, orderId);
 
-        return OrderHelper.convertToDto(resultOrderPojo);
+        return OrderHelper.convertToData(resultOrderPojo);
     }
 
     public MessageData cancelOrder(String orderId) throws ApiException {
@@ -61,9 +64,11 @@ public class OrderDto {
         return orderFlow.cancelOrder(orderId);
     }
 
-    public Page<OrderData> getAllOrders(PageForm form) {
+    public Page<OrderData> getAllOrders(PageForm form) throws ApiException {
+
+        formValidator.validate(form);
         Page<OrderPojo> orderPage = orderFlow.getAllOrders(form.getPage(), form.getSize());
-        return orderPage.map(OrderHelper::convertToDto);
+        return orderPage.map(OrderHelper::convertToData);
     }
 
     public FileData generateInvoice(String orderId) throws ApiException {
@@ -75,7 +80,7 @@ public class OrderDto {
 
         if (!status.equals("FULFILLABLE")) throw new ApiException("ORDER CANNOT BE PLACED");
 
-        OrderData orderData = OrderHelper.convertToDto(orderPojo);
+        OrderData orderData = OrderHelper.convertToData(orderPojo);
 
         FileData response = invoiceClient.generateInvoice(orderData);
 
@@ -101,6 +106,6 @@ public class OrderDto {
 
         Page<OrderPojo> orderPage =  orderFlow.filterOrders(start, end, page, size);
 
-        return orderPage.map(OrderHelper::convertToDto);
+        return orderPage.map(OrderHelper::convertToData);
     }
 }

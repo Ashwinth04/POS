@@ -4,7 +4,7 @@ import com.increff.pos.db.SalesPojo;
 import com.increff.pos.model.data.DailySalesData;
 
 public class SalesHelper {
-    public static DailySalesData convertToDto(SalesPojo salesPojo) {
+    public static DailySalesData convertToData(SalesPojo salesPojo) {
 
         DailySalesData data = new DailySalesData();
 

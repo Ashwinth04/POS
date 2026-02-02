@@ -63,7 +63,7 @@ public class OrderController {
 
     @Operation(summary = "Get all orders with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
-    public Page<OrderData> getAllOrders(@Valid @RequestBody PageForm form) throws ApiException {
+    public Page<OrderData> getAllOrders(@RequestBody PageForm form) throws ApiException {
         return orderDto.getAllOrders(form);
     }
 }

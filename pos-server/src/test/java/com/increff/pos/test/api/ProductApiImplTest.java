@@ -11,15 +11,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.*;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,220 +31,243 @@ class ProductApiImplTest {
     // ---------- addProduct ----------
 
     @Test
-    void shouldAddProductWhenBarcodeNotExists() throws ApiException {
+    void testAddProduct_success() throws ApiException {
         ProductPojo pojo = new ProductPojo();
-        pojo.setBarcode("b1");
+        pojo.setBarcode("B1");
 
-        when(productDao.findByBarcode("b1")).thenReturn(null);
+        when(productDao.findByBarcode("B1")).thenReturn(null);
         when(productDao.save(pojo)).thenReturn(pojo);
 
         ProductPojo result = productApi.addProduct(pojo);
 
-        assertEquals(pojo, result);
-        verify(productDao).save(pojo);
+        assertThat(result).isEqualTo(pojo);
     }
 
     @Test
-    void shouldThrowExceptionIfBarcodeExists() {
+    void testAddProduct_barcodeExists() {
         ProductPojo pojo = new ProductPojo();
-        pojo.setBarcode("b1");
+        pojo.setBarcode("B1");
 
-        when(productDao.findByBarcode("b1")).thenReturn(new ProductPojo());
+        when(productDao.findByBarcode("B1"))
+                .thenReturn(new ProductPojo());
 
-        ApiException ex = assertThrows(ApiException.class,
-                () -> productApi.addProduct(pojo));
-
-        assertEquals("Barcode already exists", ex.getMessage());
+        assertThatThrownBy(() -> productApi.addProduct(pojo))
+                .isInstanceOf(ApiException.class)
+                .hasMessage("Barcode already exists");
     }
 
     // ---------- editProduct ----------
 
     @Test
-    void shouldEditProduct() throws ApiException {
+    void testEditProduct_success() throws ApiException {
+        ProductPojo pojo = new ProductPojo();
+        pojo.setBarcode("B1");
+
         ProductPojo existing = new ProductPojo();
-        existing.setId("id1");
-        existing.setBarcode("b1");
+        existing.setId("DB_ID");
 
-        ProductPojo updated = new ProductPojo();
-        updated.setBarcode("b1");
+        when(productDao.findByBarcode("B1")).thenReturn(existing);
+        when(productDao.save(pojo)).thenReturn(pojo);
 
-        when(productDao.findByBarcode("b1")).thenReturn(existing);
-        when(productDao.save(any(ProductPojo.class))).thenAnswer(i -> i.getArgument(0));
+        ProductPojo result = productApi.editProduct(pojo);
 
-        ProductPojo result = productApi.editProduct(updated);
-
-        assertEquals("id1", result.getId());
-        verify(productDao).save(updated);
+        assertThat(pojo.getId()).isEqualTo("DB_ID");
+        assertThat(result).isEqualTo(pojo);
     }
 
     // ---------- getAllProducts ----------
 
     @Test
-    void shouldGetAllProducts() {
+    void testGetAllProducts_success() {
         Page<ProductPojo> page =
                 new PageImpl<>(List.of(new ProductPojo()));
 
-        when(productDao.findAll(any(PageRequest.class))).thenReturn(page);
+        when(productDao.findAll(any(Pageable.class)))
+                .thenReturn(page);
 
-        Page<ProductPojo> result = productApi.getAllProducts(0, 10);
+        Page<ProductPojo> result =
+                productApi.getAllProducts(0, 10);
 
-        assertEquals(1, result.getContent().size());
+        assertThat(result.getContent()).hasSize(1);
     }
 
     // ---------- addProductsBulk ----------
 
     @Test
-    void shouldAddProductsBulk() throws ApiException {
-        List<ProductPojo> pojos = List.of(new ProductPojo());
+    void testAddProductsBulk_success() throws ApiException {
+        List<ProductPojo> list = List.of(new ProductPojo());
 
-        when(productDao.saveAll(pojos)).thenReturn(pojos);
+        when(productDao.saveAll(list)).thenReturn(list);
 
-        List<ProductPojo> result = productApi.addProductsBulk(pojos);
+        List<ProductPojo> result =
+                productApi.addProductsBulk(list);
 
-        assertEquals(1, result.size());
-        verify(productDao).saveAll(pojos);
+        assertThat(result).hasSize(1);
     }
 
     @Test
-    void shouldThrowExceptionWhenBulkInsertFails() {
-        List<ProductPojo> pojos = List.of(new ProductPojo());
+    void testAddProductsBulk_failure() {
+        List<ProductPojo> list = List.of(new ProductPojo());
 
-        when(productDao.saveAll(pojos)).thenThrow(new RuntimeException());
+        when(productDao.saveAll(list))
+                .thenThrow(new RuntimeException());
 
-        ApiException ex = assertThrows(ApiException.class,
-                () -> productApi.addProductsBulk(pojos));
-
-        assertEquals("Failed to insert valid products", ex.getMessage());
+        assertThatThrownBy(() -> productApi.addProductsBulk(list))
+                .isInstanceOf(ApiException.class)
+                .hasMessage("Failed to insert valid products");
     }
 
     // ---------- validateAllOrderItems ----------
 
     @Test
-    void shouldValidateAllOrderItemsSuccessfully() throws ApiException {
+    void testValidateAllOrderItems_success() throws ApiException {
         OrderItem item = new OrderItem();
-        item.setBarcode("b1");
+        item.setBarcode("B1");
         item.setSellingPrice(50.0);
 
         OrderPojo order = new OrderPojo();
         order.setOrderItems(List.of(item));
 
         ProductPojo product = new ProductPojo();
-        product.setBarcode("b1");
+        product.setBarcode("B1");
         product.setMrp(100.0);
 
-        when(productDao.findByBarcodes(List.of("b1")))
+        when(productDao.findByBarcodes(List.of("B1")))
                 .thenReturn(List.of(product));
 
         productApi.validateAllOrderItems(order);
-
-        // no exception = success
     }
 
     @Test
-    void shouldFailValidationForInvalidBarcode() {
+    void testValidateAllOrderItems_invalidBarcode() {
         OrderItem item = new OrderItem();
-        item.setBarcode("b1");
+        item.setBarcode("B1");
         item.setSellingPrice(50.0);
 
         OrderPojo order = new OrderPojo();
         order.setOrderItems(List.of(item));
 
-        when(productDao.findByBarcodes(List.of("b1")))
+        when(productDao.findByBarcodes(List.of("B1")))
                 .thenReturn(List.of());
 
-        ApiException ex = assertThrows(ApiException.class,
-                () -> productApi.validateAllOrderItems(order));
-
-        assertEquals("Invalid barcode: b1", ex.getMessage());
+        assertThatThrownBy(() -> productApi.validateAllOrderItems(order))
+                .isInstanceOf(ApiException.class)
+                .hasMessage("Invalid barcode: B1");
     }
 
+    // ---------- validateItem ----------
+
     @Test
-    void shouldFailValidationWhenSellingPriceExceedsMrp() {
+    void testValidateItem_priceExceedsMrp() {
         OrderItem item = new OrderItem();
-        item.setBarcode("b1");
+        item.setBarcode("B1");
         item.setSellingPrice(200.0);
 
-        OrderPojo order = new OrderPojo();
-        order.setOrderItems(List.of(item));
-
         ProductPojo product = new ProductPojo();
-        product.setBarcode("b1");
         product.setMrp(100.0);
 
-        when(productDao.findByBarcodes(List.of("b1")))
-                .thenReturn(List.of(product));
-
-        ApiException ex = assertThrows(ApiException.class,
-                () -> productApi.validateAllOrderItems(order));
-
-        assertEquals("Selling price exceeds MRP for barcode: b1", ex.getMessage());
+        assertThatThrownBy(() ->
+                productApi.validateItem(item, Map.of("B1", product)))
+                .isInstanceOf(ApiException.class)
+                .hasMessage("Selling price exceeds MRP for barcode: B1");
     }
 
     // ---------- findExistingProducts ----------
 
     @Test
-    void shouldFindExistingProducts() {
+    void testFindExistingProducts_success() {
         ProductPojo p = new ProductPojo();
-        p.setBarcode("b1");
+        p.setBarcode("B1");
 
-        when(productDao.findByBarcodes(List.of("b1")))
+        when(productDao.findByBarcodes(List.of("B1")))
                 .thenReturn(List.of(p));
 
-        List<String> result = productApi.findExistingProducts(List.of("b1"));
+        List<String> result =
+                productApi.findExistingProducts(List.of("B1"));
 
-        assertEquals(List.of("b1"), result);
+        assertThat(result).containsExactly("B1");
     }
 
     // ---------- mapBarcodesToProductIds ----------
 
     @Test
-    void shouldMapBarcodesToProductIds() {
-        ProductPojo p = new ProductPojo();
-        p.setBarcode("b1");
-        p.setId("id1");
-
-        when(productDao.findByBarcodes(List.of("b1")))
-                .thenReturn(List.of(p));
-
-        Map<String, String> result =
-                productApi.mapBarcodesToProductIds(List.of("b1"));
-
-        assertEquals("id1", result.get("b1"));
-    }
-
-    @Test
-    void shouldReturnEmptyMapWhenBarcodesEmpty() {
+    void testMapBarcodesToProductIds_empty() {
         Map<String, String> result =
                 productApi.mapBarcodesToProductIds(List.of());
 
-        assertTrue(result.isEmpty());
-        verify(productDao, never()).findByBarcodes(anyList());
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void testMapBarcodesToProductIds_success() {
+        ProductPojo p = new ProductPojo();
+        p.setBarcode("B1");
+        p.setId("P1");
+
+        when(productDao.findByBarcodes(List.of("B1")))
+                .thenReturn(List.of(p));
+
+        Map<String, String> result =
+                productApi.mapBarcodesToProductIds(List.of("B1"));
+
+        assertThat(result).containsEntry("B1", "P1");
     }
 
     // ---------- getCheckByBarcode ----------
 
     @Test
-    void shouldGetProductByBarcode() throws ApiException {
-        ProductPojo p = new ProductPojo();
-        p.setBarcode("b1");
+    void testGetCheckByBarcode_success() throws ApiException {
+        ProductPojo pojo = new ProductPojo();
 
-        when(productDao.findByBarcode("b1")).thenReturn(p);
+        when(productDao.findByBarcode("B1"))
+                .thenReturn(pojo);
 
-        ProductPojo result = productApi.getCheckByBarcode("b1");
+        ProductPojo result =
+                productApi.getCheckByBarcode("B1");
 
-        assertEquals(p, result);
+        assertThat(result).isEqualTo(pojo);
     }
 
     @Test
-    void shouldThrowIfProductNotFoundByBarcode() {
-        when(productDao.findByBarcode("b1")).thenReturn(null);
+    void testGetCheckByBarcode_notFound() {
+        when(productDao.findByBarcode("B1"))
+                .thenReturn(null);
 
-        ApiException ex = assertThrows(ApiException.class,
-                () -> productApi.getCheckByBarcode("b1"));
+        assertThatThrownBy(() ->
+                productApi.getCheckByBarcode("B1"))
+                .isInstanceOf(ApiException.class)
+                .hasMessage("Product with this given barcode doesn't exist");
+    }
 
-        assertEquals(
-                "Product with this given barcode doesn't exist",
-                ex.getMessage()
-        );
+    // ---------- searchProducts ----------
+
+    @Test
+    void testSearchProducts_byBarcode() throws ApiException {
+        when(productDao.searchByBarcode(any(), any()))
+                .thenReturn(Page.empty());
+
+        Page<ProductPojo> result =
+                productApi.searchProducts("barcode", "B1", 0, 10);
+
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    void testSearchProducts_byName() throws ApiException {
+        when(productDao.searchByName(any(), any()))
+                .thenReturn(Page.empty());
+
+        Page<ProductPojo> result =
+                productApi.searchProducts("name", "ABC", 0, 10);
+
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    void testSearchProducts_invalidType() {
+        assertThatThrownBy(() ->
+                productApi.searchProducts("invalid", "X", 0, 10))
+                .isInstanceOf(ApiException.class)
+                .hasMessage("Invalid search type: invalid");
     }
 }

@@ -57,8 +57,7 @@ public class ClientApiImpl implements ClientApi {
         return clientPojos.stream().map(ClientPojo::getName).toList();
     }
 
-    public Page<ClientPojo> search(String type, String query, int page, int size)
-            throws ApiException {
+    public Page<ClientPojo> search(String type, String query, int page, int size) throws ApiException {
 
         if (type == null || query == null || query.isBlank()) {
             throw new ApiException("Search type and query must be provided");

@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
@@ -143,6 +144,21 @@ public class ProductApiImpl implements ProductApi {
         }
 
         return record;
+    }
+
+    public Page<ProductPojo> searchProducts(String type, String query, int page, int size) throws ApiException {
+        Pageable pageable = PageRequest.of(page, size);
+
+        return switch (type.toLowerCase()) {
+            case "barcode" ->
+                    productDao.searchByBarcode(query, pageable);
+
+            case "name" ->
+                    productDao.searchByName(query, pageable);
+
+            default ->
+                    throw new ApiException("Invalid search type: " + type);
+        };
     }
 
 }

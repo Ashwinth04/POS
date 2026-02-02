@@ -9,14 +9,18 @@ import com.increff.pos.flow.ProductFlow;
 import com.increff.pos.helper.ProductHelper;
 import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.*;
+import com.increff.pos.util.FormValidator;
+import com.increff.pos.util.NormalizationUtil;
 import com.increff.pos.util.TsvParser;
+import com.increff.pos.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-import static com.increff.pos.helper.ProductHelper.toProductPojo;
+import static com.increff.pos.helper.ProductHelper.convertRowToProductPojo;
 import static com.increff.pos.util.FileUtils.*;
 
 @Service
@@ -31,30 +35,39 @@ public class ProductDto {
     @Autowired
     private ProductApiImpl productApi;
 
+    @Autowired
+    private FormValidator formValidator;
+
     public ProductData createProduct(ProductForm productForm) throws ApiException {
 
-        clientApi.getCheckByClientName(productForm.getClientName());
+        formValidator.validate(productForm);
+        NormalizationUtil.normalizeProductForm(productForm);
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
+        clientApi.getCheckByClientName(productPojo.getClientName());
         ProductPojo savedProductPojo = productFlow.addProduct(productPojo);
 
-        return ProductHelper.convertToDto(savedProductPojo);
+        return ProductHelper.convertToData(savedProductPojo);
     }
 
     public ProductData editProduct(ProductForm productForm) throws ApiException {
 
-        clientApi.getCheckByClientName(productForm.getClientName());
+        formValidator.validate(productForm);
+        NormalizationUtil.normalizeProductForm(productForm);
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
+        clientApi.getCheckByClientName(productPojo.getClientName());
         ProductPojo editedPojo = productFlow.editProduct(productPojo);
 
-        return ProductHelper.convertToDto(editedPojo);
+        return ProductHelper.convertToData(editedPojo);
     }
 
     public Page<ProductData> getAllProducts(PageForm form) throws ApiException {
+
+        formValidator.validate(form);
         Page<ProductPojo> productPage = productFlow.getAllProducts(form.getPage(), form.getSize());
         Map<String, InventoryPojo> productIdToInventoryPojo = productFlow.getInventoryForProducts(productPage);
 
         return productPage.map(
-                product -> ProductHelper.convertToDto(product, productIdToInventoryPojo)
+                product -> ProductHelper.convertToData(product, productIdToInventoryPojo)
         );
     }
 
@@ -70,22 +83,34 @@ public class ProductDto {
 
     public FileData createProducts(FileForm fileForm) throws ApiException {
 
+        formValidator.validate(fileForm);
         List<String[]> rows = TsvParser.parseBase64Tsv(fileForm.getBase64file());
 
         List<ProductPojo> validProducts = new ArrayList<>();
         List<RowError> invalidProducts = new ArrayList<>();
 
         Map<String, Integer> headerIndexMap = extractHeaderIndexMap(rows.get(0));
-        ProductHelper.validateHeaders(headerIndexMap);
+        ValidationUtil.validateProductHeaders(headerIndexMap);
 
         if (rows.size() > 5000) throw new ApiException("Maximum row limit exceeded!");
 
         for (int i = 1; i < rows.size(); i++) {
+            String[] row = rows.get(i);
+            String firstColumn = null;
+
+            if (ValidationUtil.isRowEmpty(row)) continue;
+
+            if (row != null && row.length > 0) {
+                firstColumn = row[0].toLowerCase();
+            }
+
             try {
-                ProductPojo pojo = toProductPojo(rows.get(i), headerIndexMap);
+
+                ProductPojo pojo = convertRowToProductPojo(row, headerIndexMap);
                 validProducts.add(pojo);
             } catch (Exception e) {
-                invalidProducts.add(new RowError(rows.get(i)[0], e.getMessage()));
+                String errorMessage = (e != null && e.getMessage() != null) ? e.getMessage() : "Unknown error";
+                invalidProducts.add(new RowError(firstColumn, errorMessage));
             }
         }
 
@@ -101,6 +126,10 @@ public class ProductDto {
 
     public List<ProductPojo> getFinalValidProducts(List<ProductPojo> validProducts, List<RowError> invalidProducts, Set<String> validClientSet, Set<String> existingBarcodeSet) {
 
+        Map<String, Long> barcodeCountMap = validProducts.stream()
+                .map(ProductPojo::getBarcode)
+                .collect(Collectors.groupingBy(b -> b, Collectors.counting()));
+
         List<ProductPojo> finalValidProducts = new ArrayList<>();
 
         for (int i = 0; i < validProducts.size(); i++) {
@@ -108,6 +137,13 @@ public class ProductDto {
 
             String clientName = product.getClientName();
             String barcode = product.getBarcode();
+
+            if (barcodeCountMap.get(barcode) > 1) {
+                invalidProducts.add(
+                        new RowError(barcode, "Duplicate barcode found in upload: " + barcode)
+                );
+                continue;
+            }
 
             if (!validClientSet.contains(clientName)) {
                 invalidProducts.add(
@@ -160,5 +196,17 @@ public class ProductDto {
         fileData.setBase64file(resultFile);
 
         return fileData;
+    }
+
+    public Page<ProductData> search(String type, String query, PageForm form) throws ApiException {
+
+        formValidator.validate(form);
+        Page<ProductPojo> productPage = productFlow.searchProducts(type, query, form.getPage(), form.getSize());
+        Map<String, InventoryPojo> productIdToInventoryPojo = productFlow.getInventoryForProducts(productPage);
+
+        return productPage.map(
+                product -> ProductHelper.convertToData(product, productIdToInventoryPojo)
+        );
+
     }
 }

@@ -1,5 +1,6 @@
 package com.increff.pos.api;
 
+import com.increff.pos.constants.Constants;
 import com.increff.pos.dao.UserDao;
 import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.UserPojo;
@@ -71,7 +72,7 @@ public class AuthApiImpl {
         UserPojo user = new UserPojo();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole(Roles.OPERATOR);
+        user.setRole(Constants.OPERATOR);
         user.setStatus("ACTIVE");
 
         userDao.save(user);

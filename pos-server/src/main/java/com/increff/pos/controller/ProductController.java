@@ -31,7 +31,7 @@ public class ProductController {
 
     @Operation(summary = "Create a new product")
     @RequestMapping(path = "/add", method = RequestMethod.POST)
-    public ProductData createProduct(@Valid @RequestBody ProductForm productForm) throws ApiException {
+    public ProductData createProduct(@RequestBody ProductForm productForm) throws ApiException {
         return productDto.createProduct(productForm);
     }
 
@@ -43,13 +43,19 @@ public class ProductController {
 
     @Operation(summary = "Upload a list of products")
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
-    public FileData createProductsBulk(@Valid @RequestBody FileForm fileForm) throws ApiException { // Use base64 string
+    public FileData createProductsBulk(@RequestBody FileForm fileForm) throws ApiException { // Use base64 string
         return productDto.createProducts(fileForm);
     }
 
     @Operation(summary = "Get all products with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
-    public Page<ProductData> getAllProducts(@Valid @RequestBody PageForm form) throws ApiException {
+    public Page<ProductData> getAllProducts(@RequestBody PageForm form) throws ApiException {
         return productDto.getAllProducts(form);
+    }
+
+    @RequestMapping(path = "/search", method = RequestMethod.POST)
+    public Page<ProductData> searchProducts(@RequestParam String type, @RequestParam String query, @RequestBody PageForm pageForm) throws ApiException{
+
+        return productDto.search(type, query, pageForm);
     }
 }

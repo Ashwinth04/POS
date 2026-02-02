@@ -1,6 +1,8 @@
 package com.increff.pos.scheduler;
 
 import com.increff.pos.api.SalesApiImpl;
+import com.increff.pos.dao.SalesDao;
+import com.increff.pos.dto.SalesDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -12,7 +14,7 @@ import java.time.ZonedDateTime;
 public class SalesScheduler {
 
     @Autowired
-    private SalesApiImpl salesApi;
+    private SalesDto salesDto;
 
 //    @Scheduled(fixedDelay = 10000)
     // second minute hour day-of-month month day-of-week
@@ -22,6 +24,6 @@ public class SalesScheduler {
         ZonedDateTime start = LocalDate.now(zone).atStartOfDay(zone);
         ZonedDateTime end = start.plusDays(1);
 
-        salesApi.storeDailySales(start, end);
+        salesDto.storeDailySales(start, end);
     }
 }

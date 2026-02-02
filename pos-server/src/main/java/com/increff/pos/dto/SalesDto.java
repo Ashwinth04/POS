@@ -1,16 +1,13 @@
 package com.increff.pos.dto;
 
 import com.increff.pos.api.SalesApiImpl;
-import com.increff.pos.dao.SalesDao;
-import com.increff.pos.db.ProductPojo;
 import com.increff.pos.db.SalesPojo;
 import com.increff.pos.exception.ApiException;
-import com.increff.pos.helper.ProductHelper;
 import com.increff.pos.helper.SalesHelper;
 import com.increff.pos.model.data.DailySalesData;
 import com.increff.pos.model.data.ProductRow;
 import com.increff.pos.model.form.PageForm;
-import com.increff.pos.model.form.ProductForm;
+import com.increff.pos.util.FormValidator;
 import com.increff.pos.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,6 +23,9 @@ public class SalesDto {
 
     @Autowired
     private SalesApiImpl salesApi;
+
+    @Autowired
+    private FormValidator formValidator;
 
     public List<ProductRow> getSalesForClient(String clientName, LocalDate startDate, LocalDate endDate) throws ApiException {
 
@@ -51,13 +51,18 @@ public class SalesDto {
 
         SalesPojo pojo = salesApi.getDailySales(start, end);
 
-        return SalesHelper.convertToDto(pojo);
+        return SalesHelper.convertToData(pojo);
     }
 
-    public Page<DailySalesData> getAllPaginated(PageForm pageForm) {
+    public Page<DailySalesData> getAllPaginated(PageForm pageForm) throws ApiException {
 
+        formValidator.validate(pageForm);
         Page<SalesPojo> productPage = salesApi.getAllSales(pageForm.getPage(), pageForm.getSize());
-        return productPage.map(SalesHelper::convertToDto);
+        return productPage.map(SalesHelper::convertToData);
+    }
+
+    public void storeDailySales(ZonedDateTime startDate, ZonedDateTime endDate) {
+        salesApi.storeDailySales(startDate, endDate);
     }
 
 }

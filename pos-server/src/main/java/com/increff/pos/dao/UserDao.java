@@ -20,11 +20,6 @@ public class UserDao extends AbstractDao<UserPojo> {
         );
     }
 
-    public UserPojo findByEmail(String email) {
-        Query query = Query.query(Criteria.where("email").is(email));
-        return mongoOperations.findOne(query, UserPojo.class);
-    }
-
     public UserPojo findByUsername(String username) {
         Query query = Query.query(Criteria.where("username").is(username));
         return mongoOperations.findOne(query, UserPojo.class);

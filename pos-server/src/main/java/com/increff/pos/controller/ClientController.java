@@ -30,13 +30,13 @@ public class ClientController {
 
     @Operation(summary = "Get all clients with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
-    public Page<ClientData> getAllClients(@Valid @RequestBody PageForm form) throws ApiException {
+    public Page<ClientData> getAllClients(@RequestBody PageForm form) throws ApiException {
         return clientDto.getAllClients(form);
     }
 
     @Operation(summary = "Update client details")
     @RequestMapping(path = "/update", method = RequestMethod.PUT)
-    public ClientData updateClient(@Valid @RequestBody ClientForm clientForm) throws ApiException {
+    public ClientData updateClient(@RequestBody ClientForm clientForm) throws ApiException {
         return clientDto.updateClientDetails(clientForm);
     }
 

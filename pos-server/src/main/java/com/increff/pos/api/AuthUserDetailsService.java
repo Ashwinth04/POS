@@ -1,6 +1,7 @@
 package com.increff.pos.api;
 
 import com.increff.pos.config.SupervisorConfig;
+import com.increff.pos.constants.Constants;
 import com.increff.pos.dao.UserDao;
 import com.increff.pos.db.UserPojo;
 import com.increff.pos.security.Roles;
@@ -29,7 +30,7 @@ public class AuthUserDetailsService implements UserDetailsService {
             return User.builder()
                     .username(supervisorConfig.getUsername())
                     .password(encoder.encode(supervisorConfig.getPassword()))
-                    .roles(Roles.SUPERVISOR)
+                    .roles(Constants.SUPERVISOR)
                     .build();
         }
 
@@ -41,7 +42,7 @@ public class AuthUserDetailsService implements UserDetailsService {
         return User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
-                .roles(Roles.OPERATOR)
+                .roles(Constants.OPERATOR)
                 .build();
     }
 }

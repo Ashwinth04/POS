@@ -77,6 +77,24 @@ public class InventoryApiImpl implements InventoryApi{
         inventoryDao.save(dummyRecord);
     }
 
+    public void createDummyInventoryRecordsBulk(List<String> productIds) {
+
+        if (productIds == null || productIds.isEmpty()) {
+            return;
+        }
+
+        List<InventoryPojo> inventoryPojos = new ArrayList<>();
+
+        for (String productId : productIds) {
+            InventoryPojo pojo = new InventoryPojo();
+            pojo.setProductId(productId);
+            pojo.setQuantity(0);
+            inventoryPojos.add(pojo);
+        }
+
+        inventoryDao.saveAll(inventoryPojos);
+    }
+
     public Map<String, InventoryPojo> fetchRecordsForOrderItems(List<InventoryPojo> items) {
 
         // 1. Extract barcodes from order items

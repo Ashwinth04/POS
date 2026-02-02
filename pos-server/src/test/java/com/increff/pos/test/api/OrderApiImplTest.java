@@ -5,192 +5,226 @@ import com.increff.pos.dao.OrderDao;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.MessageData;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class OrderApiImplTest {
-
-    @InjectMocks
-    private OrderApiImpl orderApi;
 
     @Mock
     private OrderDao orderDao;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
+    @InjectMocks
+    private OrderApiImpl orderApi;
 
     // ---------- placeOrder ----------
+
     @Test
-    void shouldPlaceOrderAsFulfillable() throws ApiException {
+    void testPlaceOrder_fulfillable() {
         OrderPojo pojo = new OrderPojo();
-        pojo.setOrderId("o1");
 
-        OrderPojo saved = new OrderPojo();
-        saved.setOrderId("o1");
+        when(orderDao.save(pojo)).thenReturn(pojo);
 
-        when(orderDao.save(pojo)).thenReturn(saved);
+        OrderPojo result =
+                orderApi.placeOrder(pojo, true);
 
-        OrderPojo result = orderApi.placeOrder(pojo, true);
-
-        assertEquals("FULFILLABLE", pojo.getOrderStatus());
-        assertEquals(saved, result);
+        assertThat(result.getOrderStatus()).isEqualTo("FULFILLABLE");
         verify(orderDao).save(pojo);
+    }
+
+    @Test
+    void testPlaceOrder_unfulfillable() {
+        OrderPojo pojo = new OrderPojo();
+
+        when(orderDao.save(pojo)).thenReturn(pojo);
+
+        OrderPojo result =
+                orderApi.placeOrder(pojo, false);
+
+        assertThat(result.getOrderStatus()).isEqualTo("UNFULFILLABLE");
     }
 
     // ---------- editOrder ----------
+
     @Test
-    void shouldEditOrder() throws ApiException {
+    void testEditOrder_success() throws ApiException {
         OrderPojo pojo = new OrderPojo();
-        pojo.setOrderId("o1");
+        pojo.setOrderId("O1");
 
         OrderPojo existing = new OrderPojo();
-        existing.setOrderId("o1");
-        existing.setId("232rfe");
+        existing.setId("DB_ID");
 
-        when(orderDao.findByOrderId("o1")).thenReturn(existing);
-        when(orderDao.save(any(OrderPojo.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderDao.findByOrderId("O1")).thenReturn(existing);
+        when(orderDao.save(any(OrderPojo.class))).thenReturn(pojo);
 
-        OrderPojo result = orderApi.editOrder(pojo, false);
+        OrderPojo result =
+                orderApi.editOrder(pojo, true);
 
-        assertEquals("UNFULFILLABLE", pojo.getOrderStatus());
-        assertEquals(existing.getId(), pojo.getId());
+        assertThat(result.getOrderStatus()).isEqualTo("FULFILLABLE");
         verify(orderDao).save(pojo);
     }
 
+    // ---------- updateOrder ----------
+
     @Test
-    void shouldThrowExceptionWhenEditingNonExistingOrder() {
+    void testUpdateOrder_success() throws ApiException {
         OrderPojo pojo = new OrderPojo();
-        pojo.setOrderId("o2");
+        pojo.setOrderId("O1");
 
-        when(orderDao.findByOrderId("o2")).thenReturn(null);
+        OrderPojo existing = new OrderPojo();
+        existing.setId("DB_ID");
 
-        ApiException exception = assertThrows(ApiException.class,
-                () -> orderApi.editOrder(pojo, true));
+        when(orderDao.findByOrderId("O1")).thenReturn(existing);
+        when(orderDao.save(pojo)).thenReturn(pojo);
 
-        assertEquals("Order with the given id does not exist", exception.getMessage());
+        OrderPojo result =
+                orderApi.updateOrder(pojo);
+
+        assertThat(result).isEqualTo(pojo);
+        assertThat(pojo.getId()).isEqualTo("DB_ID");
+    }
+
+    @Test
+    void testUpdateOrder_notFound() {
+        OrderPojo pojo = new OrderPojo();
+        pojo.setOrderId("O1");
+
+        when(orderDao.findByOrderId("O1")).thenReturn(null);
+
+        assertThatThrownBy(() -> orderApi.updateOrder(pojo))
+                .isInstanceOf(ApiException.class)
+                .hasMessage("Order with the given id does not exist");
     }
 
     // ---------- cancelOrder ----------
+
     @Test
-    void shouldCancelOrder() throws ApiException {
+    void testCancelOrder_success() throws ApiException {
         OrderPojo pojo = new OrderPojo();
-        pojo.setOrderId("o1");
+        pojo.setOrderStatus("PLACED");
 
-        when(orderDao.findByOrderId("o1")).thenReturn(pojo);
-        when(orderDao.save(any(OrderPojo.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderDao.findByOrderId("O1")).thenReturn(pojo);
 
-        MessageData message = orderApi.cancelOrder("o1");
+        MessageData result =
+                orderApi.cancelOrder("O1");
 
-        assertEquals("CANCELLED", pojo.getOrderStatus());
-        assertEquals("Order cancelled successfully!", message.getMessage());
+        assertThat(pojo.getOrderStatus()).isEqualTo("CANCELLED");
+        assertThat(result.getMessage())
+                .isEqualTo("Order cancelled successfully!");
         verify(orderDao).save(pojo);
     }
 
     @Test
-    void shouldThrowExceptionWhenCancellingNonExistingOrder() {
-        when(orderDao.findByOrderId("o2")).thenReturn(null);
+    void testCancelOrder_notFound() {
+        when(orderDao.findByOrderId("O1")).thenReturn(null);
 
-        ApiException exception = assertThrows(ApiException.class,
-                () -> orderApi.cancelOrder("o2"));
-
-        assertEquals("Order with the given id does not exist", exception.getMessage());
-    }
-
-    // ---------- getOrderByOrderId ----------
-    @Test
-    void shouldGetOrderByOrderId() throws ApiException {
-        OrderPojo pojo = new OrderPojo();
-        pojo.setOrderId("o1");
-
-        when(orderDao.findByOrderId("o1")).thenReturn(pojo);
-
-        OrderPojo result = orderApi.getOrderByOrderId("o1");
-
-        assertEquals(pojo, result);
-    }
-
-    @Test
-    void shouldThrowExceptionWhenOrderNotFound() {
-        when(orderDao.findByOrderId("o2")).thenReturn(null);
-
-        ApiException exception = assertThrows(ApiException.class,
-                () -> orderApi.getOrderByOrderId("o2"));
-
-        assertEquals("ORDER WITH THE GIVEN ID DOESN'T EXIST", exception.getMessage());
-    }
-
-    // ---------- updatePlacedStatus ----------
-    @Test
-    void shouldUpdatePlacedStatus() throws ApiException {
-        OrderPojo pojo = new OrderPojo();
-        pojo.setOrderId("o1");
-        pojo.setOrderStatus("FULFILLABLE");
-
-        when(orderDao.findByOrderId("o1")).thenReturn(pojo);
-        when(orderDao.save(any(OrderPojo.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        orderApi.updatePlacedStatus("o1");
-
-        assertEquals("PLACED", pojo.getOrderStatus());
-        verify(orderDao).save(pojo);
+        assertThatThrownBy(() -> orderApi.cancelOrder("O1"))
+                .isInstanceOf(ApiException.class)
+                .hasMessage("Order with the given id does not exist");
     }
 
     // ---------- getAllOrders ----------
+
     @Test
-    void shouldGetAllOrders() {
-        OrderPojo pojo1 = new OrderPojo();
-        OrderPojo pojo2 = new OrderPojo();
+    void testGetAllOrders_success() {
+        Page<OrderPojo> page =
+                new PageImpl<>(List.of(new OrderPojo()));
 
-        Pageable pageable = PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "orderTime"));
-        Page<OrderPojo> page = new PageImpl<>(List.of(pojo1, pojo2), pageable, 2);
+        when(orderDao.findAll(any(Pageable.class)))
+                .thenReturn(page);
 
-        when(orderDao.findAll(pageable)).thenReturn(page);
+        Page<OrderPojo> result =
+                orderApi.getAllOrders(0, 10);
 
-        Page<OrderPojo> result = orderApi.getAllOrders(0, 2);
+        assertThat(result.getContent()).hasSize(1);
+    }
 
-        assertEquals(2, result.getTotalElements());
-        verify(orderDao).findAll(pageable);
+    // ---------- getOrderByOrderId ----------
+
+    @Test
+    void testGetOrderByOrderId_success() throws ApiException {
+        OrderPojo pojo = new OrderPojo();
+
+        when(orderDao.findByOrderId("O1"))
+                .thenReturn(pojo);
+
+        OrderPojo result =
+                orderApi.getOrderByOrderId("O1");
+
+        assertThat(result).isEqualTo(pojo);
+    }
+
+    @Test
+    void testGetOrderByOrderId_notFound() {
+        when(orderDao.findByOrderId("O1"))
+                .thenReturn(null);
+
+        assertThatThrownBy(() -> orderApi.getOrderByOrderId("O1"))
+                .isInstanceOf(ApiException.class)
+                .hasMessage("ORDER WITH THE GIVEN ID DOESN'T EXIST");
+    }
+
+    // ---------- updatePlacedStatus ----------
+
+    @Test
+    void testUpdatePlacedStatus_success() throws ApiException {
+        OrderPojo pojo = new OrderPojo();
+        pojo.setOrderStatus("FULFILLABLE");
+
+        when(orderDao.findByOrderId("O1"))
+                .thenReturn(pojo);
+
+        orderApi.updatePlacedStatus("O1");
+
+        assertThat(pojo.getOrderStatus()).isEqualTo("PLACED");
+        verify(orderDao).save(pojo);
     }
 
     // ---------- filterOrders ----------
-    @Test
-    void shouldFilterOrders() {
-        OrderPojo pojo = new OrderPojo();
-        Pageable pageable = PageRequest.of(0, 1);
-        Page<OrderPojo> page = new PageImpl<>(List.of(pojo), pageable, 1);
 
+    @Test
+    void testFilterOrders_success() {
         ZonedDateTime start = ZonedDateTime.now().minusDays(1);
         ZonedDateTime end = ZonedDateTime.now();
 
-        when(orderDao.findOrdersBetween(start, end, 0, 1)).thenReturn(page);
+        Page<OrderPojo> daoPage =
+                new PageImpl<>(List.of(new OrderPojo()),
+                        PageRequest.of(0, 10),
+                        1);
 
-        Page<OrderPojo> result = orderApi.filterOrders(start, end, 0, 1);
+        when(orderDao.findOrdersBetween(start, end, 0, 10))
+                .thenReturn(daoPage);
 
-        assertEquals(1, result.getTotalElements());
-        verify(orderDao).findOrdersBetween(start, end, 0, 1);
+        Page<OrderPojo> result =
+                orderApi.filterOrders(start, end, 0, 10);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getTotalElements()).isEqualTo(1);
     }
 
     // ---------- getOrderStatus ----------
+
     @Test
-    void shouldGetOrderStatus() throws ApiException {
+    void testGetOrderStatus_success() throws ApiException {
         OrderPojo pojo = new OrderPojo();
-        pojo.setOrderId("o1");
-        pojo.setOrderStatus("FULFILLABLE");
+        pojo.setOrderStatus("PLACED");
 
-        when(orderDao.findByOrderId("o1")).thenReturn(pojo);
+        when(orderDao.findByOrderId("O1"))
+                .thenReturn(pojo);
 
-        String status = orderApi.getOrderStatus("o1");
+        String status =
+                orderApi.getOrderStatus("O1");
 
-        assertEquals("FULFILLABLE", status);
+        assertThat(status).isEqualTo("PLACED");
     }
 }

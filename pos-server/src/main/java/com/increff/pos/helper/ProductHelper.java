@@ -1,18 +1,11 @@
 package com.increff.pos.helper;
 
-import com.increff.pos.controller.ProductController;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
-import com.increff.pos.model.data.InventoryData;
 import com.increff.pos.model.data.ProductData;
-import com.increff.pos.model.data.ProductDisplayData;
-import com.increff.pos.model.form.InventoryForm;
 import com.increff.pos.model.form.ProductForm;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static com.increff.pos.constants.Constants.*;
@@ -29,7 +22,7 @@ public class ProductHelper {
         return productPojo;
     }
 
-    public static ProductData convertToDto(ProductPojo productPojo) {
+    public static ProductData convertToData(ProductPojo productPojo) {
 
         ProductData productData = new ProductData();
         productData.setId(productPojo.getId());
@@ -42,25 +35,7 @@ public class ProductHelper {
         return productData;
     }
 
-    public static void validateHeaders(Map<String, Integer> headerIndexMap) throws ApiException {
-
-        List<String> requiredHeaders = List.of(
-                BARCODE,
-                PRODUCT_NAME,
-                CLIENT_NAME,
-                MRP
-        );
-
-        List<String> missing = requiredHeaders.stream()
-                .filter(h -> !headerIndexMap.containsKey(h))
-                .toList();
-
-        if (!missing.isEmpty()) {
-            throw new ApiException("Missing required columns: " + missing);
-        }
-    }
-
-    private static String getValue(String[] row, Map<String, Integer> headerIndexMap, String header) {
+    private static String getValueFromRow(String[] row, Map<String, Integer> headerIndexMap, String header) {
         Integer index = headerIndexMap.get(header);
         if (index == null || index >= row.length) {
             return null;
@@ -68,33 +43,58 @@ public class ProductHelper {
         return row[index].trim();
     }
 
-    public static ProductPojo toProductPojo(
-            String[] row,
-            Map<String, Integer> headerIndexMap
-    ) throws ApiException {
+    public static ProductPojo convertRowToProductPojo(String[] row, Map<String, Integer> headerIndexMap) throws ApiException {
 
         ProductPojo pojo = new ProductPojo();
 
-        pojo.setBarcode(getValue(row, headerIndexMap, BARCODE).toLowerCase());
-        pojo.setName(getValue(row, headerIndexMap, PRODUCT_NAME).toLowerCase());
-        pojo.setClientName(getValue(row, headerIndexMap, CLIENT_NAME));
+        String barcode = getValueFromRow(row, headerIndexMap, BARCODE);
+        if (barcode == null || barcode.trim().isEmpty()) {
+            throw new ApiException("Barcode cannot be empty");
+        }
+        pojo.setBarcode(barcode.toLowerCase());
 
-        String mrpStr = getValue(row, headerIndexMap, MRP);
-        if (mrpStr != null) {
-            try {
-                pojo.setMrp(Double.parseDouble(mrpStr));
-            } catch (NumberFormatException e) {
-                throw new ApiException("Invalid MRP: " + mrpStr);
-            }
+        String name = getValueFromRow(row, headerIndexMap, PRODUCT_NAME);
+        if (name == null || name.trim().isEmpty()) {
+            throw new ApiException("Product name cannot be empty");
+        }
+        pojo.setName(name.toLowerCase());
+
+        String clientName = getValueFromRow(row, headerIndexMap, CLIENT_NAME);
+        if (clientName == null || clientName.trim().isEmpty()) {
+            throw new ApiException("Client name cannot be empty");
+        }
+        pojo.setClientName(clientName);
+
+        String mrpStr = getValueFromRow(row, headerIndexMap, MRP);
+        if (mrpStr == null || mrpStr.trim().isEmpty()) {
+            throw new ApiException("MRP cannot be empty");
         }
 
-        pojo.setImageUrl(getValue(row, headerIndexMap, IMAGE_URL));
+        double mrp;
+        try {
+            mrp = Double.parseDouble(mrpStr.trim());
+        } catch (NumberFormatException e) {
+            throw new ApiException("Invalid MRP: " + mrpStr);
+        }
+
+        // simple validations
+        if (mrp <= 0 || Double.isNaN(mrp) || Double.isInfinite(mrp) || mrp > 1_000_000) {
+            throw new ApiException("Invalid MRP: " + mrpStr);
+        }
+
+        // optional: reject scientific notation (contains 'e' or 'E' in original string)
+        if (mrpStr.toLowerCase().contains("e")) {
+            throw new ApiException("MRP cannot be in scientific notation: " + mrpStr);
+        }
+
+        pojo.setMrp(mrp);
+
+        pojo.setImageUrl(getValueFromRow(row, headerIndexMap, IMAGE_URL));
 
         return pojo;
     }
 
-
-    public static ProductData convertToDto(
+    public static ProductData convertToData(
             ProductPojo product,
             Map<String, InventoryPojo> inventoryByProductId
     ) {

@@ -4,14 +4,12 @@ import com.increff.pos.db.OrderPojo;
 import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.OrderItemForm;
-import org.springframework.core.annotation.Order;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public class OrderHelper {
@@ -25,7 +23,7 @@ public class OrderHelper {
 
         for (OrderItemForm item: orderForm.getOrderItems()) {
             OrderItem orderItem = new OrderItem();
-            orderItem.setBarcode(item.getBarcode().toLowerCase());
+            orderItem.setBarcode(item.getBarcode());
             orderItem.setOrderedQuantity(item.getOrderedQuantity());
             orderItem.setSellingPrice(item.getSellingPrice());
 
@@ -38,7 +36,7 @@ public class OrderHelper {
         return orderPojo;
     }
 
-    public static OrderData convertToDto(OrderPojo orderPojo) {
+    public static OrderData convertToData(OrderPojo orderPojo) {
 
         OrderData orderData = new OrderData();
 

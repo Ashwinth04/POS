@@ -14,7 +14,7 @@ public class ClientHelper {
         return clientPojo;
     }
 
-    public static ClientData convertToDto(ClientPojo clientPojo) {
+    public static ClientData convertToData(ClientPojo clientPojo) {
         ClientData clientData = new ClientData();
         clientData.setId(clientPojo.getId());
         clientData.setName(clientPojo.getName());
@@ -22,13 +22,5 @@ public class ClientHelper {
         clientData.setLocation(clientPojo.getLocation());
         clientData.setPhoneNumber(clientPojo.getPhoneNumber());
         return clientData;
-    }
-
-    public static ClientPojo normalizeClient(ClientPojo clientPojo) {
-        String location = clientPojo.getLocation().toLowerCase();
-        clientPojo.setEmail(clientPojo.getEmail().toLowerCase());
-        clientPojo.setLocation(location);
-
-        return clientPojo;
     }
 }

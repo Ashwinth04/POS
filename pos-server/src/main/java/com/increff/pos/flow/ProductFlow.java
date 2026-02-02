@@ -54,9 +54,13 @@ public class ProductFlow {
 
         List<ProductPojo> savedProducts = productApi.addProductsBulk(productPojos);
 
-        for (ProductPojo pojo: savedProducts) {
-            String productId = pojo.getId();
-            inventoryApi.createDummyInventoryRecord(productId);
-        }
+        List<String> productIds = savedProducts.stream().map(ProductPojo::getId).toList();
+
+        inventoryApi.createDummyInventoryRecordsBulk(productIds);
+
+    }
+
+    public Page<ProductPojo> searchProducts(String type, String query, int page,int size) throws ApiException {
+        return productApi.searchProducts(type, query, page, size);
     }
 }

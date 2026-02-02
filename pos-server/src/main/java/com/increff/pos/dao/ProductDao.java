@@ -3,6 +3,7 @@ package com.increff.pos.dao;
 import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -37,6 +38,34 @@ public class ProductDao extends AbstractDao<ProductPojo> {
         );
 
         return mongoOperations.find(query, ProductPojo.class);
+    }
+
+    public Page<ProductPojo> searchByBarcode(String barcode, Pageable pageable) {
+        Query query = new Query(
+                Criteria.where("barcode").regex("^" + barcode)
+        );
+
+        long total = mongoOperations.count(query, ProductPojo.class);
+        query.with(pageable);
+
+        List<ProductPojo> results =
+                mongoOperations.find(query, ProductPojo.class);
+
+        return new PageImpl<>(results, pageable, total);
+    }
+
+    public Page<ProductPojo> searchByName(String name, Pageable pageable) {
+        Query query = new Query(
+                Criteria.where("name").regex("^" + name)
+        );
+
+        long total = mongoOperations.count(query, ProductPojo.class);
+        query.with(pageable);
+
+        List<ProductPojo> results =
+                mongoOperations.find(query, ProductPojo.class);
+
+        return new PageImpl<>(results, pageable, total);
     }
 
 }

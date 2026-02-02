@@ -1,11 +1,8 @@
 package com.increff.pos.helper;
 
-import com.increff.pos.dao.InventoryDao;
 import com.increff.pos.db.InventoryPojo;
-import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.InventoryData;
-import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.model.form.InventoryForm;
 
 import java.util.ArrayList;
@@ -14,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.increff.pos.constants.Constants.*;
-import static com.increff.pos.constants.Constants.CLIENT_NAME;
-import static com.increff.pos.constants.Constants.MRP;
 
 public class InventoryHelper {
 
@@ -27,7 +22,7 @@ public class InventoryHelper {
         return inventoryPojo;
     }
 
-    public static InventoryData convertToDto(InventoryPojo inventoryPojo) {
+    public static InventoryData convertToData(InventoryPojo inventoryPojo) {
 
         InventoryData inventoryData = new InventoryData();
         inventoryData.setProductId(inventoryPojo.getProductId());
@@ -62,7 +57,7 @@ public class InventoryHelper {
         if (!headerIndexMap.containsKey(BARCODE)) {
             missingHeaders.add("barcode");
         }
-        if (!headerIndexMap.containsKey(INVENTORY)) {
+        if (!headerIndexMap.containsKey(QUANTITY)) {
             missingHeaders.add("inventory");
         }
 
@@ -92,7 +87,7 @@ public class InventoryHelper {
 
         List<String> requiredHeaders = List.of(
                 BARCODE,
-                INVENTORY
+                QUANTITY
         );
 
         List<String> missing = requiredHeaders.stream()
@@ -104,7 +99,7 @@ public class InventoryHelper {
         }
     }
 
-    public static InventoryPojo toInventoryPojo(String[] row, Map<String, Integer> headerIndexMap, Map<String, String> barcodeToProductId) throws ApiException {
+    public static InventoryPojo convertRowToInventoryPojo(String[] row, Map<String, Integer> headerIndexMap, Map<String, String> barcodeToProductId) throws ApiException {
 
         Integer barcodeIndex = headerIndexMap.get("barcode");
         if (barcodeIndex == null || barcodeIndex >= row.length) {
