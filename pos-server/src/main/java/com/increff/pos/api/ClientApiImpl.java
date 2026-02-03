@@ -24,8 +24,7 @@ public class ClientApiImpl implements ClientApi {
     private ClientDao clientDao;
 
     @Transactional(rollbackFor = Exception.class)
-    public ClientPojo addClient(ClientPojo clientPojo) throws ApiException {
-
+    public ClientPojo addClient(ClientPojo clientPojo) {
         return clientDao.save(clientPojo);
     }
 
@@ -45,6 +44,7 @@ public class ClientApiImpl implements ClientApi {
     }
 
     public void checkNameExists(String name) throws ApiException {
+
         ClientPojo existing = clientDao.findByName(name);
 
         if (Objects.nonNull(existing)) {

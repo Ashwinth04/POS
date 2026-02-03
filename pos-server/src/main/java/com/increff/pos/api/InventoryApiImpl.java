@@ -25,6 +25,7 @@ public class InventoryApiImpl implements InventoryApi{
         return inventoryPojo;
     }
 
+    @Transactional(rollbackFor = ApiException.class)
     public boolean reserveInventory(List<InventoryPojo> items) throws ApiException {
 
         boolean isFulfillable = checkOrderFulfillable(items);
@@ -40,13 +41,14 @@ public class InventoryApiImpl implements InventoryApi{
         return isFulfillable;
     }
 
+    @Transactional(rollbackFor = ApiException.class)
     public void editOrder(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) throws ApiException {
 
         Map<String, Integer> delta = calculateDeltaInventory(existingItems, incomingItems);
         updateDeltaInventory(delta);
-
     }
 
+    @Transactional(rollbackFor = ApiException.class)
     public void revertInventory(List<InventoryPojo> orderInventoryPojos) {
 
         for (InventoryPojo pojo: orderInventoryPojos) {
@@ -57,6 +59,7 @@ public class InventoryApiImpl implements InventoryApi{
         updateBulkInventory(orderInventoryPojos);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void createDummyInventoryRecord(String productId) {
 
         InventoryPojo dummyRecord = new InventoryPojo();
@@ -66,9 +69,10 @@ public class InventoryApiImpl implements InventoryApi{
         inventoryDao.save(dummyRecord);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void createDummyInventoryRecordsBulk(List<String> productIds) {
 
-        if (productIds == null || productIds.isEmpty()) {
+        if (Objects.isNull(productIds) || productIds.isEmpty()) {
             return;
         }
 
@@ -86,7 +90,6 @@ public class InventoryApiImpl implements InventoryApi{
 
     public Map<String, InventoryPojo> fetchRecordsForOrderItems(List<InventoryPojo> items) {
 
-        // 1. Extract productIds from order items
         List<String> productIds = items.stream()
                 .map(InventoryPojo::getProductId)
                 .distinct()
@@ -102,7 +105,7 @@ public class InventoryApiImpl implements InventoryApi{
 
     }
 
-    public boolean checkOrderFulfillable(List<InventoryPojo> items) throws ApiException {
+    public boolean checkOrderFulfillable(List<InventoryPojo> items) {
 
         Map<String, InventoryPojo> existingRecords = fetchRecordsForOrderItems(items);
 
@@ -127,10 +130,6 @@ public class InventoryApiImpl implements InventoryApi{
 
     public void updateBulkInventory(List<InventoryPojo> pojos) {
 
-        if (pojos == null || pojos.isEmpty()) {
-            return;
-        }
-
         inventoryDao.bulkUpdate(pojos);
     }
 
@@ -145,7 +144,7 @@ public class InventoryApiImpl implements InventoryApi{
 
         Map<String, Integer> delta = new HashMap<>();
 
-        // Add all incoming (positive)
+        // Add all incoming
         incomingItems.forEach((barcode, qty) ->
                 delta.put(barcode, qty)
         );

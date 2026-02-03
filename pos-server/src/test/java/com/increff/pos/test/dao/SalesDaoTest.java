@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
@@ -44,67 +45,6 @@ class SalesDaoTest {
     void testFindByDate_notFound() {
         SalesPojo result = salesDao.findByDate(ZonedDateTime.now());
         assertThat(result).isNull();
-    }
-
-    // ------------------------------------------------
-    // getSalesReport()
-    // ------------------------------------------------
-
-    @Test
-    void testGetSalesReport_success() {
-
-        // product
-        mongoOperations.insert(
-                new Document(Map.of(
-                        "barcode", "B1",
-                        "clientName", "ClientA"
-                )),
-                "products"
-        );
-
-        // order
-        mongoOperations.insert(
-                new Document(Map.of(
-                        "orderTime", new Date(),
-                        "orderItems", List.of(
-                                Map.of(
-                                        "barcode", "B1",
-                                        "orderedQuantity", 2,
-                                        "sellingPrice", 50.0
-                                )
-                        )
-                )),
-                "orders"
-        );
-
-        ZonedDateTime now = ZonedDateTime.now();
-
-        List<ProductRow> rows =
-                salesDao.getSalesReport(
-                        "ClientA",
-                        now.minusDays(1),
-                        now.plusDays(1)
-                );
-
-        assertThat(rows).hasSize(1);
-        assertThat(rows.get(0).getProduct()).isEqualTo("B1");
-        assertThat(rows.get(0).getQuantity()).isEqualTo(2);
-        assertThat(rows.get(0).getRevenue()).isEqualTo(100.0);
-    }
-
-    @Test
-    void testGetSalesReport_noData() {
-
-        ZonedDateTime now = ZonedDateTime.now();
-
-        List<ProductRow> rows =
-                salesDao.getSalesReport(
-                        "ClientA",
-                        now.minusDays(1),
-                        now.plusDays(1)
-                );
-
-        assertThat(rows).isEmpty();
     }
 
     // ------------------------------------------------

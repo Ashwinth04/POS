@@ -9,6 +9,7 @@ import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.OrderHelper;
 import com.increff.pos.model.data.MessageData;
+import com.increff.pos.model.data.OrderData;
 import com.increff.pos.model.data.OrderItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -78,7 +79,7 @@ public class OrderFlow {
 
         OrderPojo orderPojo = orderApi.getCheckByOrderId(orderId);
 
-        String status = orderApi.getOrderStatus(orderId); // get it from orderpojo
+        String status = orderPojo.getOrderStatus();
         OrderHelper.checkOrderCancellable(status);
 
         if (status.equals("FULFILLABLE")) {
@@ -146,5 +147,9 @@ public class OrderFlow {
 
     public Map<String, ProductPojo> mapBarcodesToProductPojos(List<String> barcodes) {
         return productApi.mapBarcodesToProductPojos(barcodes);
+    }
+
+    public OrderPojo searchById(String orderId) throws ApiException {
+        return orderApi.getCheckByOrderId(orderId);
     }
 }

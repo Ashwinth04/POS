@@ -39,9 +39,8 @@ public class SalesDao extends AbstractDao<SalesPojo> {
                                            ZonedDateTime endDate) {
 
         MatchOperation dateMatch = match(
-                Criteria.where("orderTime")
-                        .gte(Date.from(startDate.toInstant()))
-                        .lte(Date.from(endDate.toInstant()))
+                Criteria.where("orderStatus").is("FULFILLABLE")
+                        .and("orderTime").gte(startDate).lt(endDate)
         );
 
         UnwindOperation unwindItems = Aggregation.unwind("orderItems");

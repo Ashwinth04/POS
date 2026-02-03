@@ -1,5 +1,6 @@
-package com.increff.pos.api;
+package com.increff.pos.test.api;
 
+import com.increff.pos.api.SalesApiImpl;
 import com.increff.pos.dao.SalesDao;
 import com.increff.pos.db.SalesPojo;
 import com.increff.pos.model.data.ProductRow;
@@ -8,13 +9,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,98 +34,87 @@ class SalesApiImplTest {
     // ---------- getSalesForClient ----------
 
     @Test
-    void testGetSalesForClient_success() {
-        ZonedDateTime start = ZonedDateTime.now().minusDays(1);
+    void getSalesForClient_success() {
+        ProductRow row = new ProductRow();
+
+        ZonedDateTime start = ZonedDateTime.now().minusDays(5);
         ZonedDateTime end = ZonedDateTime.now();
 
-        List<ProductRow> rows = List.of(new ProductRow());
-
-        when(salesDao.getSalesReport("ClientA", start, end))
-                .thenReturn(rows);
+        when(salesDao.getSalesReport("client1", start, end))
+                .thenReturn(List.of(row));
 
         List<ProductRow> result =
-                salesApi.getSalesForClient("ClientA", start, end);
+                salesApi.getSalesForClient("client1", start, end);
 
-        assertThat(result).hasSize(1);
+        assertEquals(1, result.size());
+        verify(salesDao).getSalesReport("client1", start, end);
     }
 
     // ---------- getDailySales ----------
 
     @Test
-    void testGetDailySales_success() {
+    void getDailySales_success() {
         ZonedDateTime start = ZonedDateTime.now().minusDays(1);
         ZonedDateTime end = ZonedDateTime.now();
 
         SalesPojo pojo = new SalesPojo();
 
-        when(salesDao.getDailySalesData(start, end))
-                .thenReturn(pojo);
+        when(salesDao.getDailySalesData(start, end)).thenReturn(pojo);
 
-        SalesPojo result =
-                salesApi.getDailySales(start, end);
+        SalesPojo result = salesApi.getDailySales(start, end);
 
-        assertThat(result).isEqualTo(pojo);
+        assertEquals(pojo, result);
     }
 
     // ---------- storeDailySales ----------
 
     @Test
-    void testStoreDailySales_noExistingRecord() {
+    void storeDailySales_newRecord() {
         ZonedDateTime start = ZonedDateTime.now().minusDays(1);
         ZonedDateTime end = ZonedDateTime.now();
 
-        SalesPojo newData = new SalesPojo();
+        SalesPojo pojo = new SalesPojo();
 
-        when(salesDao.getDailySalesData(start, end))
-                .thenReturn(newData);
-
-        when(salesDao.findByDate(start))
-                .thenReturn(null);
+        when(salesDao.getDailySalesData(start, end)).thenReturn(pojo);
+        when(salesDao.findByDate(start)).thenReturn(null);
 
         salesApi.storeDailySales(start, end);
 
-        assertThat(newData.getDate())
-                .isNotNull();
-
-        verify(salesDao).save(newData);
+        assertNotNull(pojo.getDate());
+        verify(salesDao).save(pojo);
     }
 
     @Test
-    void testStoreDailySales_existingRecord() {
+    void storeDailySales_existingRecord() {
         ZonedDateTime start = ZonedDateTime.now().minusDays(1);
         ZonedDateTime end = ZonedDateTime.now();
 
-        SalesPojo newData = new SalesPojo();
         SalesPojo existing = new SalesPojo();
-        existing.setId("EXISTING_ID");
+        existing.setId("99");
 
-        when(salesDao.getDailySalesData(start, end))
-                .thenReturn(newData);
+        SalesPojo data = new SalesPojo();
 
-        when(salesDao.findByDate(start))
-                .thenReturn(existing);
+        when(salesDao.getDailySalesData(start, end)).thenReturn(data);
+        when(salesDao.findByDate(start)).thenReturn(existing);
 
         salesApi.storeDailySales(start, end);
 
-        assertThat(newData.getId())
-                .isEqualTo("EXISTING_ID");
-
-        verify(salesDao).save(newData);
+        assertEquals("99", data.getId());
+        verify(salesDao).save(data);
     }
 
     // ---------- getAllSales ----------
 
     @Test
-    void testGetAllSales_success() {
+    void getAllSales_success() {
         Page<SalesPojo> page =
                 new PageImpl<>(List.of(new SalesPojo()));
 
-        when(salesDao.findAll(any(Pageable.class)))
+        when(salesDao.findAll(any(PageRequest.class)))
                 .thenReturn(page);
 
-        Page<SalesPojo> result =
-                salesApi.getAllSales(0, 10);
+        Page<SalesPojo> result = salesApi.getAllSales(0, 10);
 
-        assertThat(result.getContent()).hasSize(1);
+        assertEquals(1, result.getContent().size());
     }
 }

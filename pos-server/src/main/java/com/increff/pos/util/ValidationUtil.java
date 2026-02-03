@@ -5,6 +5,7 @@ import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.RowError;
 import com.increff.pos.model.form.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -245,6 +246,24 @@ public class ValidationUtil {
 
         if (rows.size() > 5000) {
             throw new ApiException("Maximum row limit exceeded!");
+        }
+    }
+
+    public static void validateCreateUserRequest(CreateUserRequest request) throws ApiException {
+
+        if (request.getUsername() == null || request.getUsername().isBlank()) {
+            throw new ApiException("Username missing");
+        }
+
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new ApiException("Password missing");
+        }
+    }
+
+    public static void validateAuthentication(Authentication authentication) throws ApiException {
+
+        if (authentication == null) {
+            throw new ApiException("Not logged in");
         }
     }
 } 

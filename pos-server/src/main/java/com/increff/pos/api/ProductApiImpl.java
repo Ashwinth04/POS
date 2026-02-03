@@ -31,6 +31,7 @@ public class ProductApiImpl implements ProductApi {
         return productDao.save(productPojo);
     }
 
+    @Transactional(rollbackFor = ApiException.class)
     public ProductPojo editProduct(ProductPojo productPojo) throws ApiException {
 
         ProductPojo existingRecord = getCheckByBarcode(productPojo.getBarcode());

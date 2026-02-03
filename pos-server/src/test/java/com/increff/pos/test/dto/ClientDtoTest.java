@@ -7,6 +7,7 @@ import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.ClientData;
 import com.increff.pos.model.form.ClientForm;
 import com.increff.pos.model.form.PageForm;
+import com.increff.pos.util.FormValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +26,9 @@ class ClientDtoTest {
 
     @Mock
     private ClientApiImpl clientApi;
+
+    @Mock
+    private FormValidator formValidator;
 
     @InjectMocks
     private ClientDto clientDto;

@@ -23,6 +23,8 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 @Service
 public class AuthApiImpl {
 
@@ -62,11 +64,10 @@ public class AuthApiImpl {
         }
     }
 
+    @Transactional(rollbackFor = ApiException.class)
     public void createOperator(String username, String password) throws ApiException {
 
-        if (userDao.findByUsername(username) != null) {
-            throw new ApiException("User already exists");
-        }
+        checkUserExists(username);
 
         UserPojo user = new UserPojo();
         user.setUsername(username);
@@ -88,10 +89,18 @@ public class AuthApiImpl {
         return new LoginResponse(username, role);
     }
 
-    @Transactional(rollbackFor = ApiException.class)
     public Page<UserPojo> getAllOperators(int page, int size) {
 
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return userDao.findAll(pageRequest);
+    }
+
+    public void checkUserExists(String username) throws ApiException {
+
+        UserPojo user = userDao.findByUsername(username);
+
+        if (Objects.nonNull(user)) {
+            throw new ApiException("User already exists");
+        }
     }
 }

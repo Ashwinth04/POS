@@ -8,6 +8,7 @@ import com.increff.pos.model.form.ProductForm;
 import com.increff.pos.util.ValidationUtil;
 
 import java.util.Map;
+import java.util.Objects;
 
 import static com.increff.pos.constants.Constants.*;
 import static com.increff.pos.util.FileUtils.getValueFromRow;
@@ -60,10 +61,7 @@ public class ProductHelper {
         return pojo;
     }
 
-    public static ProductData convertToData(
-            ProductPojo product,
-            Map<String, InventoryPojo> inventoryByProductId
-    ) {
+    public static ProductData convertToData(ProductPojo product, Map<String, InventoryPojo> inventoryByProductId) {
         ProductData data = new ProductData();
 
         data.setId(product.getId());
@@ -74,7 +72,7 @@ public class ProductHelper {
         data.setImageUrl(product.getImageUrl());
 
         InventoryPojo inventory = inventoryByProductId.get(product.getId());
-        if (inventory != null) {
+        if (Objects.nonNull(inventory)) {
             data.setQuantity(inventory.getQuantity());
         }
 

@@ -9,6 +9,7 @@ import com.increff.pos.model.data.OperatorData;
 import com.increff.pos.model.form.CreateUserRequest;
 import com.increff.pos.model.form.LoginRequest;
 import com.increff.pos.model.form.PageForm;
+import com.increff.pos.util.NormalizationUtil;
 import com.increff.pos.util.ValidationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,47 +27,31 @@ public class AuthDto {
     public LoginResponse login(LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ApiException {
 
         ValidationUtil.validateLoginRequest(request);
-
-        String username = request.getUsername().trim().toLowerCase();
+        String username = request.getUsername();
+        NormalizationUtil.normalizeUsername(username);
         String password = request.getPassword();
 
         return authApi.login(username, password, httpRequest, httpResponse);
     }
 
     public void createOperator(CreateUserRequest request) throws ApiException {
-        try {
-            // 1. Validate
-            if (request.getUsername() == null || request.getUsername().isBlank()) {
-                throw new ApiException("Username missing");
-            }
 
-            if (request.getPassword() == null || request.getPassword().isBlank()) {
-                throw new ApiException("Password missing");
-            }
+        ValidationUtil.validateCreateUserRequest(request);
+        String username = request.getUsername();
+        NormalizationUtil.normalizeUsername(username);
+        String password = request.getPassword();
 
-            // 2. Sanitize
-            String username = request.getUsername().trim().toLowerCase();
-            String password = request.getPassword();
-
-            // 3. Delegate to API
-            authApi.createOperator(username, password);
-
-        } catch (Exception e) {
-            e.printStackTrace();   // 👈 your important line preserved
-            throw e;
-        }
+        authApi.createOperator(username, password);
     }
 
     public LoginResponse me(Authentication authentication) throws ApiException {
 
-        if (authentication == null) {
-            throw new ApiException("Not logged in");
-        }
+        ValidationUtil.validateAuthentication(authentication);
 
         return authApi.me(authentication);
     }
 
-    public Page<OperatorData> getAllOperators(PageForm form) throws ApiException {
+    public Page<OperatorData> getAllOperators(PageForm form) {
         Page<UserPojo> operatorPage = authApi.getAllOperators(form.getPage(), form.getSize());
         return operatorPage.map(AuthHelper::convertToData);
     }

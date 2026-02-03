@@ -42,6 +42,10 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
 
     public BulkWriteResult bulkUpdate(List<InventoryPojo> validPojos) {
 
+        if (validPojos == null || validPojos.isEmpty()) {
+            return null;
+        }
+
         BulkOperations bulkOps = mongoOperations.bulkOps(
                 BulkOperations.BulkMode.UNORDERED,
                 InventoryPojo.class

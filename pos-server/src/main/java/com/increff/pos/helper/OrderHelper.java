@@ -49,15 +49,6 @@ public class OrderHelper {
         return orderData;
     }
 
-    public static OrderData convertToOrderDto(OrderPojo orderPojo) {
-        OrderData orderData = new OrderData();
-        orderData.setOrderTime(orderPojo.getOrderTime());
-        orderData.setOrderItems(orderPojo.getOrderItems());
-        orderData.setOrderStatus(orderPojo.getOrderStatus());
-
-        return orderData;
-    }
-
     public static String generate() {
         String timestamp = LocalDateTime.now()
                 .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));

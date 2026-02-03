@@ -8,6 +8,7 @@ import com.increff.pos.helper.SalesHelper;
 import com.increff.pos.model.data.DailySalesData;
 import com.increff.pos.model.data.ProductRow;
 import com.increff.pos.model.form.PageForm;
+import com.increff.pos.util.FormValidator;
 import com.increff.pos.util.ValidationUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,121 +20,124 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SalesDtoTest {
 
-    @Mock
-    private SalesApiImpl salesApi;
-
     @InjectMocks
     private SalesDto salesDto;
 
-    // ---------- GET SALES FOR CLIENT ----------
+    @Mock
+    private SalesApiImpl salesApi;
+
+    @Mock
+    private FormValidator formValidator;
+
+    // ---------- getSalesForClient ----------
 
     @Test
-    void testGetSalesForClientSuccess() throws ApiException {
-
-        String clientName = "client1";
-        LocalDate startDate = LocalDate.now().minusDays(5);
-        LocalDate endDate = LocalDate.now();
+    void testGetSalesForClient_success() throws ApiException {
+        LocalDate start = LocalDate.now().minusDays(2);
+        LocalDate end = LocalDate.now();
 
         List<ProductRow> rows = List.of(new ProductRow());
 
-        try (MockedStatic<ValidationUtil> validationMock = mockStatic(ValidationUtil.class)) {
+        try (MockedStatic<ValidationUtil> validation = mockStatic(ValidationUtil.class)) {
 
-            validationMock.when(() -> ValidationUtil.validateName(clientName))
-                    .thenAnswer(invocation -> null);
+            validation.when(() -> ValidationUtil.validateName("client1"))
+                    .thenAnswer(i -> null);
+            validation.when(() -> ValidationUtil.validateDates(start, end))
+                    .thenAnswer(i -> null);
 
-            validationMock.when(() -> ValidationUtil.validateDates(startDate, endDate))
-                    .thenAnswer(invocation -> null);
+            ZonedDateTime zs = start.atStartOfDay(ZoneId.systemDefault());
+            ZonedDateTime ze = end.atTime(23, 59, 59, 999_000_000)
+                    .atZone(ZoneId.systemDefault());
 
-            when(salesApi.getSalesForClient(
-                    eq(clientName),
-                    any(ZonedDateTime.class),
-                    any(ZonedDateTime.class)
-            )).thenReturn(rows);
+            when(salesApi.getSalesForClient("client1", zs, ze))
+                    .thenReturn(rows);
 
             List<ProductRow> result =
-                    salesDto.getSalesForClient(clientName, startDate, endDate);
+                    salesDto.getSalesForClient("client1", start, end);
 
             assertEquals(1, result.size());
-            verify(salesApi).getSalesForClient(
-                    eq(clientName),
-                    any(ZonedDateTime.class),
-                    any(ZonedDateTime.class)
-            );
         }
     }
 
-    // ---------- GET SALES FOR PERIOD ----------
+    // ---------- getSalesForPeriod ----------
 
     @Test
-    void testGetSalesForPeriodSuccess() throws ApiException {
-
-        LocalDate startDate = LocalDate.now().minusDays(2);
-        LocalDate endDate = LocalDate.now();
+    void testGetSalesForPeriod_success() throws ApiException {
+        LocalDate start = LocalDate.now().minusDays(1);
+        LocalDate end = LocalDate.now();
 
         SalesPojo pojo = new SalesPojo();
         DailySalesData data = new DailySalesData();
 
         try (
-                MockedStatic<ValidationUtil> validationMock = mockStatic(ValidationUtil.class);
-                MockedStatic<SalesHelper> helperMock = mockStatic(SalesHelper.class)
+                MockedStatic<ValidationUtil> validation = mockStatic(ValidationUtil.class);
+                MockedStatic<SalesHelper> helper = mockStatic(SalesHelper.class)
         ) {
+            validation.when(() -> ValidationUtil.validateDates(start, end))
+                    .thenAnswer(i -> null);
 
-            validationMock.when(() -> ValidationUtil.validateDates(startDate, endDate))
-                    .thenAnswer(invocation -> null);
+            ZonedDateTime zs = start.atStartOfDay(ZoneId.systemDefault());
+            ZonedDateTime ze = end.atTime(23, 59, 59, 999_000_000)
+                    .atZone(ZoneId.systemDefault());
 
-            when(salesApi.getDailySales(
-                    any(ZonedDateTime.class),
-                    any(ZonedDateTime.class)
-            )).thenReturn(pojo);
-
-            helperMock.when(() -> SalesHelper.convertToData(pojo))
+            when(salesApi.getDailySales(zs, ze)).thenReturn(pojo);
+            helper.when(() -> SalesHelper.convertToData(pojo))
                     .thenReturn(data);
 
             DailySalesData result =
-                    salesDto.getSalesForPeriod(startDate, endDate);
+                    salesDto.getSalesForPeriod(start, end);
 
             assertNotNull(result);
-            verify(salesApi).getDailySales(
-                    any(ZonedDateTime.class),
-                    any(ZonedDateTime.class)
-            );
         }
     }
 
-    // ---------- GET ALL PAGINATED ----------
+    // ---------- getAllPaginated ----------
 
     @Test
-    void testGetAllPaginatedSuccess() throws ApiException {
+    void testGetAllPaginated_success() throws ApiException {
+        PageForm form = new PageForm();
+        form.setPage(0);
+        form.setSize(10);
 
         SalesPojo pojo = new SalesPojo();
+        DailySalesData data = new DailySalesData();
+
         Page<SalesPojo> page = new PageImpl<>(List.of(pojo));
 
-        when(salesApi.getAllSales(0, 10)).thenReturn(page);
-
-        try (MockedStatic<SalesHelper> helperMock = mockStatic(SalesHelper.class)) {
-
-            helperMock.when(() -> SalesHelper.convertToData(pojo))
-                    .thenReturn(new DailySalesData());
-
-            PageForm pageForm = new PageForm();
-            pageForm.setPage(0);
-            pageForm.setSize(10);
+        try (MockedStatic<SalesHelper> helper = mockStatic(SalesHelper.class)) {
+            when(salesApi.getAllSales(0, 10)).thenReturn(page);
+            helper.when(() -> SalesHelper.convertToData(pojo))
+                    .thenReturn(data);
 
             Page<DailySalesData> result =
-                    salesDto.getAllPaginated(pageForm);
+                    salesDto.getAllPaginated(form);
 
-            assertEquals(1, result.getTotalElements());
-            verify(salesApi).getAllSales(0, 10);
+            assertEquals(1, result.getContent().size());
+            verify(formValidator).validate(form);
         }
+    }
+
+    // ---------- storeDailySales ----------
+
+    @Test
+    void testStoreDailySales() {
+        ZonedDateTime start = ZonedDateTime.now().minusDays(1);
+        ZonedDateTime end = ZonedDateTime.now();
+
+        doNothing().when(salesApi).storeDailySales(start, end);
+
+        salesDto.storeDailySales(start, end);
+
+        verify(salesApi).storeDailySales(start, end);
     }
 }

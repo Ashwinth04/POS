@@ -144,4 +144,9 @@ public class OrderDto {
             throw new ApiException("Selling price exceeds MRP for barcode: " + barcode);
         }
     }
+
+    public OrderData searchById(String orderId) throws ApiException {
+        OrderPojo orderPojo = orderFlow.searchById(orderId);
+        return OrderHelper.convertToData(orderPojo);
+    }
 }

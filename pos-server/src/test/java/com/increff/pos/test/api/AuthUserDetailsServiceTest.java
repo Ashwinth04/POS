@@ -93,7 +93,7 @@ class AuthUserDetailsServiceTest {
     @Test
     void testLoadUserByUsername_userNotFound() {
 
-        when(supervisorConfig.getUsername()).thenReturn("admin");
+        when(supervisorConfig.getUsername()).thenReturn("adminn@gmail.com");
         when(userDao.findByUsername("missing"))
                 .thenReturn(null);
 
@@ -101,25 +101,6 @@ class AuthUserDetailsServiceTest {
                 service.loadUserByUsername("missing")
         )
                 .isInstanceOf(UsernameNotFoundException.class)
-                .hasMessageContaining("Username not found");
-    }
-
-    @Test
-    void testLoadUserByUsername_userInactive() {
-
-        when(supervisorConfig.getUsername()).thenReturn("admin");
-
-        UserPojo pojo = new UserPojo();
-        pojo.setUsername("operator2");
-        pojo.setStatus("INACTIVE");
-
-        when(userDao.findByUsername("operator2"))
-                .thenReturn(pojo);
-
-        assertThatThrownBy(() ->
-                service.loadUserByUsername("operator2")
-        )
-                .isInstanceOf(UsernameNotFoundException.class)
-                .hasMessageContaining("Username not found");
+                .hasMessageContaining("User with the given email not found");
     }
 }

@@ -47,29 +47,6 @@ public class InventoryHelper {
         return pojos;
     }
 
-    public static void validateInventoryRows(List<String[]> rows) throws ApiException {
-
-        if (rows == null || rows.isEmpty()) {
-            throw new ApiException("TSV file is empty");
-        }
-
-        String[] headerRow = rows.get(0);
-        Map<String, Integer> headerIndexMap = extractInventoryHeaderIndexMap(headerRow);
-
-        List<String> missingHeaders = new ArrayList<>();
-
-        if (!headerIndexMap.containsKey(BARCODE)) {
-            missingHeaders.add("barcode");
-        }
-        if (!headerIndexMap.containsKey(QUANTITY)) {
-            missingHeaders.add("inventory");
-        }
-
-        if (!missingHeaders.isEmpty()) {
-            throw new ApiException("Missing required columns: " + missingHeaders);
-        }
-    }
-
     public static Map<String, Integer> extractInventoryHeaderIndexMap(String[] headerRow) {
 
         Map<String, Integer> map = new HashMap<>();

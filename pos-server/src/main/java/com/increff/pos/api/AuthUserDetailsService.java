@@ -4,27 +4,27 @@ import com.increff.pos.config.SupervisorConfig;
 import com.increff.pos.constants.Constants;
 import com.increff.pos.dao.UserDao;
 import com.increff.pos.db.UserPojo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Objects;
+
 @Service
 public class AuthUserDetailsService implements UserDetailsService {
 
-    private final SupervisorConfig supervisorConfig;
-    private final UserDao userDao;
-    private final PasswordEncoder encoder;
+    @Autowired
+    private SupervisorConfig supervisorConfig;
 
-    public AuthUserDetailsService(SupervisorConfig supervisorConfig, UserDao userDao, PasswordEncoder encoder) {
-        this.supervisorConfig = supervisorConfig;
-        this.userDao = userDao;
-        this.encoder = encoder;
-    }
+    @Autowired
+    private UserDao userDao;
 
-    @Override
+    @Autowired
+    private PasswordEncoder encoder;
+
     public UserDetails loadUserByUsername(String username) {
 
-        // 1. Supervisor
         if (username.equals(supervisorConfig.getUsername())) {
             return User.builder()
                     .username(supervisorConfig.getUsername())
@@ -33,15 +33,23 @@ public class AuthUserDetailsService implements UserDetailsService {
                     .build();
         }
 
-        // 2. Operator from DB
-        UserPojo user = userDao.findByUsername(username);
-
-        if (user == null || "INACTIVE".equals(user.getStatus())) throw new UsernameNotFoundException("Username not found or user access revoked");
+        UserPojo user = getCheckByUsername(username);
 
         return User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
                 .roles(Constants.OPERATOR)
                 .build();
+    }
+
+    private UserPojo getCheckByUsername(String username) {
+
+        UserPojo user = userDao.findByUsername(username);
+
+        if (Objects.isNull(user)) {
+            throw new UsernameNotFoundException("User with the given email not found");
+        }
+
+        return user;
     }
 }

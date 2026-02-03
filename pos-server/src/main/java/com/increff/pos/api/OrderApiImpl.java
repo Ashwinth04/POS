@@ -4,6 +4,7 @@ import com.increff.pos.dao.OrderDao;
 import com.increff.pos.model.data.MessageData;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.model.data.OrderData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -40,6 +41,7 @@ public class OrderApiImpl implements OrderApi {
         return orderDao.save(orderPojo);
     }
 
+    @Transactional(rollbackFor = ApiException.class)
     public MessageData cancelOrder(String orderId) throws ApiException {
 
         OrderPojo record = getCheckByOrderId(orderId);
@@ -60,15 +62,14 @@ public class OrderApiImpl implements OrderApi {
 
         OrderPojo pojo = orderDao.findByOrderId(orderId);
 
-        if (pojo == null) throw new ApiException("ORDER WITH THE GIVEN ID DOESN'T EXIST");
+        if (Objects.isNull(pojo)) throw new ApiException("ORDER WITH THE GIVEN ID DOESN'T EXIST");
 
         return pojo;
     }
 
+    @Transactional(rollbackFor = ApiException.class)
     public void updatePlacedStatus(String orderId) throws ApiException {
         OrderPojo orderPojo = getCheckByOrderId(orderId);
-
-        if (orderPojo == null) throw new ApiException("ORDER WITH THE GIVEN ID DOESN'T EXIST");
 
         orderPojo.setOrderStatus("PLACED");
         orderDao.save(orderPojo);
@@ -87,4 +88,5 @@ public class OrderApiImpl implements OrderApi {
     public String getOrderStatus(String orderId) throws ApiException {
         return getCheckByOrderId(orderId).getOrderStatus();
     }
+
 }

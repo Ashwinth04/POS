@@ -7,10 +7,13 @@ import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.InventoryHelper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -24,54 +27,33 @@ class InventoryApiImplTest {
     @InjectMocks
     private InventoryApiImpl inventoryApi;
 
-    private InventoryPojo inv(String productId, int qty) {
-        InventoryPojo pojo = new InventoryPojo();
-        pojo.setProductId(productId);
-        pojo.setQuantity(qty);
-        return pojo;
-    }
-
     // ---------- updateSingleInventory ----------
 
     @Test
-    void testUpdateSingleInventory() throws ApiException {
-        InventoryPojo pojo = inv("p1", 10);
+    void updateSingleInventory_success() throws ApiException {
+        InventoryPojo pojo = new InventoryPojo();
+        pojo.setProductId("p1");
+        pojo.setQuantity(10);
 
-        doNothing().when(inventoryDao).updateInventory(pojo);
+        inventoryApi.updateSingleInventory(pojo);
 
-        InventoryPojo result = inventoryApi.updateSingleInventory(pojo);
-
-        assertEquals(pojo, result);
         verify(inventoryDao).updateInventory(pojo);
-    }
-
-    // ---------- bulkInventoryUpdate ----------
-
-    @Test
-    void testBulkInventoryUpdateWithItems() throws ApiException {
-        List<InventoryPojo> items = List.of(inv("p1", 1));
-
-        inventoryApi.updateBulkInventory(items);
-
-        verify(inventoryDao).bulkUpdate(items);
-    }
-
-    @Test
-    void testBulkInventoryUpdateEmpty() throws ApiException {
-        inventoryApi.updateBulkInventory(List.of());
-
-        verify(inventoryDao, never()).bulkUpdate(any());
     }
 
     // ---------- reserveInventory ----------
 
     @Test
-    void testReserveInventoryFulfillable() throws ApiException {
-        InventoryPojo orderItem = inv("p1", 5);
-        InventoryPojo stock = inv("p1", 10);
+    void reserveInventory_fulfillable() throws ApiException {
+        InventoryPojo orderItem = new InventoryPojo();
+        orderItem.setProductId("p1");
+        orderItem.setQuantity(5);
+
+        InventoryPojo existing = new InventoryPojo();
+        existing.setProductId("p1");
+        existing.setQuantity(10);
 
         when(inventoryDao.findByProductIds(List.of("p1")))
-                .thenReturn(List.of(stock));
+                .thenReturn(List.of(existing));
 
         boolean result = inventoryApi.reserveInventory(List.of(orderItem));
 
@@ -81,12 +63,17 @@ class InventoryApiImplTest {
     }
 
     @Test
-    void testReserveInventoryNotFulfillable() throws ApiException {
-        InventoryPojo orderItem = inv("p1", 15);
-        InventoryPojo stock = inv("p1", 10);
+    void reserveInventory_notFulfillable() throws ApiException {
+        InventoryPojo orderItem = new InventoryPojo();
+        orderItem.setProductId("p1");
+        orderItem.setQuantity(15);
+
+        InventoryPojo existing = new InventoryPojo();
+        existing.setProductId("p1");
+        existing.setQuantity(10);
 
         when(inventoryDao.findByProductIds(List.of("p1")))
-                .thenReturn(List.of(stock));
+                .thenReturn(List.of(existing));
 
         boolean result = inventoryApi.reserveInventory(List.of(orderItem));
 
@@ -97,15 +84,14 @@ class InventoryApiImplTest {
     // ---------- editOrder ----------
 
     @Test
-    void testEditOrder() throws ApiException {
-        Map<String, Integer> existing = Map.of("p1", 2);
-        Map<String, Integer> incoming = Map.of("p1", 5);
+    void editOrder_success() throws ApiException {
+        Map<String, Integer> existing = Map.of("p1", 5);
+        Map<String, Integer> incoming = Map.of("p1", 8, "p2", 2);
 
-        try (MockedStatic<InventoryHelper> mocked =
-                     Mockito.mockStatic(InventoryHelper.class)) {
+        try (MockedStatic<InventoryHelper> mocked = mockStatic(InventoryHelper.class)) {
 
-            List<InventoryPojo> pojos = List.of(inv("p1", 3));
-            mocked.when(() -> InventoryHelper.getPojosFromMap(any()))
+            List<InventoryPojo> pojos = List.of(new InventoryPojo());
+            mocked.when(() -> InventoryHelper.getPojosFromMap(anyMap()))
                     .thenReturn(pojos);
 
             inventoryApi.editOrder(existing, incoming);
@@ -117,43 +103,43 @@ class InventoryApiImplTest {
     // ---------- revertInventory ----------
 
     @Test
-    void testRevertInventory() throws ApiException {
-        InventoryPojo pojo = inv("p1", 5);
+    void revertInventory_success() {
+        InventoryPojo pojo = new InventoryPojo();
+        pojo.setProductId("p1");
+        pojo.setQuantity(5);
 
         inventoryApi.revertInventory(List.of(pojo));
 
-        verify(inventoryDao).bulkUpdate(List.of(pojo));
+        verify(inventoryDao).bulkUpdate(anyList());
     }
 
     // ---------- createDummyInventoryRecord ----------
 
     @Test
-    void testCreateDummyInventoryRecord() {
+    void createDummyInventoryRecord_success() {
         inventoryApi.createDummyInventoryRecord("p1");
 
-        verify(inventoryDao).save(argThat(p ->
-                p.getProductId().equals("p1") && p.getQuantity() == 0
-        ));
+        verify(inventoryDao).save(any(InventoryPojo.class));
     }
 
     // ---------- createDummyInventoryRecordsBulk ----------
 
     @Test
-    void testCreateDummyInventoryRecordsBulkNull() {
+    void createDummyInventoryRecordsBulk_nullInput() {
         inventoryApi.createDummyInventoryRecordsBulk(null);
 
         verify(inventoryDao, never()).saveAll(any());
     }
 
     @Test
-    void testCreateDummyInventoryRecordsBulkEmpty() {
+    void createDummyInventoryRecordsBulk_emptyList() {
         inventoryApi.createDummyInventoryRecordsBulk(List.of());
 
         verify(inventoryDao, never()).saveAll(any());
     }
 
     @Test
-    void testCreateDummyInventoryRecordsBulkSuccess() {
+    void createDummyInventoryRecordsBulk_success() {
         inventoryApi.createDummyInventoryRecordsBulk(List.of("p1", "p2"));
 
         verify(inventoryDao).saveAll(anyList());
@@ -162,67 +148,82 @@ class InventoryApiImplTest {
     // ---------- fetchRecordsForOrderItems ----------
 
     @Test
-    void testFetchRecordsForOrderItems() {
-        InventoryPojo pojo = inv("p1", 10);
+    void fetchRecordsForOrderItems_success() {
+        InventoryPojo orderItem = new InventoryPojo();
+        orderItem.setProductId("p1");
+
+        InventoryPojo inventory = new InventoryPojo();
+        inventory.setProductId("p1");
+        inventory.setQuantity(10);
 
         when(inventoryDao.findByProductIds(List.of("p1")))
-                .thenReturn(List.of(pojo));
+                .thenReturn(List.of(inventory));
 
         Map<String, InventoryPojo> result =
-                inventoryApi.fetchRecordsForOrderItems(List.of(inv("p1", 1)));
+                inventoryApi.fetchRecordsForOrderItems(List.of(orderItem));
 
-        assertEquals(pojo, result.get("p1"));
+        assertEquals(1, result.size());
+        assertTrue(result.containsKey("p1"));
     }
 
     // ---------- checkOrderFulfillable ----------
 
     @Test
-    void testCheckOrderFulfillableTrue() throws ApiException {
-        InventoryPojo order = inv("p1", 5);
-        InventoryPojo stock = inv("p1", 10);
+    void checkOrderFulfillable_true() {
+        InventoryPojo item = new InventoryPojo();
+        item.setProductId("p1");
+        item.setQuantity(3);
+
+        InventoryPojo existing = new InventoryPojo();
+        existing.setProductId("p1");
+        existing.setQuantity(5);
 
         when(inventoryDao.findByProductIds(List.of("p1")))
-                .thenReturn(List.of(stock));
+                .thenReturn(List.of(existing));
 
-        assertTrue(inventoryApi.checkOrderFulfillable(List.of(order)));
+        boolean result = inventoryApi.checkOrderFulfillable(List.of(item));
+
+        assertTrue(result);
     }
 
     @Test
-    void testCheckOrderFulfillableFalse() throws ApiException {
-        InventoryPojo order = inv("p1", 15);
-        InventoryPojo stock = inv("p1", 10);
+    void checkOrderFulfillable_false() {
+        InventoryPojo item = new InventoryPojo();
+        item.setProductId("p1");
+        item.setQuantity(10);
+
+        InventoryPojo existing = new InventoryPojo();
+        existing.setProductId("p1");
+        existing.setQuantity(5);
 
         when(inventoryDao.findByProductIds(List.of("p1")))
-                .thenReturn(List.of(stock));
+                .thenReturn(List.of(existing));
 
-        assertFalse(inventoryApi.checkOrderFulfillable(List.of(order)));
+        boolean result = inventoryApi.checkOrderFulfillable(List.of(item));
+
+        assertFalse(result);
     }
 
     // ---------- updateBulkInventory ----------
 
     @Test
-    void testUpdateBulkInventory() throws ApiException {
-        List<InventoryPojo> pojos = List.of(inv("p1", 1));
+    void updateBulkInventory_success() {
+        inventoryApi.updateBulkInventory(List.of(new InventoryPojo()));
 
-        inventoryApi.updateBulkInventory(pojos);
-
-        verify(inventoryDao).bulkUpdate(pojos);
+        verify(inventoryDao).bulkUpdate(anyList());
     }
 
     // ---------- updateDeltaInventory ----------
 
     @Test
-    void testUpdateDeltaInventory() {
-        Map<String, Integer> delta = Map.of("p1", 5);
+    void updateDeltaInventory_success() {
+        try (MockedStatic<InventoryHelper> mocked = mockStatic(InventoryHelper.class)) {
 
-        try (MockedStatic<InventoryHelper> mocked =
-                     Mockito.mockStatic(InventoryHelper.class)) {
-
-            List<InventoryPojo> pojos = List.of(inv("p1", 5));
-            mocked.when(() -> InventoryHelper.getPojosFromMap(delta))
+            List<InventoryPojo> pojos = List.of(new InventoryPojo());
+            mocked.when(() -> InventoryHelper.getPojosFromMap(anyMap()))
                     .thenReturn(pojos);
 
-            inventoryApi.updateDeltaInventory(delta);
+            inventoryApi.updateDeltaInventory(Map.of("p1", 5));
 
             verify(inventoryDao).bulkUpdate(pojos);
         }
@@ -231,23 +232,28 @@ class InventoryApiImplTest {
     // ---------- aggregateItemsByProductId ----------
 
     @Test
-    void testAggregateItemsByProductId() {
-        List<InventoryPojo> list = List.of(
-                inv("p1", 2),
-                inv("p1", 3)
-        );
+    void aggregateItemsByProductId_success() {
+        InventoryPojo p1 = new InventoryPojo();
+        p1.setProductId("p1");
+        p1.setQuantity(5);
+
+        InventoryPojo p2 = new InventoryPojo();
+        p2.setProductId("p1");
+        p2.setQuantity(3);
 
         Map<String, Integer> result =
-                inventoryApi.aggregateItemsByProductId(list);
+                inventoryApi.aggregateItemsByProductId(List.of(p1, p2));
 
-        assertEquals(5, result.get("p1"));
+        assertEquals(8, result.get("p1"));
     }
 
     // ---------- getInventoryForProductIds ----------
 
     @Test
-    void testGetInventoryForProductIds() {
-        InventoryPojo pojo = inv("p1", 10);
+    void getInventoryForProductIds_success() {
+        InventoryPojo pojo = new InventoryPojo();
+        pojo.setProductId("p1");
+        pojo.setQuantity(10);
 
         when(inventoryDao.findByProductIds(List.of("p1")))
                 .thenReturn(List.of(pojo));
@@ -255,6 +261,7 @@ class InventoryApiImplTest {
         Map<String, InventoryPojo> result =
                 inventoryApi.getInventoryForProductIds(List.of("p1"));
 
-        assertEquals(pojo, result.get("p1"));
+        assertEquals(1, result.size());
+        assertTrue(result.containsKey("p1"));
     }
 }

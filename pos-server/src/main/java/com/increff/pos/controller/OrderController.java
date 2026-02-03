@@ -66,4 +66,10 @@ public class OrderController {
     public Page<OrderData> getAllOrders(@RequestBody PageForm form) throws ApiException {
         return orderDto.getAllOrders(form);
     }
+
+    @Operation(summary = "Search by order id")
+    @RequestMapping(path = "/search-by-id/{orderId}")
+    public OrderData searchOrder(@PathVariable String orderId) throws ApiException {
+        return orderDto.searchById(orderId);
+    }
 }

@@ -30,10 +30,13 @@ public class ClientDto {
         NormalizationUtil.normalizeClientForm(clientForm);
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
         clientApi.checkNameExists(clientPojo.getName());
-        return ClientHelper.convertToData(clientApi.addClient(clientPojo)); //store it in a variable
+        ClientPojo savedClientPojo = clientApi.addClient(clientPojo);
+        return ClientHelper.convertToData(savedClientPojo);
     }
 
     public Page<ClientData> getAllClients(PageForm form) throws ApiException {
+
+        formValidator.validate(form);
         Page<ClientPojo> clientPage = clientApi.getAllClients(form.getPage(), form.getSize());
         return clientPage.map(ClientHelper::convertToData);
     }
@@ -49,6 +52,7 @@ public class ClientDto {
 
     public Page<ClientData> search(String type, String query, PageForm pageForm) throws ApiException {
 
+        formValidator.validate(pageForm);
         ValidationUtil.validateSearchParams(type, query);
         Page<ClientPojo> clientPage = clientApi.search(type, query, pageForm.getPage(), pageForm.getSize());
         return clientPage.map(ClientHelper::convertToData);

@@ -12,10 +12,10 @@ import java.util.List;
 public class NormalizationUtil {
 
     public static void normalizeClientForm(ClientForm clientForm) {
+
         String location = clientForm.getLocation().toLowerCase();
         clientForm.setEmail(clientForm.getEmail().toLowerCase());
         clientForm.setLocation(location);
-
     }
 
     public static void normalizeOrderForm(OrderForm orderForm) {
@@ -23,12 +23,15 @@ public class NormalizationUtil {
         for (OrderItemForm orderItem: orderForm.getOrderItems()) {
             orderItem.setBarcode(orderItem.getBarcode().toLowerCase());
         }
-
     }
 
     public static void normalizeProductForm(ProductForm productForm) {
 
         productForm.setBarcode(productForm.getBarcode().toLowerCase());
         productForm.setClientName(productForm.getClientName());
+    }
+
+    public static void normalizeUsername(String username) {
+        username.trim().toLowerCase();
     }
 }

@@ -73,7 +73,6 @@ class InventoryDaoTest {
         assertThat(updated.getQuantity()).isEqualTo(15);
     }
 
-
     @Test
     void testUpdateInventory_noMatchingProduct() {
 

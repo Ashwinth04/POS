@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -31,6 +32,7 @@ public class SalesApiImpl {
         return salesDao.getDailySalesData(start, end);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void storeDailySales(ZonedDateTime start, ZonedDateTime end) {
 
         SalesPojo data = salesDao.getDailySalesData(start,end);
