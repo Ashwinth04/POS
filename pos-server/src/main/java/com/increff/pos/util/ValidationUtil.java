@@ -16,6 +16,7 @@ import java.util.Map;
 
 import static com.increff.pos.constants.Constants.*;
 import static com.increff.pos.constants.Constants.MRP;
+import static com.increff.pos.helper.ProductHelper.getValueFromRow;
 
 public class ValidationUtil {
 
@@ -77,13 +78,42 @@ public class ValidationUtil {
         }
     }
 
-    public static void validateProductRow(String[] row) throws ApiException {
+    public static void validateProductRow(String[] row, Map<String, Integer> headerIndexMap) throws ApiException {
 
-        validateName(row[0].trim());
-        validateName(row[1].trim());
-        validateName(row[2].trim());
-        validateMrp(Double.parseDouble(row[3].trim()));
-        validateUrl(row[4].trim());
+        String barcode = getValueFromRow(row, headerIndexMap, BARCODE);
+        if (barcode == null || barcode.trim().isEmpty()) {
+            throw new ApiException("Barcode cannot be empty");
+        }
+
+        String name = getValueFromRow(row, headerIndexMap, PRODUCT_NAME);
+        if (name == null || name.trim().isEmpty()) {
+            throw new ApiException("Product name cannot be empty");
+        }
+
+        String clientName = getValueFromRow(row, headerIndexMap, CLIENT_NAME);
+        if (clientName == null || clientName.trim().isEmpty()) {
+            throw new ApiException("Client name cannot be empty");
+        }
+
+        String mrpStr = getValueFromRow(row, headerIndexMap, MRP);
+        if (mrpStr == null || mrpStr.trim().isEmpty()) {
+            throw new ApiException("MRP cannot be empty");
+        }
+
+        double mrp;
+        try {
+            mrp = Double.parseDouble(mrpStr.trim());
+        } catch (NumberFormatException e) {
+            throw new ApiException("Invalid MRP: " + mrpStr);
+        }
+
+        if (mrp <= 0 || Double.isNaN(mrp) || Double.isInfinite(mrp) || mrp > 1_000_000) {
+            throw new ApiException("Invalid MRP: " + mrpStr);
+        }
+
+        if (mrpStr.toLowerCase().contains("e")) {
+            throw new ApiException("MRP cannot be in scientific notation: " + mrpStr);
+        }
     }
 
     public static void validateInventoryRow(String[] row) throws ApiException {

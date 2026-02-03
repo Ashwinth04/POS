@@ -1,6 +1,7 @@
 package com.increff.pos.helper;
 
 import com.increff.pos.db.OrderPojo;
+import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.OrderItemForm;
@@ -67,5 +68,19 @@ public class OrderHelper {
                 .toUpperCase();
 
         return "ORD-" + timestamp + "-" + random;
+    }
+
+    public static void checkOrderEditable(String status) throws ApiException {
+
+        if (status.equals("CANCELLED")) throw new ApiException("CANCELLED ORDERS CANNOT BE EDITED");
+
+        if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE EDITED");
+    }
+
+    public static void checkOrderCancellable(String status) throws ApiException {
+
+        if (status.equals("CANCELLED")) throw new ApiException("ORDER CANCELLED ALREADY");
+
+        if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE CANCELLED");
     }
 }

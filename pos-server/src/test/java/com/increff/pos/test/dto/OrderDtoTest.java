@@ -136,7 +136,7 @@ class OrderDtoTest {
     // ---------- GET ALL ORDERS ----------
 
     @Test
-    void testGetAllOrders() {
+    void testGetAllOrders() throws ApiException {
 
         OrderPojo pojo = new OrderPojo();
         Page<OrderPojo> pojoPage = new PageImpl<>(List.of(pojo));

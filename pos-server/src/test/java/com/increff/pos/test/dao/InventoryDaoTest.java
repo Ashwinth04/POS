@@ -51,7 +51,7 @@ class InventoryDaoTest {
     }
 
     // ------------------------------------------------
-    // updateInventory()
+    // updateBulkInventory()
     // ------------------------------------------------
 
     @Test

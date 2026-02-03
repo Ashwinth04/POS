@@ -11,9 +11,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,193 +28,166 @@ class ClientApiImplTest {
     @InjectMocks
     private ClientApiImpl clientApi;
 
+    private ClientPojo createClient(String id, String name) {
+        ClientPojo pojo = new ClientPojo();
+        pojo.setId(id);
+        pojo.setName(name);
+        pojo.setEmail(name + "@test.com");
+        pojo.setPhoneNumber("9999999999");
+        pojo.setCreatedAt(ZonedDateTime.now());
+        return pojo;
+    }
+
     // ---------- addClient ----------
 
     @Test
-    void testAddClient_success() throws ApiException {
-        ClientPojo client = new ClientPojo();
-        client.setName("ABC");
+    void testAddClient() throws ApiException {
+        ClientPojo pojo = createClient(null, "Client1");
+        when(clientDao.save(pojo)).thenReturn(pojo);
 
-        when(clientDao.save(client)).thenReturn(client);
+        ClientPojo result = clientApi.addClient(pojo);
 
-        ClientPojo result = clientApi.addClient(client);
-
-        assertThat(result).isEqualTo(client);
-        verify(clientDao).save(client);
+        assertEquals(pojo, result);
+        verify(clientDao).save(pojo);
     }
 
     // ---------- getAllClients ----------
 
     @Test
-    void testGetAllClients_success() {
-        Page<ClientPojo> page =
-                new PageImpl<>(List.of(new ClientPojo()));
+    void testGetAllClients() {
+        ClientPojo pojo = createClient("101", "Client1");
+        Page<ClientPojo> page = new PageImpl<>(List.of(pojo));
 
-        when(clientDao.findAll(any(Pageable.class)))
-                .thenReturn(page);
+        when(clientDao.findAll(any(Pageable.class))).thenReturn(page);
 
         Page<ClientPojo> result = clientApi.getAllClients(0, 10);
 
-        assertThat(result.getContent()).hasSize(1);
-        verify(clientDao).findAll(any(Pageable.class));
+        assertEquals(1, result.getTotalElements());
+        verify(clientDao).findAll(any(PageRequest.class));
     }
 
     // ---------- updateClient ----------
 
     @Test
-    void testUpdateClient_success() throws ApiException {
-        ClientPojo existing = new ClientPojo();
-        existing.setId("1");
-        existing.setName("ABC");
+    void testUpdateClient() throws ApiException {
+        ClientPojo existing = createClient("101", "Client1");
+        ClientPojo updated = createClient(null, "Client1");
 
-        ClientPojo update = new ClientPojo();
-        update.setName("ABC");
+        when(clientDao.findByName("Client1")).thenReturn(existing);
+        when(clientDao.save(any(ClientPojo.class))).thenAnswer(i -> i.getArgument(0));
 
-        when(clientDao.findByName("ABC")).thenReturn(existing);
-        when(clientDao.save(update)).thenReturn(update);
+        ClientPojo result = clientApi.updateClient(updated);
 
-        ClientPojo result = clientApi.updateClient(update);
-
-        assertThat(result).isEqualTo(update);
-        assertThat(update.getId()).isEqualTo("1");
-        verify(clientDao).save(update);
-    }
-
-    @Test
-    void testUpdateClient_notFound() {
-        ClientPojo update = new ClientPojo();
-        update.setName("ABC");
-
-        when(clientDao.findByName("ABC")).thenReturn(null);
-
-        assertThatThrownBy(() -> clientApi.updateClient(update))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("doesn't exist");
+        assertEquals(existing.getId(), result.getId());
+        verify(clientDao).save(updated);
     }
 
     // ---------- checkNameExists ----------
 
     @Test
-    void testCheckNameExists_exists() {
-        when(clientDao.findByName("ABC"))
-                .thenReturn(new ClientPojo());
+    void testCheckNameExistsThrowsException() {
+        when(clientDao.findByName("Client1"))
+                .thenReturn(createClient("101", "Client1"));
 
-        assertThatThrownBy(() -> clientApi.checkNameExists("ABC"))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("already exists");
+        ApiException ex = assertThrows(ApiException.class,
+                () -> clientApi.checkNameExists("Client1"));
+
+        assertEquals("Client already exists", ex.getMessage());
     }
 
     @Test
-    void testCheckNameExists_notExists() throws ApiException {
-        when(clientDao.findByName("ABC"))
-                .thenReturn(null);
+    void testCheckNameExistsSuccess() throws ApiException {
+        when(clientDao.findByName("Client1")).thenReturn(null);
 
-        clientApi.checkNameExists("ABC");
-
-        verify(clientDao).findByName("ABC");
+        assertDoesNotThrow(() -> clientApi.checkNameExists("Client1"));
     }
 
     // ---------- fetchExistingClientNames ----------
 
     @Test
-    void testFetchExistingClientNames_success() {
-        ClientPojo c1 = new ClientPojo();
-        c1.setName("A");
+    void testFetchExistingClientNames() {
+        ClientPojo c1 = createClient("101", "A");
+        ClientPojo c2 = createClient("102", "B");
 
-        ClientPojo c2 = new ClientPojo();
-        c2.setName("B");
-
-        when(clientDao.findExistingClientNames(List.of("A", "B", "C")))
+        when(clientDao.findExistingClientNames(List.of("A", "B")))
                 .thenReturn(List.of(c1, c2));
 
-        List<String> result =
-                clientApi.fetchExistingClientNames(List.of("A", "B", "C"));
+        Map<String, ClientPojo> result =
+                clientApi.fetchExistingClientNames(List.of("A", "B"));
 
-        assertThat(result).containsExactly("A", "B");
+        assertEquals(2, result.size());
+        assertEquals(c1, result.get("A"));
+        assertEquals(c2, result.get("B"));
     }
 
     // ---------- search ----------
 
     @Test
-    void testSearch_invalidInput() {
-        assertThatThrownBy(() ->
-                clientApi.search(null, "abc", 0, 10))
-                .isInstanceOf(ApiException.class);
+    void testSearchByName() throws ApiException {
+        Page<ClientPojo> page = new PageImpl<>(List.of(createClient("101", "A")));
+        when(clientDao.searchByName(eq("A"), any(Pageable.class))).thenReturn(page);
 
-        assertThatThrownBy(() ->
-                clientApi.search("name", "   ", 0, 10))
-                .isInstanceOf(ApiException.class);
+        Page<ClientPojo> result = clientApi.search("name", "A", 0, 10);
+
+        assertEquals(1, result.getTotalElements());
     }
 
     @Test
-    void testSearch_byName() throws ApiException {
-        Page<ClientPojo> page = new PageImpl<>(List.of(new ClientPojo()));
+    void testSearchByEmail() throws ApiException {
+        Page<ClientPojo> page = new PageImpl<>(List.of(createClient("101", "A")));
+        when(clientDao.searchByEmail(eq("a@test.com"), any(Pageable.class))).thenReturn(page);
 
-        when(clientDao.searchByName(eq("abc"), any(Pageable.class)))
-                .thenReturn(page);
+        Page<ClientPojo> result = clientApi.search("email", "a@test.com", 0, 10);
 
-        Page<ClientPojo> result =
-                clientApi.search("name", "abc", 0, 10);
-
-        assertThat(result.getContent()).hasSize(1);
+        assertEquals(1, result.getTotalElements());
     }
 
     @Test
-    void testSearch_byEmail() throws ApiException {
-        Page<ClientPojo> page = new PageImpl<>(List.of(new ClientPojo()));
+    void testSearchByPhone() throws ApiException {
+        Page<ClientPojo> page = new PageImpl<>(List.of(createClient("101", "A")));
+        when(clientDao.searchByPhoneNumber(eq("999"), any(Pageable.class))).thenReturn(page);
 
-        when(clientDao.searchByEmail(eq("abc"), any(Pageable.class)))
-                .thenReturn(page);
+        Page<ClientPojo> result = clientApi.search("phone", "999", 0, 10);
 
-        Page<ClientPojo> result =
-                clientApi.search("email", "abc", 0, 10);
-
-        assertThat(result.getContent()).hasSize(1);
+        assertEquals(1, result.getTotalElements());
     }
 
     @Test
-    void testSearch_byPhone() throws ApiException {
-        Page<ClientPojo> page = new PageImpl<>(List.of(new ClientPojo()));
+    void testSearchInvalidType() {
+        ApiException ex = assertThrows(ApiException.class,
+                () -> clientApi.search("invalid", "x", 0, 10));
 
-        when(clientDao.searchByPhoneNumber(eq("123"), any(Pageable.class)))
-                .thenReturn(page);
-
-        Page<ClientPojo> result =
-                clientApi.search("phone", "123", 0, 10);
-
-        assertThat(result.getContent()).hasSize(1);
+        assertTrue(ex.getMessage().contains("Invalid search type"));
     }
 
     @Test
-    void testSearch_invalidType() {
-        assertThatThrownBy(() ->
-                clientApi.search("invalid", "abc", 0, 10))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("Invalid search type");
+    void testSearchNullOrBlankQuery() {
+        assertThrows(ApiException.class,
+                () -> clientApi.search(null, "x", 0, 10));
+
+        assertThrows(ApiException.class,
+                () -> clientApi.search("name", "   ", 0, 10));
     }
 
     // ---------- getCheckByClientName ----------
 
     @Test
-    void testGetCheckByClientName_success() throws ApiException {
-        ClientPojo client = new ClientPojo();
-        client.setName("ABC");
+    void testGetCheckByClientNameSuccess() throws ApiException {
+        ClientPojo pojo = createClient("101", "Client1");
+        when(clientDao.findByName("Client1")).thenReturn(pojo);
 
-        when(clientDao.findByName("ABC")).thenReturn(client);
+        ClientPojo result = clientApi.getCheckByClientName("Client1");
 
-        ClientPojo result =
-                clientApi.getCheckByClientName("ABC");
-
-        assertThat(result).isEqualTo(client);
+        assertEquals(pojo, result);
     }
 
     @Test
-    void testGetCheckByClientName_notFound() {
-        when(clientDao.findByName("ABC")).thenReturn(null);
+    void testGetCheckByClientNameThrowsException() {
+        when(clientDao.findByName("Client1")).thenReturn(null);
 
-        assertThatThrownBy(() ->
-                clientApi.getCheckByClientName("ABC"))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("doesn't exist");
+        ApiException ex = assertThrows(ApiException.class,
+                () -> clientApi.getCheckByClientName("Client1"));
+
+        assertTrue(ex.getMessage().contains("doesn't exist"));
     }
 }

@@ -12,7 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ClientApiImpl implements ClientApi {
@@ -26,7 +29,6 @@ public class ClientApiImpl implements ClientApi {
         return clientDao.save(clientPojo);
     }
 
-    @Transactional(rollbackFor = ApiException.class)
     public Page<ClientPojo> getAllClients(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return clientDao.findAll(pageRequest);
@@ -50,19 +52,21 @@ public class ClientApiImpl implements ClientApi {
         }
     }
 
-    public List<String> fetchExistingClientNames(List<String> clientNames) {
+    public Map<String, ClientPojo> fetchExistingClientNames(List<String> clientNames) {
 
         List<ClientPojo> clientPojos = clientDao.findExistingClientNames(clientNames);
 
-        return clientPojos.stream().map(ClientPojo::getName).toList();
+        return clientPojos.stream()
+                        .collect(Collectors.toMap(
+                                ClientPojo::getName,
+                                Function.identity()
+                        ));
+
     }
 
     public Page<ClientPojo> search(String type, String query, int page, int size) throws ApiException {
 
-        if (type == null || query == null || query.isBlank()) {
-            throw new ApiException("Search type and query must be provided");
-        }
-
+        // TODO: type should be an enum
         Pageable pageable = PageRequest.of(page, size);
 
         return switch (type.toLowerCase()) {

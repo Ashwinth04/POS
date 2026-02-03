@@ -35,6 +35,7 @@ public class ClientDao extends AbstractDao<ClientPojo> {
         return mongoOperations.findOne(query, ClientPojo.class);
     }
 
+    // TODO: read what happens if you pass an empty list
     public List<ClientPojo> findExistingClientNames(List<String> clientNames) {
 
         if (clientNames == null || clientNames.isEmpty()) {

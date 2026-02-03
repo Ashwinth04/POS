@@ -2,6 +2,7 @@ package com.increff.pos.dto;
 
 import com.increff.pos.api.ClientApiImpl;
 import com.increff.pos.api.ProductApiImpl;
+import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
@@ -31,9 +32,6 @@ public class ProductDto {
 
     @Autowired
     private ClientApiImpl clientApi;
-
-    @Autowired
-    private ProductApiImpl productApi;
 
     @Autowired
     private FormValidator formValidator;
@@ -105,7 +103,6 @@ public class ProductDto {
             }
 
             try {
-
                 ProductPojo pojo = convertRowToProductPojo(row, headerIndexMap);
                 validProducts.add(pojo);
             } catch (Exception e) {
@@ -114,8 +111,8 @@ public class ProductDto {
             }
         }
 
-        Set<String> validClientSet = getValidClients(validProducts);
-        Set<String> existingBarcodeSet = getValidBarcodes(validProducts);
+        Map<String, ClientPojo> validClientSet = getValidClients(validProducts);
+        Map<String, ProductPojo> existingBarcodeSet = getValidBarcodes(validProducts);
 
         List<ProductPojo> finalValidProducts = getFinalValidProducts(validProducts, invalidProducts, validClientSet, existingBarcodeSet);
 
@@ -124,7 +121,9 @@ public class ProductDto {
         return convertProductResultsToBase64(invalidProducts);
     }
 
-    public List<ProductPojo> getFinalValidProducts(List<ProductPojo> validProducts, List<RowError> invalidProducts, Set<String> validClientSet, Set<String> existingBarcodeSet) {
+
+    // TODO: keep it inside validation util
+    public List<ProductPojo> getFinalValidProducts(List<ProductPojo> validProducts, List<RowError> invalidProducts, Map<String, ClientPojo> validClientSet, Map<String, ProductPojo> existingBarcodeSet) {
 
         Map<String, Long> barcodeCountMap = validProducts.stream()
                 .map(ProductPojo::getBarcode)
@@ -145,14 +144,14 @@ public class ProductDto {
                 continue;
             }
 
-            if (!validClientSet.contains(clientName)) {
+            if (!validClientSet.containsKey(clientName)) {
                 invalidProducts.add(
                         new RowError(barcode, "Client does not exist: " + clientName)
                 );
                 continue;
             }
 
-            if (existingBarcodeSet.contains(barcode)) {
+            if (existingBarcodeSet.containsKey(barcode)) {
                 invalidProducts.add(
                         new RowError(barcode, "Product with barcode already exists: " + barcode)
                 );
@@ -165,26 +164,22 @@ public class ProductDto {
         return finalValidProducts;
     }
 
-    public Set<String> getValidClients(List<ProductPojo> validProducts) {
+    public Map<String, ClientPojo> getValidClients(List<ProductPojo> validProducts) {
 
         List<String> clientNames = validProducts.stream()
                 .map(ProductPojo::getClientName)
                 .toList();
 
-        List<String> validClients = clientApi.fetchExistingClientNames(clientNames);
-
-        return new HashSet<>(validClients);
+        return clientApi.fetchExistingClientNames(clientNames);
     }
 
-    public Set<String> getValidBarcodes(List<ProductPojo> validProducts) {
+    public Map<String, ProductPojo> getValidBarcodes(List<ProductPojo> validProducts) {
 
         List<String> barcodes = validProducts.stream()
                 .map(ProductPojo::getBarcode)
                 .toList();
 
-        List<String> validBarcodes = productApi.findExistingProducts(barcodes);
-
-        return new HashSet<>(validBarcodes);
+        return productFlow.findExistingProducts(barcodes);
     }
 
     public FileData convertProductResultsToBase64(List<RowError> results) {

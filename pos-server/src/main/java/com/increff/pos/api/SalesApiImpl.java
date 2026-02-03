@@ -47,7 +47,7 @@ public class SalesApiImpl {
 
     public Page<SalesPojo> getAllSales(int page, int size) {
 
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
         return salesDao.findAll(pageRequest);
     }
 }

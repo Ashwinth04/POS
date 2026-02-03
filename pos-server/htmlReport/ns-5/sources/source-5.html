@@ -1,0 +1,173 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > OrderController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.increff.pos.controller</a>
+</div>
+
+<h1>Coverage Summary for Class: OrderController (com.increff.pos.controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">OrderController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    12.5%
+  </span>
+  <span class="absValue">
+    (1/8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    12.5%
+  </span>
+  <span class="absValue">
+    (1/8)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.increff.pos.controller;
+&nbsp;
+&nbsp;import com.increff.pos.dto.OrderDto;
+&nbsp;import com.increff.pos.exception.ApiException;
+&nbsp;import com.increff.pos.model.data.*;
+&nbsp;import com.increff.pos.model.data.OrderStatusData;
+&nbsp;import com.increff.pos.model.form.OrderForm;
+&nbsp;import com.increff.pos.model.form.PageForm;
+&nbsp;import io.swagger.v3.oas.annotations.Operation;
+&nbsp;import io.swagger.v3.oas.annotations.tags.Tag;
+&nbsp;import jakarta.validation.Valid;
+&nbsp;import org.apache.coyote.Request;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.data.domain.Page;
+&nbsp;import org.springframework.format.annotation.DateTimeFormat;
+&nbsp;import org.springframework.http.HttpHeaders;
+&nbsp;import org.springframework.http.MediaType;
+&nbsp;import org.springframework.http.ResponseEntity;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;
+&nbsp;import java.time.LocalDate;
+&nbsp;
+&nbsp;@Tag(name = &quot;Order Management&quot;, description = &quot;Create, view and filter orders&quot;)
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/api/orders&quot;)
+<b class="fc">&nbsp;public class OrderController {</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private OrderDto orderDto;
+&nbsp;
+&nbsp;    @Operation(summary = &quot;Create new order&quot;)
+&nbsp;    @RequestMapping(value = &quot;/create&quot;, method = RequestMethod.POST)
+&nbsp;    public OrderData createOrder(@RequestBody OrderForm orderForm) throws ApiException {
+<b class="nc">&nbsp;        return orderDto.createOrder(orderForm);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;Edit order&quot;)
+&nbsp;    @RequestMapping(value = &quot;/edit/{orderId}&quot;, method = RequestMethod.POST)
+&nbsp;    public OrderData editOrder(@RequestBody OrderForm orderForm, @PathVariable String orderId) throws ApiException {
+<b class="nc">&nbsp;        return orderDto.editOrder(orderForm, orderId);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;Cancel order&quot;)
+&nbsp;    @RequestMapping(value = &quot;/cancel/{orderId}&quot;, method = RequestMethod.PUT)
+&nbsp;    public MessageData cancelOrder(@PathVariable String orderId) throws ApiException {
+<b class="nc">&nbsp;        return orderDto.cancelOrder(orderId);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @RequestMapping(value = &quot;/generate-invoice/{orderId}&quot;, method = RequestMethod.GET)
+&nbsp;    public FileData generateInvoice(@PathVariable String orderId) throws ApiException {
+<b class="nc">&nbsp;        return orderDto.generateInvoice(orderId);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @RequestMapping(value = &quot;/download-invoice/{orderId}&quot;, method = RequestMethod.GET)
+&nbsp;    public FileData downloadInvoice(@PathVariable String orderId) throws ApiException {
+<b class="nc">&nbsp;        return orderDto.downloadInvoice(orderId);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @RequestMapping(value = &quot;/filter-orders&quot;, method = RequestMethod.GET)
+&nbsp;    public Page&lt;OrderData&gt; filterOrders(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate, @RequestParam int page,@RequestParam int size) throws ApiException {
+<b class="nc">&nbsp;        return orderDto.filterOrders(startDate, endDate, page, size);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;Get all orders with pagination&quot;)
+&nbsp;    @RequestMapping(path = &quot;/get-all-paginated&quot;, method = RequestMethod.POST)
+&nbsp;    public Page&lt;OrderData&gt; getAllOrders(@Valid @RequestBody PageForm form) throws ApiException {
+<b class="nc">&nbsp;        return orderDto.getAllOrders(form);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-02 23:17</div>
+</div>
+</body>
+</html>

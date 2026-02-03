@@ -1,0 +1,197 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > AppRestControllerAdvice</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.increff.pos.controller</a>
+</div>
+
+<h1>Coverage Summary for Class: AppRestControllerAdvice (com.increff.pos.controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">AppRestControllerAdvice</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    11.1%
+  </span>
+  <span class="absValue">
+    (1/9)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    5.3%
+  </span>
+  <span class="absValue">
+    (1/19)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.increff.pos.controller;
+&nbsp;
+&nbsp;import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+&nbsp;import com.increff.pos.exception.ApiException;
+&nbsp;import com.increff.pos.model.data.MessageData;
+&nbsp;import org.springframework.core.convert.ConversionFailedException;
+&nbsp;import org.springframework.dao.DuplicateKeyException;
+&nbsp;import org.springframework.http.HttpStatus;
+&nbsp;import org.springframework.http.ResponseEntity;
+&nbsp;import org.springframework.http.converter.HttpMessageNotReadableException;
+&nbsp;import org.springframework.web.bind.MethodArgumentNotValidException;
+&nbsp;import org.springframework.web.bind.MissingServletRequestParameterException;
+&nbsp;import org.springframework.web.bind.annotation.ExceptionHandler;
+&nbsp;import org.springframework.web.bind.annotation.ResponseStatus;
+&nbsp;import org.springframework.web.bind.annotation.RestControllerAdvice;
+&nbsp;import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+&nbsp;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;@RestControllerAdvice
+<b class="fc">&nbsp;public class AppRestControllerAdvice {</b>
+&nbsp;
+&nbsp;    @ExceptionHandler(ApiException.class)
+&nbsp;    @ResponseStatus(HttpStatus.BAD_REQUEST)
+&nbsp;    public MessageData handle(ApiException e) {
+<b class="nc">&nbsp;        return new MessageData(e.getMessage());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @ExceptionHandler(Throwable.class)
+&nbsp;    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+&nbsp;    public MessageData handle(Throwable e) {
+<b class="nc">&nbsp;        return new MessageData(&quot;An internal error occurred&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @ExceptionHandler(DuplicateKeyException.class)
+&nbsp;    @ResponseStatus(HttpStatus.BAD_REQUEST)
+&nbsp;    public MessageData handle(DuplicateKeyException e) {
+<b class="nc">&nbsp;        return new MessageData(&quot;A record with this key already exists&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @ExceptionHandler(HttpMessageNotReadableException.class)
+&nbsp;    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; handleInvalidJson(HttpMessageNotReadableException ex) {
+<b class="nc">&nbsp;        String message = &quot;Invalid input format&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        if (ex.getCause() instanceof InvalidFormatException ife) {</b>
+<b class="nc">&nbsp;            String field = ife.getPath().get(0).getFieldName();</b>
+<b class="nc">&nbsp;            message = field + &quot; has invalid value&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, message));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+&nbsp;    public ResponseEntity&lt;String&gt; handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+<b class="nc">&nbsp;        return ResponseEntity.badRequest()</b>
+<b class="nc">&nbsp;                .body(&quot;Invalid value for parameter: &quot; + ex.getName() + &quot;. Expected format: yyyy-MM-dd&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @ExceptionHandler(MissingServletRequestParameterException.class)
+&nbsp;    public ResponseEntity&lt;String&gt; handleMissingParam(MissingServletRequestParameterException ex) {
+<b class="nc">&nbsp;        return ResponseEntity.badRequest()</b>
+<b class="nc">&nbsp;                .body(&quot;Missing required parameter: &quot; + ex.getParameterName());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @ExceptionHandler(ConversionFailedException.class)
+&nbsp;    public ResponseEntity&lt;String&gt; handleConversionError() {
+<b class="nc">&nbsp;        return ResponseEntity.badRequest()</b>
+<b class="nc">&nbsp;                .body(&quot;Invalid date format. Expected yyyy-MM-dd&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @ExceptionHandler(MethodArgumentNotValidException.class)
+&nbsp;    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; handleValidation(MethodArgumentNotValidException ex) {
+<b class="nc">&nbsp;        String message = ex.getBindingResult()</b>
+<b class="nc">&nbsp;                .getFieldError()</b>
+<b class="nc">&nbsp;                .getDefaultMessage();</b>
+&nbsp;
+<b class="nc">&nbsp;        return ResponseEntity.badRequest().body(Map.of(&quot;message&quot;, message));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-02 23:17</div>
+</div>
+</body>
+</html>

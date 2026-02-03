@@ -22,7 +22,7 @@ public class OrderApiImpl implements OrderApi {
     private OrderDao orderDao;
 
     @Transactional(rollbackFor = ApiException.class)
-    public OrderPojo placeOrder(OrderPojo orderPojo, boolean isFulFillable) {
+    public OrderPojo createOrder(OrderPojo orderPojo, boolean isFulFillable) {
 
         orderPojo.setOrderStatus(isFulFillable ? "FULFILLABLE" : "UNFULFILLABLE");
 
@@ -34,23 +34,15 @@ public class OrderApiImpl implements OrderApi {
 
         orderPojo.setOrderStatus(isFulFillable ? "FULFILLABLE" : "UNFULFILLABLE");
 
-        return updateOrder(orderPojo);
-    }
-
-    public OrderPojo updateOrder(OrderPojo orderPojo) throws ApiException{
-
-        OrderPojo record = orderDao.findByOrderId(orderPojo.getOrderId());
-
-        if (record == null) throw new ApiException("Order with the given id does not exist");
+        OrderPojo record = getCheckByOrderId(orderPojo.getOrderId());
 
         orderPojo.setId(record.getId());
         return orderDao.save(orderPojo);
     }
 
     public MessageData cancelOrder(String orderId) throws ApiException {
-        OrderPojo record = orderDao.findByOrderId(orderId);
 
-        if (record == null) throw new ApiException("Order with the given id does not exist");
+        OrderPojo record = getCheckByOrderId(orderId);
 
         record.setOrderStatus("CANCELLED");
         orderDao.save(record);
@@ -64,7 +56,7 @@ public class OrderApiImpl implements OrderApi {
         return orderDao.findAll(pageRequest);
     }
 
-    public OrderPojo getOrderByOrderId(String orderId) throws ApiException {
+    public OrderPojo getCheckByOrderId(String orderId) throws ApiException {
 
         OrderPojo pojo = orderDao.findByOrderId(orderId);
         if (pojo == null) throw new ApiException("ORDER WITH THE GIVEN ID DOESN'T EXIST");
@@ -73,7 +65,7 @@ public class OrderApiImpl implements OrderApi {
     }
 
     public void updatePlacedStatus(String orderId) throws ApiException {
-        OrderPojo orderPojo = getOrderByOrderId(orderId);
+        OrderPojo orderPojo = getCheckByOrderId(orderId);
 
         if (orderPojo == null) throw new ApiException("ORDER WITH THE GIVEN ID DOESN'T EXIST");
 
@@ -92,6 +84,6 @@ public class OrderApiImpl implements OrderApi {
     }
 
     public String getOrderStatus(String orderId) throws ApiException {
-        return getOrderByOrderId(orderId).getOrderStatus();
+        return getCheckByOrderId(orderId).getOrderStatus();
     }
 }

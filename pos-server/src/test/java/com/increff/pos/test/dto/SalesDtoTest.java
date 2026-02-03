@@ -113,7 +113,7 @@ class SalesDtoTest {
     // ---------- GET ALL PAGINATED ----------
 
     @Test
-    void testGetAllPaginatedSuccess() {
+    void testGetAllPaginatedSuccess() throws ApiException {
 
         SalesPojo pojo = new SalesPojo();
         Page<SalesPojo> page = new PageImpl<>(List.of(pojo));

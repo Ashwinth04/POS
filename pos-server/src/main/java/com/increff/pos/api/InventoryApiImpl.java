@@ -2,11 +2,8 @@ package com.increff.pos.api;
 
 import com.increff.pos.dao.InventoryDao;
 import com.increff.pos.db.InventoryPojo;
-import com.increff.pos.db.OrderPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.InventoryHelper;
-import com.increff.pos.model.data.OrderItem;
-import com.increff.pos.model.data.OrderStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,14 +25,6 @@ public class InventoryApiImpl implements InventoryApi{
         return inventoryPojo;
     }
 
-    public void bulkInventoryUpdate(List<InventoryPojo> inventoryPojos) {
-
-        if (!inventoryPojos.isEmpty()) {
-            inventoryDao.bulkUpdate(inventoryPojos);
-        }
-
-    }
-
     public boolean reserveInventory(List<InventoryPojo> items) throws ApiException {
 
         boolean isFulfillable = checkOrderFulfillable(items);
@@ -46,7 +35,7 @@ public class InventoryApiImpl implements InventoryApi{
                 item.setQuantity(-item.getQuantity());
             }
 
-            updateInventory(items);
+            updateBulkInventory(items);
         }
         return isFulfillable;
     }
@@ -58,14 +47,14 @@ public class InventoryApiImpl implements InventoryApi{
 
     }
 
-    public void revertInventory(List<InventoryPojo> orderInventoryPojos) throws ApiException {
+    public void revertInventory(List<InventoryPojo> orderInventoryPojos) {
 
         for (InventoryPojo pojo: orderInventoryPojos) {
             int quantity = pojo.getQuantity();
             pojo.setQuantity(quantity);
         }
 
-        updateInventory(orderInventoryPojos);
+        updateBulkInventory(orderInventoryPojos);
     }
 
     public void createDummyInventoryRecord(String productId) {
@@ -129,14 +118,18 @@ public class InventoryApiImpl implements InventoryApi{
         return allFulfillable;
     }
 
-    private boolean isItemFulfillable(InventoryPojo item, InventoryPojo existingRecord) throws ApiException {
+    private boolean isItemFulfillable(InventoryPojo item, InventoryPojo existingRecord) {
 
         int available = existingRecord.getQuantity();
         int required = item.getQuantity();
         return available >= required;
     }
 
-    public void updateInventory(List<InventoryPojo> pojos) throws ApiException {
+    public void updateBulkInventory(List<InventoryPojo> pojos) {
+
+        if (pojos == null || pojos.isEmpty()) {
+            return;
+        }
 
         inventoryDao.bulkUpdate(pojos);
     }

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class SupervisorConfig {
 
-    @Value("${app.supervisor.username}")
+    @Value("${app.supervisor.email}")
     private String username;
 
     @Value("${app.supervisor.password}")

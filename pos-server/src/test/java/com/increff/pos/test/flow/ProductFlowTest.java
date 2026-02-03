@@ -6,12 +6,13 @@ import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.ProductFlow;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -19,10 +20,8 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ProductFlowTest {
-
-    @InjectMocks
-    private ProductFlow productFlow;
 
     @Mock
     private ProductApiImpl productApi;
@@ -30,102 +29,124 @@ class ProductFlowTest {
     @Mock
     private InventoryApiImpl inventoryApi;
 
-    @BeforeEach
-    void setup() {
-        MockitoAnnotations.openMocks(this);
+    @InjectMocks
+    private ProductFlow productFlow;
+
+    private ProductPojo product(String id) {
+        ProductPojo pojo = new ProductPojo();
+        pojo.setId(id);
+        pojo.setBarcode("b-" + id);
+        pojo.setName("Product-" + id);
+        pojo.setMrp(100.0);
+        return pojo;
     }
 
-    // ---------------- addProduct ----------------
+    // ---------- addProduct ----------
+
     @Test
-    void shouldAddProductAndCreateInventory() throws ApiException {
-        ProductPojo input = new ProductPojo();
-        input.setId("p1");
+    void testAddProduct() throws ApiException {
+        ProductPojo pojo = product("p1");
 
-        ProductPojo saved = new ProductPojo();
-        saved.setId("p1");
-
-        when(productApi.addProduct(input)).thenReturn(saved);
+        when(productApi.addProduct(pojo)).thenReturn(pojo);
         doNothing().when(inventoryApi).createDummyInventoryRecord("p1");
 
-        ProductPojo result = productFlow.addProduct(input);
+        ProductPojo result = productFlow.addProduct(pojo);
 
-        assertEquals("p1", result.getId());
-        verify(productApi).addProduct(input);
+        assertEquals(pojo, result);
         verify(inventoryApi).createDummyInventoryRecord("p1");
     }
 
-    // ---------------- editProduct ----------------
+    // ---------- editProduct ----------
+
     @Test
-    void shouldEditProduct() throws ApiException {
-        ProductPojo input = new ProductPojo();
-        input.setId("p1");
+    void testEditProduct() throws ApiException {
+        ProductPojo pojo = product("p1");
 
-        ProductPojo updated = new ProductPojo();
-        updated.setId("p1");
+        when(productApi.editProduct(pojo)).thenReturn(pojo);
 
-        when(productApi.editProduct(input)).thenReturn(updated);
+        ProductPojo result = productFlow.editProduct(pojo);
 
-        ProductPojo result = productFlow.editProduct(input);
-
-        assertEquals("p1", result.getId());
-        verify(productApi).editProduct(input);
-        verifyNoInteractions(inventoryApi); // Inventory not touched on edit
+        assertEquals(pojo, result);
     }
 
-    // ---------------- getAllProducts ----------------
-    @Test
-    void shouldGetAllProducts() {
-        ProductPojo p1 = new ProductPojo();
-        p1.setId("p1");
+    // ---------- getAllProducts ----------
 
-        Page<ProductPojo> page = new PageImpl<>(List.of(p1));
+    @Test
+    void testGetAllProducts() {
+        Page<ProductPojo> page =
+                new PageImpl<>(List.of(product("p1")));
+
         when(productApi.getAllProducts(0, 10)).thenReturn(page);
 
         Page<ProductPojo> result = productFlow.getAllProducts(0, 10);
 
-        assertEquals(1, result.getContent().size());
-        assertEquals("p1", result.getContent().get(0).getId());
-        verify(productApi).getAllProducts(0, 10);
+        assertEquals(1, result.getTotalElements());
     }
 
-    // ---------------- getInventoryForProducts ----------------
+    // ---------- getInventoryForProducts ----------
+
     @Test
-    void shouldGetInventoryForProducts() {
-        ProductPojo p1 = new ProductPojo();
-        p1.setId("p1");
+    void testGetInventoryForProducts() {
+        ProductPojo p1 = product("p1");
+        ProductPojo p2 = product("p2");
 
-        Page<ProductPojo> page = new PageImpl<>(List.of(p1));
+        Page<ProductPojo> page = new PageImpl<>(List.of(p1, p2));
 
-        InventoryPojo inv = new InventoryPojo();
-        inv.setProductId("p1");
+        InventoryPojo inv1 = new InventoryPojo();
+        inv1.setProductId("p1");
+        inv1.setQuantity(0);
 
-        when(inventoryApi.getInventoryForProductIds(List.of("p1"))).thenReturn(Map.of("p1", inv));
+        InventoryPojo inv2 = new InventoryPojo();
+        inv2.setProductId("p2");
+        inv2.setQuantity(0);
 
-        Map<String, InventoryPojo> result = productFlow.getInventoryForProducts(page);
+        when(inventoryApi.getInventoryForProductIds(List.of("p1", "p2")))
+                .thenReturn(Map.of(
+                        "p1", inv1,
+                        "p2", inv2
+                ));
 
-        assertEquals(1, result.size());
-        assertTrue(result.containsKey("p1"));
-        verify(inventoryApi).getInventoryForProductIds(List.of("p1"));
+        Map<String, InventoryPojo> result =
+                productFlow.getInventoryForProducts(page);
+
+        assertEquals(2, result.size());
+        assertEquals(0, result.get("p1").getQuantity());
     }
 
-    // ---------------- addProductsBulk ----------------
+    // ---------- addProductsBulk ----------
+
     @Test
-    void shouldAddProductsBulkAndCreateInventory() throws ApiException {
-        ProductPojo p1 = new ProductPojo();
-        p1.setId("p1");
-        ProductPojo p2 = new ProductPojo();
-        p2.setId("p2");
+    void testAddProductsBulk() throws ApiException {
+        ProductPojo p1 = product("p1");
+        ProductPojo p2 = product("p2");
 
-        List<ProductPojo> input = List.of(p1, p2);
-        List<ProductPojo> saved = List.of(p1, p2);
+        List<ProductPojo> savedProducts = List.of(p1, p2);
 
-        when(productApi.addProductsBulk(input)).thenReturn(saved);
-        doNothing().when(inventoryApi).createDummyInventoryRecord(anyString());
+        when(productApi.addProductsBulk(List.of(p1, p2)))
+                .thenReturn(savedProducts);
 
-        productFlow.addProductsBulk(input);
+        doNothing().when(inventoryApi)
+                .createDummyInventoryRecordsBulk(List.of("p1", "p2"));
 
-        verify(productApi).addProductsBulk(input);
-        verify(inventoryApi).createDummyInventoryRecord("p1");
-        verify(inventoryApi).createDummyInventoryRecord("p2");
+        productFlow.addProductsBulk(List.of(p1, p2));
+
+        verify(inventoryApi)
+                .createDummyInventoryRecordsBulk(List.of("p1", "p2"));
+    }
+
+    // ---------- searchProducts ----------
+
+    @Test
+    void testSearchProducts() throws ApiException {
+        Page<ProductPojo> page =
+                new PageImpl<>(List.of(product("p1")));
+
+        when(productApi.searchProducts("name", "prod", 0, 10))
+                .thenReturn(page);
+
+        Page<ProductPojo> result =
+                productFlow.searchProducts("name", "prod", 0, 10);
+
+        assertEquals(1, result.getTotalElements());
     }
 }

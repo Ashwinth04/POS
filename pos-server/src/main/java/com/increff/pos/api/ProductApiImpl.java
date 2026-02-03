@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,24 +46,18 @@ public class ProductApiImpl implements ProductApi {
 
     public Page<ProductPojo> getAllProducts(int page, int size) {
 
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
         return productDao.findAll(pageRequest);
     }
 
     @Transactional(rollbackFor = ApiException.class)
     public List<ProductPojo> addProductsBulk(List<ProductPojo> pojos) throws ApiException {
 
-        return persistValidProducts(pojos);
-    }
-
-    private List<ProductPojo> persistValidProducts(List<ProductPojo> validForInsert) throws ApiException {
-
         try {
-            return productDao.saveAll(validForInsert);
+            return productDao.saveAll(pojos);
         } catch (Exception e) {
             throw new ApiException("Failed to insert valid products");
         }
-
     }
 
     public void checkBarcodeExists(String barcode) throws ApiException {
@@ -72,6 +67,7 @@ public class ProductApiImpl implements ProductApi {
         if (Objects.nonNull(result)) { throw new ApiException("Barcode already exists"); }
     }
 
+    // TODO: move this to the DTO layer
     public void validateAllOrderItems(OrderPojo orderPojo) throws ApiException {
 
         List<String> barcodes = orderPojo.getOrderItems().stream()
@@ -108,11 +104,15 @@ public class ProductApiImpl implements ProductApi {
         }
     }
 
-    public List<String> findExistingProducts(List<String> barcodes) {
+    public Map<String, ProductPojo> findExistingProducts(List<String> barcodes) {
 
         List<ProductPojo> existingBarcodes = productDao.findByBarcodes(barcodes);
 
-        return existingBarcodes.stream().map(ProductPojo::getBarcode).toList();
+        return existingBarcodes.stream()
+                .collect(Collectors.toMap(
+                        ProductPojo::getBarcode,
+                        Function.identity()
+                ));
     }
 
     public Map<String, String> mapBarcodesToProductIds(List<String> barcodes) {

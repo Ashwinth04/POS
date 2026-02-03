@@ -16,7 +16,7 @@ public class ProductForm {
     @NotBlank(message = "Product Name cannot be empty")
     @Size(min = 3, max = 21, message = "Number of characters should be between 3 to 21")
     private String name;
-    @Min(value = 0, message = "Page number cannot be negative")
+    @Min(value = 0, message = "MRP cannot be less than or equal to zero")
     private Double mrp;
     private String imageUrl;
 }

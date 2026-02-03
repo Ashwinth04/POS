@@ -30,7 +30,7 @@ public class ClientDto {
         NormalizationUtil.normalizeClientForm(clientForm);
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
         clientApi.checkNameExists(clientPojo.getName());
-        return ClientHelper.convertToData(clientApi.addClient(clientPojo));
+        return ClientHelper.convertToData(clientApi.addClient(clientPojo)); //store it in a variable
     }
 
     public Page<ClientData> getAllClients(PageForm form) throws ApiException {

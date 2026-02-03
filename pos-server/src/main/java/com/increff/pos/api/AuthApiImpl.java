@@ -6,7 +6,6 @@ import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.UserPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.LoginResponse;
-import com.increff.pos.security.Roles;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;

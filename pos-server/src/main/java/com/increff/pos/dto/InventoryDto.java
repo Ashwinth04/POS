@@ -79,6 +79,7 @@ public class InventoryDto {
 
             if (ValidationUtil.isRowEmpty(row)) continue;
 
+            // TODO: check if this is actually useful
             Integer barcodeIndex = headerIndexMap.get("barcode");
             String barcode = rows.get(i)[0];
             if (barcodeIndex != null && barcodeIndex < rows.get(i).length) {
@@ -102,7 +103,7 @@ public class InventoryDto {
             }
         }
 
-        inventoryApi.bulkInventoryUpdate(validInventory);
+        inventoryApi.updateBulkInventory(validInventory);
 
         return buildBulkUpdateResponse(invalidInventory);
     }

@@ -1,0 +1,182 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ProductFlow</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.increff.pos.flow</a>
+</div>
+
+<h1>Coverage Summary for Class: ProductFlow (com.increff.pos.flow)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ProductFlow</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    14.3%
+  </span>
+  <span class="absValue">
+    (1/7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    6.2%
+  </span>
+  <span class="absValue">
+    (1/16)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.increff.pos.flow;
+&nbsp;
+&nbsp;import com.increff.pos.api.ClientApiImpl;
+&nbsp;import com.increff.pos.api.InventoryApiImpl;
+&nbsp;import com.increff.pos.api.ProductApiImpl;
+&nbsp;import com.increff.pos.db.InventoryPojo;
+&nbsp;import com.increff.pos.db.ProductPojo;
+&nbsp;import com.increff.pos.exception.ApiException;
+&nbsp;import com.increff.pos.model.data.ProductUploadResult;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.data.domain.Page;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;@Service
+<b class="fc">&nbsp;public class ProductFlow {</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private ProductApiImpl productApi;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private InventoryApiImpl inventoryApi;
+&nbsp;
+&nbsp;    public ProductPojo addProduct(ProductPojo productPojo) throws ApiException {
+&nbsp;
+<b class="nc">&nbsp;        ProductPojo res = productApi.addProduct(productPojo);</b>
+<b class="nc">&nbsp;        inventoryApi.createDummyInventoryRecord(productPojo.getId());</b>
+&nbsp;
+<b class="nc">&nbsp;        return res;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public ProductPojo editProduct(ProductPojo productPojo) throws ApiException {
+&nbsp;
+<b class="nc">&nbsp;        return productApi.editProduct(productPojo);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Page&lt;ProductPojo&gt; getAllProducts(int page, int size) {
+<b class="nc">&nbsp;        return productApi.getAllProducts(page, size);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Map&lt;String, InventoryPojo&gt; getInventoryForProducts(Page&lt;ProductPojo&gt; page) {
+<b class="nc">&nbsp;        List&lt;String&gt; productIds = page.getContent()</b>
+<b class="nc">&nbsp;                .stream()</b>
+<b class="nc">&nbsp;                .map(ProductPojo::getId)</b>
+<b class="nc">&nbsp;                .toList();</b>
+&nbsp;
+<b class="nc">&nbsp;        return inventoryApi.getInventoryForProductIds(productIds);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;    public void addProductsBulk(List&lt;ProductPojo&gt; productPojos) throws ApiException {
+&nbsp;
+<b class="nc">&nbsp;        List&lt;ProductPojo&gt; savedProducts = productApi.addProductsBulk(productPojos);</b>
+&nbsp;
+<b class="nc">&nbsp;        for (ProductPojo pojo: savedProducts) {</b>
+<b class="nc">&nbsp;            String productId = pojo.getId();</b>
+<b class="nc">&nbsp;            inventoryApi.createDummyInventoryRecord(productId);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    public Page&lt;ProductPojo&gt; searchProducts(String type, String query, int page,int size) throws ApiException {
+<b class="nc">&nbsp;        return productApi.searchProducts(type, query, page, size);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-02 23:17</div>
+</div>
+</body>
+</html>

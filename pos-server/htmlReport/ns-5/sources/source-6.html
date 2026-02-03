@@ -1,0 +1,165 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ProductController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.increff.pos.controller</a>
+</div>
+
+<h1>Coverage Summary for Class: ProductController (com.increff.pos.controller)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ProductController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    16.7%
+  </span>
+  <span class="absValue">
+    (1/6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    16.7%
+  </span>
+  <span class="absValue">
+    (1/6)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.increff.pos.controller;
+&nbsp;
+&nbsp;import com.increff.pos.dto.ProductDto;
+&nbsp;import com.increff.pos.exception.ApiException;
+&nbsp;import com.increff.pos.model.data.FileData;
+&nbsp;import com.increff.pos.model.data.InventoryData;
+&nbsp;import com.increff.pos.model.data.ProductData;
+&nbsp;import com.increff.pos.model.data.ProductUploadResult;
+&nbsp;import com.increff.pos.model.form.FileForm;
+&nbsp;import com.increff.pos.model.form.InventoryForm;
+&nbsp;import com.increff.pos.model.form.PageForm;
+&nbsp;import com.increff.pos.model.form.ProductForm;
+&nbsp;import io.swagger.v3.oas.annotations.Operation;
+&nbsp;import io.swagger.v3.oas.annotations.tags.Tag;
+&nbsp;import jakarta.validation.Valid;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.data.domain.Page;
+&nbsp;import org.springframework.http.MediaType;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;import org.springframework.web.multipart.MultipartFile;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;@Tag(name = &quot;Product Management&quot;, description = &quot;Perform CRUD operations on Products&quot;)
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/api/products&quot;)
+<b class="fc">&nbsp;public class ProductController {</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private ProductDto productDto;
+&nbsp;
+&nbsp;    @Operation(summary = &quot;Create a new product&quot;)
+&nbsp;    @RequestMapping(path = &quot;/add&quot;, method = RequestMethod.POST)
+&nbsp;    public ProductData createProduct(@Valid @RequestBody ProductForm productForm) throws ApiException {
+<b class="nc">&nbsp;        return productDto.createProduct(productForm);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;Edit product details&quot;)
+&nbsp;    @RequestMapping(path = &quot;/edit&quot;, method = RequestMethod.POST)
+&nbsp;    public ProductData editProductDetails(@RequestBody ProductForm productForm) throws ApiException {
+<b class="nc">&nbsp;        return productDto.editProduct(productForm);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;Upload a list of products&quot;)
+&nbsp;    @RequestMapping(value = &quot;/upload&quot;, method = RequestMethod.POST)
+&nbsp;    public FileData createProductsBulk(@Valid @RequestBody FileForm fileForm) throws ApiException { // Use base64 string
+<b class="nc">&nbsp;        return productDto.createProducts(fileForm);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Operation(summary = &quot;Get all products with pagination&quot;)
+&nbsp;    @RequestMapping(path = &quot;/get-all-paginated&quot;, method = RequestMethod.POST)
+&nbsp;    public Page&lt;ProductData&gt; getAllProducts(@Valid @RequestBody PageForm form) throws ApiException {
+<b class="nc">&nbsp;        return productDto.getAllProducts(form);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @RequestMapping(path = &quot;/search&quot;, method = RequestMethod.POST)
+&nbsp;    public Page&lt;ProductData&gt; searchProducts(@RequestParam String type, @RequestParam String query, @RequestBody PageForm pageForm) throws ApiException{
+&nbsp;
+<b class="nc">&nbsp;        return productDto.search(type, query, pageForm);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-02 23:17</div>
+</div>
+</body>
+</html>

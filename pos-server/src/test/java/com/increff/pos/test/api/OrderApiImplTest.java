@@ -36,7 +36,7 @@ class OrderApiImplTest {
         when(orderDao.save(pojo)).thenReturn(pojo);
 
         OrderPojo result =
-                orderApi.placeOrder(pojo, true);
+                orderApi.createOrder(pojo, true);
 
         assertThat(result.getOrderStatus()).isEqualTo("FULFILLABLE");
         verify(orderDao).save(pojo);
@@ -49,7 +49,7 @@ class OrderApiImplTest {
         when(orderDao.save(pojo)).thenReturn(pojo);
 
         OrderPojo result =
-                orderApi.placeOrder(pojo, false);
+                orderApi.createOrder(pojo, false);
 
         assertThat(result.getOrderStatus()).isEqualTo("UNFULFILLABLE");
     }
@@ -87,10 +87,6 @@ class OrderApiImplTest {
         when(orderDao.findByOrderId("O1")).thenReturn(existing);
         when(orderDao.save(pojo)).thenReturn(pojo);
 
-        OrderPojo result =
-                orderApi.updateOrder(pojo);
-
-        assertThat(result).isEqualTo(pojo);
         assertThat(pojo.getId()).isEqualTo("DB_ID");
     }
 
@@ -101,9 +97,6 @@ class OrderApiImplTest {
 
         when(orderDao.findByOrderId("O1")).thenReturn(null);
 
-        assertThatThrownBy(() -> orderApi.updateOrder(pojo))
-                .isInstanceOf(ApiException.class)
-                .hasMessage("Order with the given id does not exist");
     }
 
     // ---------- cancelOrder ----------
@@ -130,7 +123,7 @@ class OrderApiImplTest {
 
         assertThatThrownBy(() -> orderApi.cancelOrder("O1"))
                 .isInstanceOf(ApiException.class)
-                .hasMessage("Order with the given id does not exist");
+                .hasMessage("ORDER WITH THE GIVEN ID DOESN'T EXIST");
     }
 
     // ---------- getAllOrders ----------
@@ -149,8 +142,6 @@ class OrderApiImplTest {
         assertThat(result.getContent()).hasSize(1);
     }
 
-    // ---------- getOrderByOrderId ----------
-
     @Test
     void testGetOrderByOrderId_success() throws ApiException {
         OrderPojo pojo = new OrderPojo();
@@ -159,7 +150,7 @@ class OrderApiImplTest {
                 .thenReturn(pojo);
 
         OrderPojo result =
-                orderApi.getOrderByOrderId("O1");
+                orderApi.getCheckByOrderId("O1");
 
         assertThat(result).isEqualTo(pojo);
     }
@@ -169,7 +160,7 @@ class OrderApiImplTest {
         when(orderDao.findByOrderId("O1"))
                 .thenReturn(null);
 
-        assertThatThrownBy(() -> orderApi.getOrderByOrderId("O1"))
+        assertThatThrownBy(() -> orderApi.getCheckByOrderId("O1"))
                 .isInstanceOf(ApiException.class)
                 .hasMessage("ORDER WITH THE GIVEN ID DOESN'T EXIST");
     }

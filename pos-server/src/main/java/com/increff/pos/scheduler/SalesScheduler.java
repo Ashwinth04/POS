@@ -16,7 +16,6 @@ public class SalesScheduler {
     @Autowired
     private SalesDto salesDto;
 
-//    @Scheduled(fixedDelay = 10000)
     // second minute hour day-of-month month day-of-week
     @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Kolkata")
     public void run() {

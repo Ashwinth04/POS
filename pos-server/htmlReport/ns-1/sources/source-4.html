@@ -1,0 +1,293 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > InventoryApiImpl</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.increff.pos.api</a>
+</div>
+
+<h1>Coverage Summary for Class: InventoryApiImpl (com.increff.pos.api)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">InventoryApiImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (18/18)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (16/16)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (60/60)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.increff.pos.api;
+&nbsp;
+&nbsp;import com.increff.pos.dao.InventoryDao;
+&nbsp;import com.increff.pos.db.InventoryPojo;
+&nbsp;import com.increff.pos.db.OrderPojo;
+&nbsp;import com.increff.pos.exception.ApiException;
+&nbsp;import com.increff.pos.helper.InventoryHelper;
+&nbsp;import com.increff.pos.model.data.OrderItem;
+&nbsp;import com.increff.pos.model.data.OrderStatus;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.transaction.annotation.Transactional;
+&nbsp;
+&nbsp;import java.util.*;
+&nbsp;import java.util.function.Function;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;@Service
+<b class="fc">&nbsp;public class InventoryApiImpl implements InventoryApi{</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private InventoryDao inventoryDao;
+&nbsp;
+&nbsp;    @Transactional(rollbackFor = ApiException.class)
+&nbsp;    public InventoryPojo updateSingleInventory(InventoryPojo inventoryPojo) throws ApiException {
+&nbsp;
+<b class="fc">&nbsp;        inventoryDao.updateInventory(inventoryPojo);</b>
+<b class="fc">&nbsp;        return inventoryPojo;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void bulkInventoryUpdate(List&lt;InventoryPojo&gt; inventoryPojos) {
+&nbsp;
+<b class="fc">&nbsp;        if (!inventoryPojos.isEmpty()) {</b>
+<b class="fc">&nbsp;            inventoryDao.bulkUpdate(inventoryPojos);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean reserveInventory(List&lt;InventoryPojo&gt; items) throws ApiException {
+&nbsp;
+<b class="fc">&nbsp;        boolean isFulfillable = checkOrderFulfillable(items);</b>
+&nbsp;
+<b class="fc">&nbsp;        if (isFulfillable) {</b>
+&nbsp;
+<b class="fc">&nbsp;            for (InventoryPojo item: items) {</b>
+<b class="fc">&nbsp;                item.setQuantity(-item.getQuantity());</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            updateInventory(items);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return isFulfillable;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void editOrder(Map&lt;String, Integer&gt; existingItems, Map&lt;String, Integer&gt; incomingItems) throws ApiException {
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, Integer&gt; delta = calculateDeltaInventory(existingItems, incomingItems);</b>
+<b class="fc">&nbsp;        updateDeltaInventory(delta);</b>
+&nbsp;
+&nbsp;    }
+&nbsp;
+&nbsp;    public void revertInventory(List&lt;InventoryPojo&gt; orderInventoryPojos) throws ApiException {
+&nbsp;
+<b class="fc">&nbsp;        for (InventoryPojo pojo: orderInventoryPojos) {</b>
+<b class="fc">&nbsp;            int quantity = pojo.getQuantity();</b>
+<b class="fc">&nbsp;            pojo.setQuantity(quantity);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        updateInventory(orderInventoryPojos);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void createDummyInventoryRecord(String productId) {
+&nbsp;
+<b class="fc">&nbsp;        InventoryPojo dummyRecord = new InventoryPojo();</b>
+<b class="fc">&nbsp;        dummyRecord.setProductId(productId);</b>
+<b class="fc">&nbsp;        dummyRecord.setQuantity(0);</b>
+&nbsp;
+<b class="fc">&nbsp;        inventoryDao.save(dummyRecord);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Map&lt;String, InventoryPojo&gt; fetchRecordsForOrderItems(List&lt;InventoryPojo&gt; items) {
+&nbsp;
+&nbsp;        // 1. Extract barcodes from order items
+<b class="fc">&nbsp;        List&lt;String&gt; productIds = items.stream()</b>
+<b class="fc">&nbsp;                .map(InventoryPojo::getProductId)</b>
+<b class="fc">&nbsp;                .distinct()</b>
+<b class="fc">&nbsp;                .toList();</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;InventoryPojo&gt; inventoryList = inventoryDao.findByProductIds(productIds);</b>
+&nbsp;
+<b class="fc">&nbsp;        return inventoryList.stream()</b>
+<b class="fc">&nbsp;                .collect(Collectors.toMap(</b>
+&nbsp;                        InventoryPojo::getProductId,
+<b class="fc">&nbsp;                        inv -&gt; inv</b>
+&nbsp;                ));
+&nbsp;
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean checkOrderFulfillable(List&lt;InventoryPojo&gt; items) throws ApiException {
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, InventoryPojo&gt; existingRecords = fetchRecordsForOrderItems(items);</b>
+&nbsp;
+<b class="fc">&nbsp;        boolean allFulfillable = true;</b>
+&nbsp;
+<b class="fc">&nbsp;        for (InventoryPojo item : items) {</b>
+<b class="fc">&nbsp;            String productId = item.getProductId();</b>
+<b class="fc">&nbsp;            boolean fulfillable = isItemFulfillable(item,existingRecords.get(productId));</b>
+&nbsp;
+<b class="fc">&nbsp;            if (!fulfillable) allFulfillable = false;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return allFulfillable;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private boolean isItemFulfillable(InventoryPojo item, InventoryPojo existingRecord) throws ApiException {
+&nbsp;
+<b class="fc">&nbsp;        int available = existingRecord.getQuantity();</b>
+<b class="fc">&nbsp;        int required = item.getQuantity();</b>
+<b class="fc">&nbsp;        return available &gt;= required;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void updateInventory(List&lt;InventoryPojo&gt; pojos) throws ApiException {
+&nbsp;
+<b class="fc">&nbsp;        inventoryDao.bulkUpdate(pojos);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void updateDeltaInventory(Map&lt;String, Integer&gt; delta)  {
+&nbsp;
+<b class="fc">&nbsp;        List&lt;InventoryPojo&gt; pojos = InventoryHelper.getPojosFromMap(delta);</b>
+<b class="fc">&nbsp;        inventoryDao.bulkUpdate(pojos);</b>
+&nbsp;
+&nbsp;    }
+&nbsp;
+&nbsp;    private Map&lt;String, Integer&gt; calculateDeltaInventory(Map&lt;String, Integer&gt; existingItems, Map&lt;String, Integer&gt; incomingItems) {
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, Integer&gt; delta = new HashMap&lt;&gt;();</b>
+&nbsp;
+&nbsp;        // Add all incoming (positive)
+<b class="fc">&nbsp;        incomingItems.forEach((barcode, qty) -&gt;</b>
+<b class="fc">&nbsp;                delta.put(barcode, qty)</b>
+&nbsp;        );
+&nbsp;
+&nbsp;        // Subtract all existing
+<b class="fc">&nbsp;        existingItems.forEach((barcode, qty) -&gt;</b>
+<b class="fc">&nbsp;                delta.merge(barcode, -qty, Integer::sum)</b>
+&nbsp;        );
+&nbsp;
+<b class="fc">&nbsp;        return delta;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Map&lt;String, Integer&gt; aggregateItemsByProductId(List&lt;InventoryPojo&gt; inventoryPojos) {
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, Integer&gt; aggregatedItems = new HashMap&lt;&gt;();</b>
+&nbsp;
+<b class="fc">&nbsp;        for (InventoryPojo pojo : inventoryPojos) {</b>
+<b class="fc">&nbsp;            String productId = pojo.getProductId();</b>
+<b class="fc">&nbsp;            Integer quantity = pojo.getQuantity();</b>
+&nbsp;
+<b class="fc">&nbsp;            aggregatedItems.merge(productId, quantity, Integer::sum);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return aggregatedItems;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Map&lt;String, InventoryPojo&gt; getInventoryForProductIds(List&lt;String&gt; productIds) {
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, InventoryPojo&gt; productIdToInventory =</b>
+<b class="fc">&nbsp;                inventoryDao.findByProductIds(productIds)</b>
+<b class="fc">&nbsp;                        .stream()</b>
+<b class="fc">&nbsp;                        .collect(Collectors.toMap(</b>
+&nbsp;                                InventoryPojo::getProductId,
+<b class="fc">&nbsp;                                Function.identity()</b>
+&nbsp;                        ));
+&nbsp;
+<b class="fc">&nbsp;        return productIdToInventory;</b>
+&nbsp;
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-02 23:17</div>
+</div>
+</body>
+</html>

@@ -29,6 +29,6 @@ public class NormalizationUtil {
     public static void normalizeProductForm(ProductForm productForm) {
 
         productForm.setBarcode(productForm.getBarcode().toLowerCase());
-        productForm.setClientName(productForm.getClientName().toLowerCase());
+        productForm.setClientName(productForm.getClientName());
     }
 }

@@ -7,6 +7,7 @@ import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.helper.OrderHelper;
 import com.increff.pos.model.data.MessageData;
 import com.increff.pos.model.data.OrderData;
 import com.increff.pos.model.data.OrderItem;
@@ -38,7 +39,7 @@ public class OrderFlow {
 
         boolean isFulfillable = inventoryApi.reserveInventory(orderInventoryPojos);
 
-        return orderApi.placeOrder(orderPojo, isFulfillable);
+        return orderApi.createOrder(orderPojo, isFulfillable);
     }
 
     public OrderPojo editOrder(OrderPojo orderPojo, String orderId) throws ApiException {
@@ -46,7 +47,7 @@ public class OrderFlow {
         createOrderItemIds(orderPojo);
 
         String existingStatus = orderApi.getOrderStatus(orderId);
-        checkOrderEditable(existingStatus);
+        OrderHelper.checkOrderEditable(existingStatus);
 
         List<InventoryPojo> orderInventoryPojos = getInventoryPojosForOrder(orderPojo.getOrderItems());
 
@@ -57,20 +58,13 @@ public class OrderFlow {
         return orderApi.editOrder(orderPojo, isFulfillable);
     }
 
-    public void checkOrderEditable(String status) throws ApiException {
-
-        if (status.equals("CANCELLED")) throw new ApiException("CANCELLED ORDERS CANNOT BE EDITED");
-
-        if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE EDITED");
-    }
-
     private void aggregateAndUpdateInventory(String orderId, List<InventoryPojo> incomingInventoryPojos, String existingStatus, boolean isFulfillable) throws ApiException {
 
         Map<String, Integer> aggregatedItemsIncoming = new HashMap<>();
         Map<String, Integer> aggregatedItemsExisting = new HashMap<>();
 
         if (existingStatus.equals("FULFILLABLE")) {
-            OrderPojo existingOrderPojo = orderApi.getOrderByOrderId(orderId);
+            OrderPojo existingOrderPojo = orderApi.getCheckByOrderId(orderId);
             List<InventoryPojo> existingInventoryPojos = getInventoryPojosForOrder(existingOrderPojo.getOrderItems());
             aggregatedItemsExisting = inventoryApi.aggregateItemsByProductId(existingInventoryPojos);
         }
@@ -84,10 +78,10 @@ public class OrderFlow {
 
     public MessageData cancelOrder(String orderId) throws ApiException {
 
-        OrderPojo orderPojo = orderApi.getOrderByOrderId(orderId);
+        OrderPojo orderPojo = orderApi.getCheckByOrderId(orderId);
 
-        String status = orderApi.getOrderStatus(orderId);
-        checkOrderCancellable(status);
+        String status = orderApi.getOrderStatus(orderId); // get it from orderpojo
+        OrderHelper.checkOrderCancellable(status);
 
         if (status.equals("FULFILLABLE")) {
             List<InventoryPojo> orderInventoryPojos = getInventoryPojosForOrder(orderPojo.getOrderItems());
@@ -95,13 +89,6 @@ public class OrderFlow {
         }
 
         return orderApi.cancelOrder(orderId);
-    }
-
-    public void checkOrderCancellable(String status) throws ApiException {
-
-        if (status.equals("CANCELLED")) throw new ApiException("ORDER CANCELLED ALREADY");
-
-        if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE CANCELLED");
     }
 
     private void createOrderItemIds(OrderPojo orderPojo) {
@@ -115,7 +102,7 @@ public class OrderFlow {
     }
 
     public OrderPojo getOrder(String orderId) throws ApiException {
-        return orderApi.getOrderByOrderId(orderId);
+        return orderApi.getCheckByOrderId(orderId);
     }
 
     public void updatePlacedStatus(String orderId) throws ApiException {

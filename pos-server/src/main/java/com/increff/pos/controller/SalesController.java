@@ -32,7 +32,7 @@ public class SalesController {
     }
 
     @RequestMapping(value = "/get-all-paginated", method = RequestMethod.POST)
-    public Page<DailySalesData> getDailySalesPaginated(@RequestBody PageForm pageForm) {
+    public Page<DailySalesData> getDailySalesPaginated(@RequestBody PageForm pageForm) throws ApiException {
         return salesDto.getAllPaginated(pageForm);
     }
 }

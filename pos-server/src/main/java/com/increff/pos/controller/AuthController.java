@@ -8,7 +8,6 @@ import com.increff.pos.model.data.OperatorData;
 import com.increff.pos.model.form.CreateUserRequest;
 import com.increff.pos.model.form.LoginRequest;
 import com.increff.pos.model.form.PageForm;
-import com.increff.pos.security.Roles;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.Page;
