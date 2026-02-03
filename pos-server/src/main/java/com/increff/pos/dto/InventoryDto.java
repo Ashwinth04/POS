@@ -3,6 +3,7 @@ package com.increff.pos.dto;
 import com.increff.pos.api.InventoryApiImpl;
 import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.InventoryPojo;
+import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.InventoryHelper;
 import com.increff.pos.model.data.FileData;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-import static com.increff.pos.helper.InventoryHelper.extractInventoryHeaderIndexMap;
+import static com.increff.pos.helper.InventoryHelper.*;
 
 @Service
 public class InventoryDto {
@@ -51,57 +52,14 @@ public class InventoryDto {
         List<RowError> invalidInventory = new ArrayList<>();
 
         Map<String, Integer> headerIndexMap = extractInventoryHeaderIndexMap(rows.get(0));
-        InventoryHelper.validateHeaders(headerIndexMap);
+        ValidationUtil.validateHeaders(headerIndexMap);
+        ValidationUtil.validateRowLimit(rows);
 
-        if (rows.size() > 5000) throw new ApiException("Maximum row limit exceeded!");
+        List<String> barcodes = getAllBarcodes(rows, headerIndexMap);
 
-        List<String> barcodes = new ArrayList<>();
+        Map<String, ProductPojo> barcodeToProductPojo = productApi.mapBarcodesToProductPojos(new ArrayList<>(barcodes));
 
-        for (int i = 1; i < rows.size(); i++) {
-            String[] row = rows.get(i);
-
-            if (ValidationUtil.isRowEmpty(row)) continue;
-
-            Integer barcodeIndex = headerIndexMap.get("barcode");
-            if (barcodeIndex != null && barcodeIndex < row.length) {
-                String barcode = row[barcodeIndex].trim();
-                if (!barcode.isEmpty()) {
-                    barcodes.add(barcode.toLowerCase());
-                }
-            }
-        }
-
-        Map<String, String> barcodeToProductId = productApi.mapBarcodesToProductIds(new ArrayList<>(barcodes));
-
-        for (int i = 1; i < rows.size(); i++) {
-
-            String[] row = rows.get(i);
-
-            if (ValidationUtil.isRowEmpty(row)) continue;
-
-            // TODO: check if this is actually useful
-            Integer barcodeIndex = headerIndexMap.get("barcode");
-            String barcode = rows.get(i)[0];
-            if (barcodeIndex != null && barcodeIndex < rows.get(i).length) {
-                barcode = rows.get(i)[barcodeIndex].trim();
-                if (!barcode.isEmpty()) {
-                    barcodes.add(barcode);
-                }
-            }
-
-            try {
-                InventoryPojo pojo = InventoryHelper.convertRowToInventoryPojo(
-                        rows.get(i),
-                        headerIndexMap,
-                        barcodeToProductId
-                );
-                validInventory.add(pojo);
-            } catch (Exception e) {
-                invalidInventory.add(
-                        new RowError(barcode, e.getMessage())
-                );
-            }
-        }
+        segragateValidAndInvalidEntries(rows, validInventory, invalidInventory, headerIndexMap, barcodeToProductPojo);
 
         inventoryApi.updateBulkInventory(validInventory);
 

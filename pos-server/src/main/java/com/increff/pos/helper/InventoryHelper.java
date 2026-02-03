@@ -1,9 +1,12 @@
 package com.increff.pos.helper;
 
 import com.increff.pos.db.InventoryPojo;
+import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.InventoryData;
+import com.increff.pos.model.data.RowError;
 import com.increff.pos.model.form.InventoryForm;
+import com.increff.pos.util.ValidationUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.increff.pos.constants.Constants.*;
+import static com.increff.pos.util.FileUtils.getValueFromRow;
 
 public class InventoryHelper {
 
@@ -83,23 +87,7 @@ public class InventoryHelper {
         return map;
     }
 
-    public static void validateHeaders(Map<String, Integer> headerIndexMap) throws ApiException {
-
-        List<String> requiredHeaders = List.of(
-                BARCODE,
-                QUANTITY
-        );
-
-        List<String> missing = requiredHeaders.stream()
-                .filter(h -> !headerIndexMap.containsKey(h))
-                .toList();
-
-        if (!missing.isEmpty()) {
-            throw new ApiException("Missing required columns: " + missing);
-        }
-    }
-
-    public static InventoryPojo convertRowToInventoryPojo(String[] row, Map<String, Integer> headerIndexMap, Map<String, String> barcodeToProductId) throws ApiException {
+    public static InventoryPojo convertRowToInventoryPojo(String[] row, Map<String, Integer> headerIndexMap, Map<String, ProductPojo> barcodeToProductId) throws ApiException {
 
         Integer barcodeIndex = headerIndexMap.get("barcode");
         if (barcodeIndex == null || barcodeIndex >= row.length) {
@@ -111,10 +99,11 @@ public class InventoryHelper {
             throw new ApiException("Barcode is empty");
         }
 
-        String productId = barcodeToProductId.get(barcode);
-        if (productId == null) {
+        ProductPojo productPojo = barcodeToProductId.get(barcode);
+        if (productPojo == null) {
             throw new ApiException("Product not found for barcode: " + barcode);
         }
+        String productId = productPojo.getId();
 
         Integer qtyIndex = headerIndexMap.get("quantity");
         if (qtyIndex == null || qtyIndex >= row.length) {
@@ -142,6 +131,52 @@ public class InventoryHelper {
         pojo.setQuantity(quantity);
 
         return pojo;
+    }
+
+    public static List<String> getAllBarcodes(List<String[]> rows, Map<String, Integer> headerIndexMap) {
+
+        List<String> barcodes = new ArrayList<>();
+
+        for (int i = 1; i < rows.size(); i++) {
+            String[] row = rows.get(i);
+
+            if (ValidationUtil.isRowEmpty(row)) continue;
+
+            Integer barcodeIndex = headerIndexMap.get("barcode");
+            if (barcodeIndex != null && barcodeIndex < row.length) {
+                String barcode = row[barcodeIndex].trim();
+                if (!barcode.isEmpty()) {
+                    barcodes.add(barcode.toLowerCase());
+                }
+            }
+        }
+
+        return barcodes;
+    }
+
+    public static void segragateValidAndInvalidEntries(List<String[]> rows, List<InventoryPojo> validInventory, List<RowError> invalidInventory, Map<String, Integer> headerIndexMap, Map<String, ProductPojo> barcodeToProductPojo) {
+
+        for (int i = 1; i < rows.size(); i++) {
+
+            String[] row = rows.get(i);
+
+            if (ValidationUtil.isRowEmpty(row)) continue;
+
+            try {
+                InventoryPojo pojo = InventoryHelper.convertRowToInventoryPojo(
+                        rows.get(i),
+                        headerIndexMap,
+                        barcodeToProductPojo
+                );
+                validInventory.add(pojo);
+            } catch (Exception e) {
+                String barcode = getValueFromRow(row, headerIndexMap, "barcode");
+                invalidInventory.add(
+                        new RowError(barcode, e.getMessage())
+                );
+            }
+        }
+
     }
 
 }

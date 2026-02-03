@@ -10,6 +10,7 @@ import com.increff.pos.util.ValidationUtil;
 import java.util.Map;
 
 import static com.increff.pos.constants.Constants.*;
+import static com.increff.pos.util.FileUtils.getValueFromRow;
 
 public class ProductHelper {
     public static ProductPojo convertToEntity(ProductForm productForm) {
@@ -34,14 +35,6 @@ public class ProductHelper {
         productData.setImageUrl(productPojo.getImageUrl());
 
         return productData;
-    }
-
-    public static String getValueFromRow(String[] row, Map<String, Integer> headerIndexMap, String header) {
-        Integer index = headerIndexMap.get(header);
-        if (index == null || index >= row.length) {
-            return null;
-        }
-        return row[index].trim();
     }
 
     public static ProductPojo convertRowToProductPojo(String[] row, Map<String, Integer> headerIndexMap) throws ApiException {

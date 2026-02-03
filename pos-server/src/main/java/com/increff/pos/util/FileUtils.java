@@ -49,4 +49,12 @@ public class FileUtils {
     private static String safe(String value) {
         return value == null ? "" : value.replace("\t", " ").replace("\n", " ");
     }
+
+    public static String getValueFromRow(String[] row, Map<String, Integer> headerIndexMap, String header) {
+        Integer index = headerIndexMap.get(header);
+        if (index == null || index >= row.length) {
+            return null;
+        }
+        return row[index].trim();
+    }
 }

@@ -3,22 +3,29 @@ package com.increff.pos.dto;
 import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.client.InvoiceClient;
 import com.increff.pos.db.OrderPojo;
+import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.OrderFlow;
 import com.increff.pos.helper.OrderHelper;
 import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.OrderForm;
+import com.increff.pos.model.form.OrderItemForm;
 import com.increff.pos.model.form.PageForm;
+import com.increff.pos.service.InvoiceService;
 import com.increff.pos.util.FormValidator;
 import com.increff.pos.util.NormalizationUtil;
 import com.increff.pos.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class OrderDto {
@@ -27,10 +34,7 @@ public class OrderDto {
     private OrderFlow orderFlow;
 
     @Autowired
-    private InvoiceClient invoiceClient;
-
-    @Autowired
-    private ProductApiImpl productApi;
+    private InvoiceService invoiceService;
 
     @Autowired
     private FormValidator formValidator;
@@ -39,8 +43,8 @@ public class OrderDto {
 
         formValidator.validate(orderForm);
         NormalizationUtil.normalizeOrderForm(orderForm);
+        validateAllOrderItems(orderForm);
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
-        productApi.validateAllOrderItems(orderPojo);
         OrderPojo resultOrderPojo = orderFlow.createOrder(orderPojo);
 
         return OrderHelper.convertToData(resultOrderPojo);
@@ -51,9 +55,9 @@ public class OrderDto {
         formValidator.validate(orderForm);
         ValidationUtil.validateOrderId(orderId);
         NormalizationUtil.normalizeOrderForm(orderForm);
+        validateAllOrderItems(orderForm);
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
         orderPojo.setOrderId(orderId);
-        productApi.validateAllOrderItems(orderPojo);
         OrderPojo resultOrderPojo = orderFlow.editOrder(orderPojo, orderId);
 
         return OrderHelper.convertToData(resultOrderPojo);
@@ -82,7 +86,7 @@ public class OrderDto {
 
         OrderData orderData = OrderHelper.convertToData(orderPojo);
 
-        FileData response = invoiceClient.generateInvoice(orderData);
+        FileData response = invoiceService.generateInvoice(orderData);
 
         orderFlow.updatePlacedStatus(orderId);
         return response;
@@ -92,7 +96,7 @@ public class OrderDto {
 
         orderFlow.checkInvoiceDownloadable(orderId);
 
-        return invoiceClient.downloadInvoice(orderId);
+        return invoiceService.downloadInvoice(orderId);
     }
 
     public Page<OrderData> filterOrders(LocalDate startDate, LocalDate endDate, int page, int size) throws ApiException {
@@ -107,5 +111,37 @@ public class OrderDto {
         Page<OrderPojo> orderPage =  orderFlow.filterOrders(start, end, page, size);
 
         return orderPage.map(OrderHelper::convertToData);
+    }
+
+    public void validateAllOrderItems(OrderForm orderForm) throws ApiException {
+
+        List<OrderItemForm> orderItems = orderForm.getOrderItems();
+
+        List<String> barcodes = orderItems.stream().map(OrderItemForm::getBarcode).toList();
+
+        Map<String, ProductPojo> barcodeToProductPojos = orderFlow.mapBarcodesToProductPojos(barcodes);
+
+        for (OrderItemForm item : orderForm.getOrderItems()) {
+            try {
+                validateItem(item, barcodeToProductPojos);
+            } catch (ApiException e) {
+                throw new ApiException(e.getMessage());
+            }
+        }
+
+    }
+
+    public void validateItem(OrderItemForm item, Map<String, ProductPojo> productMap) throws ApiException {
+
+        String barcode = item.getBarcode();
+        ProductPojo product = productMap.get(barcode);
+
+        if (product == null) {
+            throw new ApiException("Invalid barcode: " + barcode);
+        }
+
+        if (item.getSellingPrice() > product.getMrp() || item.getSellingPrice() <= 0) {
+            throw new ApiException("Selling price exceeds MRP for barcode: " + barcode);
+        }
     }
 }

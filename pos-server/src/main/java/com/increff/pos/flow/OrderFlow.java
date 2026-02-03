@@ -9,9 +9,7 @@ import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.OrderHelper;
 import com.increff.pos.model.data.MessageData;
-import com.increff.pos.model.data.OrderData;
 import com.increff.pos.model.data.OrderItem;
-import com.increff.pos.model.data.OrderStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -129,19 +127,24 @@ public class OrderFlow {
                 .map(OrderItem::getBarcode)
                 .toList();
 
-        Map<String, String> barcodeToProductId = productApi.mapBarcodesToProductIds(barcodes);
+        Map<String, ProductPojo> barcodeToProductId = productApi.mapBarcodesToProductPojos(barcodes);
 
         List<InventoryPojo> inventoryPojos = new ArrayList<>();
 
+        // TODO: Check if its fine to not check again
         for (OrderItem item: orderItems) {
             InventoryPojo pojo = new InventoryPojo();
-            String productId = barcodeToProductId.get(item.getBarcode());
-            pojo.setProductId(productId);
+            ProductPojo productPojo = barcodeToProductId.get(item.getBarcode());
+            pojo.setProductId(productPojo.getId());
             pojo.setQuantity(item.getOrderedQuantity());
 
             inventoryPojos.add(pojo);
         }
 
         return inventoryPojos;
+    }
+
+    public Map<String, ProductPojo> mapBarcodesToProductPojos(List<String> barcodes) {
+        return productApi.mapBarcodesToProductPojos(barcodes);
     }
 }

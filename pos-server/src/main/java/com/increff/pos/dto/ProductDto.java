@@ -1,7 +1,6 @@
 package com.increff.pos.dto;
 
 import com.increff.pos.api.ClientApiImpl;
-import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
@@ -19,7 +18,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.increff.pos.helper.ProductHelper.convertRowToProductPojo;
 import static com.increff.pos.util.FileUtils.*;
@@ -88,80 +86,33 @@ public class ProductDto {
         List<RowError> invalidProducts = new ArrayList<>();
 
         Map<String, Integer> headerIndexMap = extractHeaderIndexMap(rows.get(0));
-        ValidationUtil.validateProductHeaders(headerIndexMap);
 
-        if (rows.size() > 5000) throw new ApiException("Maximum row limit exceeded!");
+        ValidationUtil.validateProductHeaders(headerIndexMap);
+        ValidationUtil.validateRowLimit(rows);
 
         for (int i = 1; i < rows.size(); i++) {
             String[] row = rows.get(i);
-            String firstColumn = null;
 
             if (ValidationUtil.isRowEmpty(row)) continue;
-
-            if (row != null && row.length > 0) {
-                firstColumn = row[0].toLowerCase();
-            }
 
             try {
                 ProductPojo pojo = convertRowToProductPojo(row, headerIndexMap);
                 validProducts.add(pojo);
             } catch (Exception e) {
-                String errorMessage = (e != null && e.getMessage() != null) ? e.getMessage() : "Unknown error";
-                invalidProducts.add(new RowError(firstColumn, errorMessage));
+                String barcode = getValueFromRow(row, headerIndexMap, "barcode");
+                String errorMessage = (e.getMessage() != null) ? e.getMessage() : "Unknown error";
+                invalidProducts.add(new RowError(barcode, errorMessage));
             }
         }
 
-        Map<String, ClientPojo> validClientSet = getValidClients(validProducts);
-        Map<String, ProductPojo> existingBarcodeSet = getValidBarcodes(validProducts);
+        Map<String, ClientPojo> clientNamesToPojos = getValidClients(validProducts);
+        Map<String, ProductPojo> barcodesToPojos = getValidBarcodes(validProducts);
 
-        List<ProductPojo> finalValidProducts = getFinalValidProducts(validProducts, invalidProducts, validClientSet, existingBarcodeSet);
+        List<ProductPojo> finalValidProducts = ValidationUtil.getFinalValidProducts(validProducts, invalidProducts, clientNamesToPojos, barcodesToPojos);
 
-         productFlow.addProductsBulk(finalValidProducts);
+        productFlow.addProductsBulk(finalValidProducts);
 
         return convertProductResultsToBase64(invalidProducts);
-    }
-
-
-    // TODO: keep it inside validation util
-    public List<ProductPojo> getFinalValidProducts(List<ProductPojo> validProducts, List<RowError> invalidProducts, Map<String, ClientPojo> validClientSet, Map<String, ProductPojo> existingBarcodeSet) {
-
-        Map<String, Long> barcodeCountMap = validProducts.stream()
-                .map(ProductPojo::getBarcode)
-                .collect(Collectors.groupingBy(b -> b, Collectors.counting()));
-
-        List<ProductPojo> finalValidProducts = new ArrayList<>();
-
-        for (int i = 0; i < validProducts.size(); i++) {
-            ProductPojo product = validProducts.get(i);
-
-            String clientName = product.getClientName();
-            String barcode = product.getBarcode();
-
-            if (barcodeCountMap.get(barcode) > 1) {
-                invalidProducts.add(
-                        new RowError(barcode, "Duplicate barcode found in upload: " + barcode)
-                );
-                continue;
-            }
-
-            if (!validClientSet.containsKey(clientName)) {
-                invalidProducts.add(
-                        new RowError(barcode, "Client does not exist: " + clientName)
-                );
-                continue;
-            }
-
-            if (existingBarcodeSet.containsKey(barcode)) {
-                invalidProducts.add(
-                        new RowError(barcode, "Product with barcode already exists: " + barcode)
-                );
-                continue;
-            }
-
-            finalValidProducts.add(product);
-        }
-
-        return finalValidProducts;
     }
 
     public Map<String, ClientPojo> getValidClients(List<ProductPojo> validProducts) {
@@ -193,7 +144,7 @@ public class ProductDto {
         return fileData;
     }
 
-    public Page<ProductData> search(String type, String query, PageForm form) throws ApiException {
+    public Page<ProductData> searchProducts(String type, String query, PageForm form) throws ApiException {
 
         formValidator.validate(form);
         Page<ProductPojo> productPage = productFlow.searchProducts(type, query, form.getPage(), form.getSize());

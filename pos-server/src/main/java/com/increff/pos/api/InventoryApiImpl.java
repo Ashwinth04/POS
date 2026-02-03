@@ -86,7 +86,7 @@ public class InventoryApiImpl implements InventoryApi{
 
     public Map<String, InventoryPojo> fetchRecordsForOrderItems(List<InventoryPojo> items) {
 
-        // 1. Extract barcodes from order items
+        // 1. Extract productIds from order items
         List<String> productIds = items.stream()
                 .map(InventoryPojo::getProductId)
                 .distinct()

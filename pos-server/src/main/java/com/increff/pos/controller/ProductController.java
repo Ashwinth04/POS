@@ -55,7 +55,6 @@ public class ProductController {
 
     @RequestMapping(path = "/search", method = RequestMethod.POST)
     public Page<ProductData> searchProducts(@RequestParam String type, @RequestParam String query, @RequestBody PageForm pageForm) throws ApiException{
-
-        return productDto.search(type, query, pageForm);
+        return productDto.searchProducts(type, query, pageForm);
     }
 }

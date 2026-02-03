@@ -1,7 +1,9 @@
 package com.increff.pos.util;
 
+import com.increff.pos.db.ClientPojo;
+import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
-import com.increff.pos.model.form.OrderItemForm;
+import com.increff.pos.model.data.RowError;
 import com.increff.pos.model.form.*;
 import org.springframework.util.StringUtils;
 
@@ -10,18 +12,18 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.increff.pos.constants.Constants.*;
 import static com.increff.pos.constants.Constants.MRP;
-import static com.increff.pos.helper.ProductHelper.getValueFromRow;
+import static com.increff.pos.util.FileUtils.getValueFromRow;
 
 public class ValidationUtil {
 
-    // Reflections -> runtime you can modify any classes
-    // jakarta annotations -> validator factory
     public static void validateLoginRequest(LoginRequest request) throws ApiException {
 
         if (request.getUsername() == null || request.getUsername().isBlank()) {
@@ -100,6 +102,10 @@ public class ValidationUtil {
             throw new ApiException("MRP cannot be empty");
         }
 
+        if (mrpStr.toLowerCase().contains("e")) {
+            throw new ApiException("MRP cannot be in scientific notation: " + mrpStr);
+        }
+
         double mrp;
         try {
             mrp = Double.parseDouble(mrpStr.trim());
@@ -110,135 +116,8 @@ public class ValidationUtil {
         if (mrp <= 0 || Double.isNaN(mrp) || Double.isInfinite(mrp) || mrp > 1_000_000) {
             throw new ApiException("Invalid MRP: " + mrpStr);
         }
-
-        if (mrpStr.toLowerCase().contains("e")) {
-            throw new ApiException("MRP cannot be in scientific notation: " + mrpStr);
-        }
     }
 
-    public static void validateInventoryRow(String[] row) throws ApiException {
-
-        int quantity = Integer.parseInt(row[1]);
-
-        if (quantity <= 0) {
-            throw new ApiException("Quantity must be positive");
-        }
-
-    }
-
-    public static void validateProductRows(List<String[]> rows) throws ApiException {
-
-        int lineNumber = 2;
-        int totalRows = rows.size();
-        if (totalRows > 5000) throw new ApiException("Maximum limit for the number of rows is 5000");
-
-        boolean isHeader = true;
-
-        for (String[] columns: rows) {
-
-            if (columns.length != 5) {
-                throw new ApiException("Line " + lineNumber + ": Expected 5 columns but found " + columns.length);
-            }
-
-            if (isHeader) {
-                validateProductUploadHeader(columns);
-                isHeader = false;
-                continue;
-            }
-
-            String barcode = columns[0].trim();
-            String clientName = columns[1].trim();
-            String name = columns[2].trim();
-            String mrpStr = columns[3].trim();
-            String imageUrl = columns[4].trim();
-
-            if (barcode.isBlank()) {
-                throw new ApiException("Line " + lineNumber + ": Barcode cannot be empty");
-            }
-            if (clientName.isBlank()) {
-                throw new ApiException("Line " + lineNumber + ": ClientName cannot be empty");
-            }
-            if (name.isBlank()) {
-                throw new ApiException("Line " + lineNumber + ": Name cannot be empty");
-            }
-
-            Double mrp = null;
-            if (!mrpStr.isBlank()) {
-                try {
-                    mrp = Double.valueOf(mrpStr);
-                } catch (NumberFormatException e) {
-                    throw new ApiException("Line " + lineNumber + ": Invalid MRP value: " + mrpStr);
-                }
-            }
-
-            lineNumber++;
-
-        }
-    }
-
-    public static void validateProductUploadHeader(String[] header) throws ApiException {
-
-        String barcode = header[0].trim();
-        String clientName = header[1].trim();
-        String name = header[2].trim();
-        String mrpStr = header[3].trim();
-        String imageUrl = header[4].trim();
-
-        if (!barcode.equals("barcode")) throw new ApiException("Headers are incorrect!");
-        if (!clientName.equals("clientName")) throw new ApiException("Headers are incorrect!");
-        if (!name.equals("name")) throw new ApiException("Headers are incorrect!");
-        if (!mrpStr.equals("mrp")) throw new ApiException("Headers are incorrect!");
-    }
-
-    public static void validateInventoryRows(List<String[]> rows) throws ApiException {
-
-        int lineNumber = 2;
-        int totalRows = rows.size();
-
-        if (totalRows > 5000) throw new ApiException("Maximum limit for the number of rows is 5000");
-
-        boolean isHeader = true;
-
-        for(String[] columns: rows) {
-
-            if (columns.length != 2) {
-                throw new ApiException("Line " + lineNumber + ": Expected 2 columns but found " + columns.length);
-            }
-
-            if (isHeader) {
-                validateInventoryUploadHeader(columns);
-                isHeader = false;
-                continue;
-            }
-
-            String barcode = columns[0].trim();
-            String quantity = columns[1].trim();
-
-            if (barcode.isBlank()) {
-                throw new ApiException("Line " + lineNumber + ": Barcode cannot be empty");
-            }
-
-            Integer qty = null;
-            if (!quantity.isBlank()) {
-                try {
-                    qty = Integer.valueOf(quantity);
-                } catch (NumberFormatException e) {
-                    throw new ApiException("Line " + lineNumber + ": Invalid value for quantity: " + quantity);
-                }
-            }
-            lineNumber++;
-        }
-    }
-
-    public static void validateInventoryUploadHeader(String[] header) throws ApiException {
-
-        String barcode = header[0].trim();
-        String quantity = header[1].trim();
-
-        if (!barcode.equals("barcode")) throw new ApiException("Headers are incorrect!");
-        if (!quantity.equals("quantity")) throw new ApiException("Headers are incorrect");
-
-    }
 
     public static void validatePhoneNumber(String phoneNumber) throws ApiException {
         if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
@@ -296,8 +175,76 @@ public class ValidationUtil {
         }
     }
 
+    public static void validateHeaders(Map<String, Integer> headerIndexMap) throws ApiException {
+
+        List<String> requiredHeaders = List.of(
+                BARCODE,
+                QUANTITY
+        );
+
+        List<String> missing = requiredHeaders.stream()
+                .filter(h -> !headerIndexMap.containsKey(h))
+                .toList();
+
+        if (!missing.isEmpty()) {
+            throw new ApiException("Missing required columns: " + missing);
+        }
+    }
+
+    public static List<ProductPojo> getFinalValidProducts(List<ProductPojo> validProducts, List<RowError> invalidProducts, Map<String, ClientPojo> clientNamesToPojos, Map<String, ProductPojo> barcodesToPojos) {
+
+        Map<String, Long> barcodeCountMap = validProducts.stream()
+                .map(ProductPojo::getBarcode)
+                .collect(Collectors.groupingBy(b -> b, Collectors.counting()));
+
+        List<ProductPojo> finalValidProducts = new ArrayList<>();
+
+        for (int i = 0; i < validProducts.size(); i++) {
+            ProductPojo product = validProducts.get(i);
+
+            String clientName = product.getClientName();
+            String barcode = product.getBarcode();
+
+            if (barcodeCountMap.get(barcode) > 1) {
+                invalidProducts.add(
+                        new RowError(barcode, "Duplicate barcode found in upload: " + barcode)
+                );
+                continue;
+            }
+
+            if (!clientNamesToPojos.containsKey(clientName)) {
+                invalidProducts.add(
+                        new RowError(barcode, "Client does not exist: " + clientName)
+                );
+                continue;
+            }
+
+            if (barcodesToPojos.containsKey(barcode)) {
+                invalidProducts.add(
+                        new RowError(barcode, "Product with barcode already exists: " + barcode)
+                );
+                continue;
+            }
+
+            finalValidProducts.add(product);
+        }
+
+        return finalValidProducts;
+    }
+
     public static boolean isRowEmpty(String[] row) {
         return row == null || row.length == 0 ||
                 Arrays.stream(row).allMatch(cell -> cell == null || cell.trim().isEmpty());
+    }
+
+    public static void validateRowLimit(List<String[]> rows) throws ApiException {
+
+        if (rows.size() <= 1) {
+            throw new ApiException("No product rows found!");
+        }
+
+        if (rows.size() > 5000) {
+            throw new ApiException("Maximum row limit exceeded!");
+        }
     }
 } 

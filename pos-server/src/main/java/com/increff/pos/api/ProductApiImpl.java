@@ -5,16 +5,12 @@ import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.OrderItem;
-import com.increff.pos.model.data.OrderStatus;
-import com.increff.pos.model.data.ProductUploadResult;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -67,43 +63,6 @@ public class ProductApiImpl implements ProductApi {
         if (Objects.nonNull(result)) { throw new ApiException("Barcode already exists"); }
     }
 
-    // TODO: move this to the DTO layer
-    public void validateAllOrderItems(OrderPojo orderPojo) throws ApiException {
-
-        List<String> barcodes = orderPojo.getOrderItems().stream()
-                .map(OrderItem::getBarcode)
-                .distinct()
-                .toList();
-
-        List<ProductPojo> products = productDao.findByBarcodes(barcodes);
-
-        Map<String, ProductPojo> productMap = products.stream()
-                .collect(Collectors.toMap(ProductPojo::getBarcode, p -> p));
-
-        for (OrderItem item : orderPojo.getOrderItems()) {
-            try {
-                validateItem(item, productMap);
-            } catch (ApiException e) {
-                throw new ApiException(e.getMessage());
-            }
-        }
-
-    }
-
-    public void validateItem(OrderItem item, Map<String, ProductPojo> productMap) throws ApiException {
-
-        String barcode = item.getBarcode();
-        ProductPojo product = productMap.get(barcode);
-
-        if (product == null) {
-            throw new ApiException("Invalid barcode: " + barcode);
-        }
-
-        if (item.getSellingPrice() > product.getMrp() || item.getSellingPrice() <= 0) {
-            throw new ApiException("Selling price exceeds MRP for barcode: " + barcode);
-        }
-    }
-
     public Map<String, ProductPojo> findExistingProducts(List<String> barcodes) {
 
         List<ProductPojo> existingBarcodes = productDao.findByBarcodes(barcodes);
@@ -115,7 +74,7 @@ public class ProductApiImpl implements ProductApi {
                 ));
     }
 
-    public Map<String, String> mapBarcodesToProductIds(List<String> barcodes) {
+    public Map<String, ProductPojo> mapBarcodesToProductPojos(List<String> barcodes) {
 
         if (barcodes == null || barcodes.isEmpty()) {
             return Collections.emptyMap();
@@ -123,12 +82,12 @@ public class ProductApiImpl implements ProductApi {
 
         List<ProductPojo> products = productDao.findByBarcodes(barcodes);
 
-        Map<String, String> barcodeToProductId = new HashMap<>();
+        Map<String, ProductPojo> barcodeToProductId = new HashMap<>();
 
         for (ProductPojo product : products) {
             barcodeToProductId.put(
                     product.getBarcode(),
-                    product.getId()
+                    product
             );
         }
 

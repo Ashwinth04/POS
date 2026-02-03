@@ -3,6 +3,7 @@ package com.increff.pos.scheduler;
 import com.increff.pos.api.SalesApiImpl;
 import com.increff.pos.dao.SalesDao;
 import com.increff.pos.dto.SalesDto;
+import com.increff.pos.model.form.ClientForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

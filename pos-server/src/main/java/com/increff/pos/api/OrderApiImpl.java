@@ -59,6 +59,7 @@ public class OrderApiImpl implements OrderApi {
     public OrderPojo getCheckByOrderId(String orderId) throws ApiException {
 
         OrderPojo pojo = orderDao.findByOrderId(orderId);
+
         if (pojo == null) throw new ApiException("ORDER WITH THE GIVEN ID DOESN'T EXIST");
 
         return pojo;
