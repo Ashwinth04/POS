@@ -35,17 +35,18 @@ public class SalesApiImpl {
     @Transactional(rollbackFor = Exception.class)
     public void storeDailySales(ZonedDateTime start, ZonedDateTime end) {
 
-        SalesPojo data = salesDao.getDailySalesData(start,end);
-        ZoneId zone = ZoneId.of("Asia/Kolkata");
-        data.setDate(LocalDate.now(zone).atStartOfDay(zone));
+        SalesPojo data = salesDao.getDailySalesData(start, end);
+
+        data.setDate(start);
 
         SalesPojo existing = salesDao.findByDate(start);
-
         if (existing != null) {
             data.setId(existing.getId());
         }
+
         salesDao.save(data);
     }
+
 
     public Page<SalesPojo> getAllSales(int page, int size) {
 

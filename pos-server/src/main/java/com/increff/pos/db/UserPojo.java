@@ -13,8 +13,7 @@ import lombok.Data;
 @Document(collection = "users")
 public class UserPojo extends AbstractPojo {
     @Indexed(unique = true)
-    private String username;
+    private String email;
     private String password;
-    private String status;
     private String role;
 }

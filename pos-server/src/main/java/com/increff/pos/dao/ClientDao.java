@@ -67,8 +67,10 @@ public class ClientDao extends AbstractDao<ClientPojo> {
     }
 
     public Page<ClientPojo> searchByEmail(String email, Pageable pageable) {
+
+        String pattern = ".*" + Pattern.quote(email) + ".*";
         Query query = new Query(
-                Criteria.where("email").is(email)
+                Criteria.where("email").regex(pattern, "i")
         );
 
         long total = mongoOperations.count(query, ClientPojo.class);
@@ -81,8 +83,10 @@ public class ClientDao extends AbstractDao<ClientPojo> {
     }
 
     public Page<ClientPojo> searchByPhoneNumber(String phoneNumber, Pageable pageable) {
+
+        String pattern = ".*" + Pattern.quote(phoneNumber) + ".*";
         Query query = new Query(
-                Criteria.where("phoneNumber").is(phoneNumber)
+                Criteria.where("phoneNumber").regex(pattern, "i")
         );
 
         long total = mongoOperations.count(query, ClientPojo.class);

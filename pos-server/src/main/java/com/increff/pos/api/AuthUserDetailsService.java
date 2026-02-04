@@ -25,9 +25,9 @@ public class AuthUserDetailsService implements UserDetailsService {
 
     public UserDetails loadUserByUsername(String username) {
 
-        if (username.equals(supervisorConfig.getUsername())) {
+        if (username.equals(supervisorConfig.getEmail())) {
             return User.builder()
-                    .username(supervisorConfig.getUsername())
+                    .username(supervisorConfig.getEmail())
                     .password(encoder.encode(supervisorConfig.getPassword()))
                     .roles(Constants.SUPERVISOR)
                     .build();
@@ -36,7 +36,7 @@ public class AuthUserDetailsService implements UserDetailsService {
         UserPojo user = getCheckByUsername(username);
 
         return User.builder()
-                .username(user.getUsername())
+                .username(user.getEmail())
                 .password(user.getPassword())
                 .roles(Constants.OPERATOR)
                 .build();
@@ -44,7 +44,7 @@ public class AuthUserDetailsService implements UserDetailsService {
 
     private UserPojo getCheckByUsername(String username) {
 
-        UserPojo user = userDao.findByUsername(username);
+        UserPojo user = userDao.findByEmail(username);
 
         if (Objects.isNull(user)) {
             throw new UsernameNotFoundException("User with the given email not found");

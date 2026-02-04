@@ -40,17 +40,17 @@ public class UserDaoTest {
 
         // Create test users
         testUser1 = new UserPojo();
-        testUser1.setUsername("testuser1");
+        testUser1.setEmail("testuser1");
         // Set other required fields based on your UserPojo class
         // e.g., testUser1.setPassword("password123");
         // testUser1.setRole("USER");
 
         testUser2 = new UserPojo();
-        testUser2.setUsername("testuser2");
+        testUser2.setEmail("testuser2");
         // Set other required fields
 
         testUser3 = new UserPojo();
-        testUser3.setUsername("testuser3");
+        testUser3.setEmail("testuser3");
         // Set other required fields
     }
 
@@ -68,7 +68,7 @@ public class UserDaoTest {
         // Assert
         assertNotNull(savedUser);
         assertNotNull(savedUser.getId());
-        assertEquals(testUser1.getUsername(), savedUser.getUsername());
+        assertEquals(testUser1.getEmail(), savedUser.getEmail());
     }
 
     @Test
@@ -82,7 +82,7 @@ public class UserDaoTest {
         // Assert
         assertTrue(foundUser.isPresent());
         assertEquals(savedUser.getId(), foundUser.get().getId());
-        assertEquals(savedUser.getUsername(), foundUser.get().getUsername());
+        assertEquals(savedUser.getEmail(), foundUser.get().getEmail());
     }
 
     @Test
@@ -100,17 +100,17 @@ public class UserDaoTest {
         userDao.save(testUser1);
 
         // Act
-        UserPojo foundUser = userDao.findByUsername("testuser1");
+        UserPojo foundUser = userDao.findByEmail("testuser1");
 
         // Assert
         assertNotNull(foundUser);
-        assertEquals(testUser1.getUsername(), foundUser.getUsername());
+        assertEquals(testUser1.getEmail(), foundUser.getEmail());
     }
 
     @Test
-    public void testFindByUsername_NotFound() {
+    public void testfindByEmail_NotFound() {
         // Act
-        UserPojo foundUser = userDao.findByUsername("nonexistentuser");
+        UserPojo foundUser = userDao.findByEmail("nonexistentuser");
 
         // Assert
         assertNull(foundUser);
@@ -164,21 +164,21 @@ public class UserDaoTest {
     public void testUpdate() {
         // Arrange
         UserPojo savedUser = userDao.save(testUser1);
-        String originalUsername = savedUser.getUsername();
+        String originalUsername = savedUser.getEmail();
 
         // Act
-        savedUser.setUsername("updatedUsername");
+        savedUser.setEmail("updatedUsername");
         UserPojo updatedUser = userDao.save(savedUser);
 
         // Assert
         assertNotNull(updatedUser);
-        assertEquals("updatedUsername", updatedUser.getUsername());
-        assertNotEquals(originalUsername, updatedUser.getUsername());
+        assertEquals("updatedUsername", updatedUser.getEmail());
+        assertNotEquals(originalUsername, updatedUser.getEmail());
 
         // Verify in database
         Optional<UserPojo> foundUser = userDao.findById(savedUser.getId());
         assertTrue(foundUser.isPresent());
-        assertEquals("updatedUsername", foundUser.get().getUsername());
+        assertEquals("updatedUsername", foundUser.get().getEmail());
     }
 
     @Test
@@ -233,20 +233,20 @@ public class UserDaoTest {
     }
 
     @Test
-    public void testFindByUsername_MultipleSaves() {
+    public void testfindByEmail_MultipleSaves() {
         // Arrange
         userDao.save(testUser1);
         userDao.save(testUser2);
 
         // Act
-        UserPojo found1 = userDao.findByUsername("testuser1");
-        UserPojo found2 = userDao.findByUsername("testuser2");
+        UserPojo found1 = userDao.findByEmail("testuser1");
+        UserPojo found2 = userDao.findByEmail("testuser2");
 
         // Assert
         assertNotNull(found1);
         assertNotNull(found2);
-        assertEquals("testuser1", found1.getUsername());
-        assertEquals("testuser2", found2.getUsername());
+        assertEquals("testuser1", found1.getEmail());
+        assertEquals("testuser2", found2.getEmail());
         assertNotEquals(found1.getId(), found2.getId());
     }
 }

@@ -31,7 +31,7 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         int quantity = inventoryPojo.getQuantity();
 
         Query query = Query.query(Criteria.where("productId").is(productId));
-        Update update = new Update().inc("quantity", quantity);
+        Update update = new Update().set("quantity", quantity);
 
         UpdateResult result = mongoOperations.updateFirst(query, update, InventoryPojo.class);
 

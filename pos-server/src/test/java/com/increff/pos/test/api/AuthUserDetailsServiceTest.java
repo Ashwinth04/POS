@@ -43,7 +43,7 @@ class AuthUserDetailsServiceTest {
     @Test
     void testLoadUserByUsername_supervisor() {
 
-        when(supervisorConfig.getUsername()).thenReturn("admin");
+        when(supervisorConfig.getEmail()).thenReturn("admin");
         when(supervisorConfig.getPassword()).thenReturn("secret");
         when(passwordEncoder.encode("secret")).thenReturn("ENCODED");
 
@@ -66,14 +66,13 @@ class AuthUserDetailsServiceTest {
     @Test
     void testLoadUserByUsername_operator_active() {
 
-        when(supervisorConfig.getUsername()).thenReturn("admin");
+        when(supervisorConfig.getEmail()).thenReturn("admin");
 
         UserPojo pojo = new UserPojo();
-        pojo.setUsername("operator1");
+        pojo.setEmail("operator1");
         pojo.setPassword("pwd");
-        pojo.setStatus("ACTIVE");
 
-        when(userDao.findByUsername("operator1"))
+        when(userDao.findByEmail("operator1"))
                 .thenReturn(pojo);
 
         UserDetails user =
@@ -93,8 +92,8 @@ class AuthUserDetailsServiceTest {
     @Test
     void testLoadUserByUsername_userNotFound() {
 
-        when(supervisorConfig.getUsername()).thenReturn("adminn@gmail.com");
-        when(userDao.findByUsername("missing"))
+        when(supervisorConfig.getEmail()).thenReturn("adminn@gmail.com");
+        when(userDao.findByEmail("missing"))
                 .thenReturn(null);
 
         assertThatThrownBy(() ->

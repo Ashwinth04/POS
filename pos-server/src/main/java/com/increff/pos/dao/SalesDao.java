@@ -4,6 +4,7 @@ import com.increff.pos.db.SalesPojo;
 import com.increff.pos.model.data.ProductRow;
 import org.bson.BsonNull;
 import org.bson.Document;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -32,6 +33,16 @@ public class SalesDao extends AbstractDao<SalesPojo> {
         Query query = new Query();
         query.addCriteria(Criteria.where("date").is(date));
         return mongoOperations.findOne(query, SalesPojo.class);
+    }
+
+    public ZonedDateTime findLatestDate() {
+
+        Query query = new Query()
+                .with(Sort.by(Sort.Direction.DESC, "date"))
+                .limit(1);
+
+        SalesPojo pojo = mongoOperations.findOne(query, SalesPojo.class);
+        return pojo != null ? pojo.getDate() : null;
     }
 
     public List<ProductRow> getSalesReport(String clientName,

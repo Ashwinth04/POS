@@ -54,7 +54,6 @@ public class ClientDto {
     public Page<ClientData> search(SearchQueryForm searchForm) throws ApiException {
 
         formValidator.validate(searchForm);
-        ValidationUtil.validateSearchParams(searchForm.getType(), searchForm.getQuery());
         Page<ClientPojo> clientPage = clientApi.search(searchForm.getType(), searchForm.getQuery(), searchForm.getPage(), searchForm.getSize());
         return clientPage.map(ClientHelper::convertToData);
     }

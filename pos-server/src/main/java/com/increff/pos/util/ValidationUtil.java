@@ -27,7 +27,7 @@ public class ValidationUtil {
 
     public static void validateLoginRequest(LoginRequest request) throws ApiException {
 
-        if (request.getUsername() == null || request.getUsername().isBlank()) {
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
             throw new ApiException("Username cannot be empty");
         }
 
@@ -87,16 +87,26 @@ public class ValidationUtil {
         if (barcode == null || barcode.trim().isEmpty()) {
             throw new ApiException("Barcode cannot be empty");
         }
+        if (barcode.length() > 15) {
+            throw new ApiException("Barcode cannot be more than 15 characters");
+        }
 
         String name = getValueFromRow(row, headerIndexMap, PRODUCT_NAME);
         if (name == null || name.trim().isEmpty()) {
             throw new ApiException("Product name cannot be empty");
+        }
+        if (name.length() > 15) {
+            throw new ApiException("Product name cannot be more than 15 characters");
         }
 
         String clientName = getValueFromRow(row, headerIndexMap, CLIENT_NAME);
         if (clientName == null || clientName.trim().isEmpty()) {
             throw new ApiException("Client name cannot be empty");
         }
+        if (clientName.length() > 15) {
+            throw new ApiException("Client name cannot be more than 15 characters");
+        }
+
 
         String mrpStr = getValueFromRow(row, headerIndexMap, MRP);
         if (mrpStr == null || mrpStr.trim().isEmpty()) {
@@ -253,7 +263,7 @@ public class ValidationUtil {
 
     public static void validateCreateUserRequest(CreateUserRequest request) throws ApiException {
 
-        if (request.getUsername() == null || request.getUsername().isBlank()) {
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
             throw new ApiException("Username missing");
         }
 

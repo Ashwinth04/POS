@@ -28,8 +28,8 @@ public class NormalizationUtil {
         productForm.setClientName(productForm.getClientName());
     }
 
-    public static void normalizeUsername(String username) {
-        username.trim().toLowerCase();
+    public static void normalizeEmail(String email) {
+        email.trim().toLowerCase();
     }
 
     public static void normalizeInventoryForm(InventoryForm inventoryForm) {

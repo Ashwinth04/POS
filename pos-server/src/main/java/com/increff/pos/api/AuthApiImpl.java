@@ -1,6 +1,7 @@
 package com.increff.pos.api;
 
 import com.increff.pos.constants.Constants;
+import com.increff.pos.constants.UserRole;
 import com.increff.pos.dao.UserDao;
 import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.UserPojo;
@@ -37,11 +38,11 @@ public class AuthApiImpl {
     @Autowired
     private UserDao userDao;
 
-    public LoginResponse login(String username, String password, HttpServletRequest request, HttpServletResponse response) throws ApiException {
+    public LoginResponse login(String email, String password, HttpServletRequest request, HttpServletResponse response) throws ApiException {
 
         try {
             Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(username, password)
+                    new UsernamePasswordAuthenticationToken(email, password)
             );
 
             SecurityContext context = SecurityContextHolder.createEmptyContext();
@@ -65,28 +66,27 @@ public class AuthApiImpl {
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public void createOperator(String username, String password) throws ApiException {
+    public void createOperator(String email, String password) throws ApiException {
 
-        checkUserExists(username);
+        checkUserExists(email);
 
         UserPojo user = new UserPojo();
-        user.setUsername(username);
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole(Constants.OPERATOR);
-        user.setStatus("ACTIVE");
+        user.setRole(UserRole.OPERATOR.role());
 
         userDao.save(user);
     }
 
     public LoginResponse me(Authentication authentication) {
 
-        String username = authentication.getName();
+        String email = authentication.getName();
         String role = authentication.getAuthorities()
                 .iterator()
                 .next()
                 .getAuthority();
 
-        return new LoginResponse(username, role);
+        return new LoginResponse(email, role);
     }
 
     public Page<UserPojo> getAllOperators(int page, int size) {
@@ -95,9 +95,9 @@ public class AuthApiImpl {
         return userDao.findAll(pageRequest);
     }
 
-    public void checkUserExists(String username) throws ApiException {
+    public void checkUserExists(String email) throws ApiException {
 
-        UserPojo user = userDao.findByUsername(username);
+        UserPojo user = userDao.findByEmail(email);
 
         if (Objects.nonNull(user)) {
             throw new ApiException("User already exists");

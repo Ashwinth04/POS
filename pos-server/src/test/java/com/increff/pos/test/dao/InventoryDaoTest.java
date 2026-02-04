@@ -70,7 +70,7 @@ class InventoryDaoTest {
                 );
 
         assertThat(updated).isNotNull();
-        assertThat(updated.getQuantity()).isEqualTo(15);
+        assertThat(updated.getQuantity()).isEqualTo(5);
     }
 
     @Test

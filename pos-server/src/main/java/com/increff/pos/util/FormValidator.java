@@ -14,7 +14,6 @@ public class FormValidator {
     @Autowired
     private Validator validator;
 
-    // TODO: Read about this
     public <T> void validate(T form) throws ApiException {
         Set<ConstraintViolation<T>> violations = validator.validate(form);
 

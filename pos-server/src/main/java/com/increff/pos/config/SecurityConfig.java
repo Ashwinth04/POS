@@ -1,5 +1,6 @@
 package com.increff.pos.config;
 
+import com.increff.pos.constants.UserRole;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,16 +34,16 @@ public class SecurityConfig {
                         .requestMatchers("/auth/me").authenticated()
 
                         // Supervisor only
-                        .requestMatchers("/auth/create-operator").hasRole("SUPERVISOR")
+                        .requestMatchers("/auth/create-operator").hasRole(UserRole.SUPERVISOR.role())
 
                         // Orders accessible by both
-                        .requestMatchers("/api/orders/**").hasAnyRole("SUPERVISOR", "OPERATOR")
+                        .requestMatchers("/api/orders/**").hasAnyRole(UserRole.SUPERVISOR.role(), UserRole.OPERATOR.role())
 
-                        .requestMatchers("/api/products/get-all-paginated").hasAnyRole("SUPERVISOR","OPERATOR")
-                        .requestMatchers("/api/clients/get-all-paginated").hasAnyRole("SUPERVISOR","OPERATOR")
-                        .requestMatchers("/api/clients/search").hasAnyRole("SUPERVISOR","OPERATOR")
+                        .requestMatchers("/api/products/get-all-paginated").hasAnyRole(UserRole.SUPERVISOR.role(),UserRole.OPERATOR.role())
+                        .requestMatchers("/api/clients/get-all-paginated").hasAnyRole(UserRole.SUPERVISOR.role(),UserRole.OPERATOR.role())
+                        .requestMatchers("/api/clients/search").hasAnyRole(UserRole.SUPERVISOR.role(),UserRole.OPERATOR.role())
                         // Everything else supervisor only
-                        .anyRequest().hasRole("SUPERVISOR")
+                        .anyRequest().hasRole(UserRole.SUPERVISOR.role())
                 )
 
                 .sessionManagement(session -> session

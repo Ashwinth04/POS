@@ -7,5 +7,4 @@ import lombok.Setter;
 @Setter
 public class OperatorData {
     String username;
-    String status;
 }

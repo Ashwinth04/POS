@@ -75,6 +75,10 @@ public class InventoryHelper {
         if (barcode.isEmpty()) {
             throw new ApiException("Barcode is empty");
         }
+        if (barcode.length() > 15) {
+            throw new ApiException("Barcode cannot be more than 15 characters");
+        }
+
 
         ProductPojo productPojo = barcodeToProductId.get(barcode);
         if (productPojo == null) {
