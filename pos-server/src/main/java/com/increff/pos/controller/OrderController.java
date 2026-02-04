@@ -6,6 +6,7 @@ import com.increff.pos.model.data.*;
 import com.increff.pos.model.data.OrderStatusData;
 import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.PageForm;
+import com.increff.pos.model.form.SearchOrderForm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -68,8 +69,8 @@ public class OrderController {
     }
 
     @Operation(summary = "Search by order id")
-    @RequestMapping(path = "/search-by-id/{orderId}")
-    public OrderData searchOrder(@PathVariable String orderId) throws ApiException {
-        return orderDto.searchById(orderId);
+    @RequestMapping(path = "/search-by-id", method = RequestMethod.POST)
+    public Page<OrderData> searchOrder(@RequestBody SearchOrderForm searchOrderForm) throws ApiException {
+        return orderDto.searchById(searchOrderForm);
     }
 }

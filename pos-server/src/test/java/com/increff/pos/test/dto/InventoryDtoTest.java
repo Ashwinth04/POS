@@ -53,7 +53,7 @@ class InventoryDtoTest {
 
         try (MockedStatic<InventoryHelper> helper = mockStatic(InventoryHelper.class)) {
 
-            helper.when(() -> InventoryHelper.convertToEntity(form)).thenReturn(pojo);
+            helper.when(() -> InventoryHelper.convertToEntity(form,"1cxsv")).thenReturn(pojo);
             helper.when(() -> InventoryHelper.convertToData(pojo)).thenReturn(data);
 
             InventoryData result = inventoryDto.updateInventory(form);

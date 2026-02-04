@@ -147,7 +147,7 @@ public class OrderFlow {
         return productApi.mapBarcodesToProductPojos(barcodes);
     }
 
-    public OrderPojo searchById(String orderId) throws ApiException {
-        return orderApi.getCheckByOrderId(orderId);
+    public Page<OrderPojo> searchById(String orderId, int page, int size) throws ApiException {
+        return orderApi.search(orderId, page, size);
     }
 }

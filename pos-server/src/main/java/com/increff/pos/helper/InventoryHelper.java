@@ -18,10 +18,10 @@ import static com.increff.pos.util.FileUtils.getValueFromRow;
 
 public class InventoryHelper {
 
-    public static InventoryPojo convertToEntity(InventoryForm inventoryForm) {
+    public static InventoryPojo convertToEntity(InventoryForm inventoryForm, String productId) {
 
         InventoryPojo inventoryPojo = new InventoryPojo();
-        inventoryPojo.setProductId(inventoryForm.getProductId());
+        inventoryPojo.setProductId(productId);
         inventoryPojo.setQuantity(inventoryForm.getQuantity());
         return inventoryPojo;
     }

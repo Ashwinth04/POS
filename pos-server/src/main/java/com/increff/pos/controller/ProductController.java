@@ -6,10 +6,7 @@ import com.increff.pos.model.data.FileData;
 import com.increff.pos.model.data.InventoryData;
 import com.increff.pos.model.data.ProductData;
 import com.increff.pos.model.data.ProductUploadResult;
-import com.increff.pos.model.form.FileForm;
-import com.increff.pos.model.form.InventoryForm;
-import com.increff.pos.model.form.PageForm;
-import com.increff.pos.model.form.ProductForm;
+import com.increff.pos.model.form.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -54,7 +51,7 @@ public class ProductController {
     }
 
     @RequestMapping(path = "/search", method = RequestMethod.POST)
-    public Page<ProductData> searchProducts(@RequestParam String type, @RequestParam String query, @RequestBody PageForm pageForm) throws ApiException{
-        return productDto.searchProducts(type, query, pageForm);
+    public Page<ProductData> searchProducts(@RequestBody SearchQueryForm searchProductForm) throws ApiException{
+        return productDto.searchProducts(searchProductForm);
     }
 }

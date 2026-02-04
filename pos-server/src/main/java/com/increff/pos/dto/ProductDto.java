@@ -144,10 +144,11 @@ public class ProductDto {
         return fileData;
     }
 
-    public Page<ProductData> searchProducts(String type, String query, PageForm form) throws ApiException {
+    public Page<ProductData> searchProducts(SearchQueryForm searchForm) throws ApiException {
 
-        formValidator.validate(form);
-        Page<ProductPojo> productPage = productFlow.searchProducts(type, query, form.getPage(), form.getSize());
+        formValidator.validate(searchForm);
+        NormalizationUtil.normalizeSearchProductForm(searchForm);
+        Page<ProductPojo> productPage = productFlow.searchProducts(searchForm.getType(), searchForm.getQuery(), searchForm.getPage(), searchForm.getSize());
         Map<String, InventoryPojo> productIdToInventoryPojo = productFlow.getInventoryForProducts(productPage);
 
         return productPage.map(

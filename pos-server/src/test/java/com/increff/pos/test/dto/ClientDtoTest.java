@@ -7,6 +7,7 @@ import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.ClientData;
 import com.increff.pos.model.form.ClientForm;
 import com.increff.pos.model.form.PageForm;
+import com.increff.pos.model.form.SearchQueryForm;
 import com.increff.pos.util.FormValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -112,12 +113,14 @@ class ClientDtoTest {
 
         when(clientApi.search("name", "test", 0, 5)).thenReturn(pojoPage);
 
-        PageForm pageForm = new PageForm();
+        SearchQueryForm pageForm = new SearchQueryForm();
+        pageForm.setType("name");
+        pageForm.setQuery("test");
         pageForm.setPage(0);
         pageForm.setSize(5);
 
         Page<ClientData> result =
-                clientDto.search("name", "test", pageForm);
+                clientDto.search(pageForm);
 
         assertEquals(1, result.getTotalElements());
         assertEquals("test client", result.getContent().get(0).getName());
@@ -127,12 +130,14 @@ class ClientDtoTest {
 
     @Test
     void testSearchInvalidParamsThrowsException() {
-        PageForm pageForm = new PageForm();
+        SearchQueryForm pageForm = new SearchQueryForm();
         pageForm.setPage(0);
         pageForm.setSize(5);
+        pageForm.setType("invalid");
+        pageForm.setQuery("");
 
         assertThrows(ApiException.class, () ->
-                clientDto.search("invalid", "", pageForm)
+                clientDto.search(pageForm)
         );
 
         verifyNoInteractions(clientApi);

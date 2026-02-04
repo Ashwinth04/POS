@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class ClientForm {
     @NotBlank(message = "Name cannot be empty")
-    @Size(min = 3, max = 21, message = "Number of characters should be between 3 to 21")
+    @Size(min = 3, max = 21, message = "Number of characters for Name should be between 3 to 21")
     private String name;
     @NotBlank(message = "Email cannot be empty")
     @Pattern(
@@ -17,7 +17,13 @@ public class ClientForm {
             message = "Invalid email format"
     )
     private String email;
+
     @NotBlank(message = "Location cannot be empty")
+    @Size(
+            min = 5,
+            max = 30,
+            message = "Phone number must be exactly 10 digits"
+    )
     private String location;
     @NotBlank(message = "Phone number is required")
 

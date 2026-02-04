@@ -24,9 +24,7 @@ public class InvoiceClient {
                 .build();
     }
 
-    /**
-     * Calls POST /api/invoice/generate-invoice/
-     */
+
     public FileData generateInvoice(OrderData orderData) throws ApiException {
         try {
             return webClient.post()
@@ -42,9 +40,6 @@ public class InvoiceClient {
         }
     }
 
-    /**
-     * Calls GET /api/invoice/download-invoice/{orderId}
-     */
     public FileData downloadInvoice(String orderId) throws ApiException {
         try {
             return webClient.get()

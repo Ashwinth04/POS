@@ -11,10 +11,7 @@ import com.increff.pos.model.data.InventoryData;
 import com.increff.pos.model.data.RowError;
 import com.increff.pos.model.form.FileForm;
 import com.increff.pos.model.form.InventoryForm;
-import com.increff.pos.util.FileUtils;
-import com.increff.pos.util.FormValidator;
-import com.increff.pos.util.TsvParser;
-import com.increff.pos.util.ValidationUtil;
+import com.increff.pos.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,10 +34,12 @@ public class InventoryDto {
     public InventoryData updateInventory(InventoryForm inventoryForm) throws ApiException {
 
         formValidator.validate(inventoryForm);
-        InventoryPojo inventoryPojo = InventoryHelper.convertToEntity(inventoryForm);
+        NormalizationUtil.normalizeInventoryForm(inventoryForm);
+        String barcode = inventoryForm.getBarcode();
+        String productId = getProductIdFromBarcode(barcode);
+        InventoryPojo inventoryPojo = InventoryHelper.convertToEntity(inventoryForm, productId);
         inventoryApi.updateSingleInventory(inventoryPojo);
         return InventoryHelper.convertToData(inventoryPojo);
-
     }
 
     public FileData updateInventoryBulk(FileForm fileForm) throws ApiException {
@@ -73,5 +72,16 @@ public class InventoryDto {
         fileData.setStatus(invalidInventory.isEmpty() ? "SUCCESS" : "UNSUCCESSFUL");
 
         return fileData;
+    }
+
+    private String getProductIdFromBarcode(String barcode) throws ApiException {
+
+        Map<String, ProductPojo> barcodeToProductId = productApi.mapBarcodesToProductPojos(Collections.singletonList(barcode));
+        ProductPojo productPojo = barcodeToProductId.get(barcode);
+        if (productPojo == null) {
+            throw new ApiException("Product not found for barcode: " + barcode);
+        }
+
+        return productPojo.getId();
     }
 }

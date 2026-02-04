@@ -7,6 +7,7 @@ import com.increff.pos.helper.ClientHelper;
 import com.increff.pos.model.data.ClientData;
 import com.increff.pos.model.form.ClientForm;
 import com.increff.pos.model.form.PageForm;
+import com.increff.pos.model.form.SearchQueryForm;
 import com.increff.pos.util.FormValidator;
 import com.increff.pos.util.NormalizationUtil;
 import com.increff.pos.util.ValidationUtil;
@@ -50,11 +51,11 @@ public class ClientDto {
         return ClientHelper.convertToData(clientApi.updateClient(clientPojo));
     }
 
-    public Page<ClientData> search(String type, String query, PageForm pageForm) throws ApiException {
+    public Page<ClientData> search(SearchQueryForm searchForm) throws ApiException {
 
-        formValidator.validate(pageForm);
-        ValidationUtil.validateSearchParams(type, query);
-        Page<ClientPojo> clientPage = clientApi.search(type, query, pageForm.getPage(), pageForm.getSize());
+        formValidator.validate(searchForm);
+        ValidationUtil.validateSearchParams(searchForm.getType(), searchForm.getQuery());
+        Page<ClientPojo> clientPage = clientApi.search(searchForm.getType(), searchForm.getQuery(), searchForm.getPage(), searchForm.getSize());
         return clientPage.map(ClientHelper::convertToData);
     }
 }

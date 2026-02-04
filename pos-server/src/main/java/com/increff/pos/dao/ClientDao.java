@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Repository
@@ -50,8 +51,10 @@ public class ClientDao extends AbstractDao<ClientPojo> {
     }
 
     public Page<ClientPojo> searchByName(String name, Pageable pageable) {
+
+        String pattern = ".*" + Pattern.quote(name) + ".*";
         Query query = new Query(
-                Criteria.where("name").regex(name, "i")
+                Criteria.where("name").regex(pattern, "i")
         );
 
         long total = mongoOperations.count(query, ClientPojo.class);

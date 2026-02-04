@@ -2,6 +2,7 @@ package com.increff.pos.dao;
 
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
+import com.increff.pos.exception.ApiException;
 import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Repository
 public class OrderDao extends AbstractDao<OrderPojo> {
@@ -53,6 +55,19 @@ public class OrderDao extends AbstractDao<OrderPojo> {
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderTime")),
                 total
         );
+    }
+
+    public Page<OrderPojo> search(String orderId, Pageable pageable) throws ApiException {
+
+        String pattern = ".*" + Pattern.quote(orderId) + ".*";
+
+        Query query = new Query(Criteria.where("orderId").regex(pattern, "i")); // "i" = case-insensitive
+        query.with(pageable);
+
+        long total = mongoOperations.count(query, OrderPojo.class);
+        List<OrderPojo> results = mongoOperations.find(query, OrderPojo.class);
+
+        return new PageImpl<>(results, pageable, total);
     }
 
 }

@@ -6,10 +6,7 @@ import com.increff.pos.db.OrderPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.OrderData;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -87,6 +84,14 @@ public class OrderApiImpl implements OrderApi {
 
     public String getOrderStatus(String orderId) throws ApiException {
         return getCheckByOrderId(orderId).getOrderStatus();
+    }
+
+    public Page<OrderPojo> search(String orderId, int page, int size) throws ApiException {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return orderDao.search(orderId, pageable);
+
     }
 
 }

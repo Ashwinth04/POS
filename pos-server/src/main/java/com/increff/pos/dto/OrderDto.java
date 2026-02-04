@@ -11,6 +11,7 @@ import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.OrderItemForm;
 import com.increff.pos.model.form.PageForm;
+import com.increff.pos.model.form.SearchOrderForm;
 import com.increff.pos.service.InvoiceService;
 import com.increff.pos.util.FormValidator;
 import com.increff.pos.util.NormalizationUtil;
@@ -145,8 +146,10 @@ public class OrderDto {
         }
     }
 
-    public OrderData searchById(String orderId) throws ApiException {
-        OrderPojo orderPojo = orderFlow.searchById(orderId);
-        return OrderHelper.convertToData(orderPojo);
+    public Page<OrderData> searchById(SearchOrderForm searchOrderForm) throws ApiException {
+
+        formValidator.validate(searchOrderForm);
+        Page<OrderPojo> orderPage = orderFlow.searchById(searchOrderForm.getOrderId(), searchOrderForm.getPage(), searchOrderForm.getSize());
+        return orderPage.map(OrderHelper::convertToData);
     }
 }

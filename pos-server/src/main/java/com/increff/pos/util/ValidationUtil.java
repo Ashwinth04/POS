@@ -133,7 +133,9 @@ public class ValidationUtil {
 
     public static void validateSearchParams(String type, String query) throws ApiException {
         if (type.equals("name")) {
-            validateName(query);
+            if (!StringUtils.hasText(type)) {
+                throw new ApiException("Name cannot be empty");
+            }
         }
         else if (type.equals("email")) {
             validateEmail(query);

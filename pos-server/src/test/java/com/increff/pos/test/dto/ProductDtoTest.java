@@ -299,9 +299,12 @@ class ProductDtoTest {
 
     @Test
     void testSearchProducts() throws ApiException {
-        PageForm form = new PageForm();
+
+        SearchQueryForm form = new SearchQueryForm();
         form.setPage(0);
         form.setSize(10);
+        form.setType("name");
+        form.setQuery("q");
 
         Page<ProductPojo> page = new PageImpl<>(List.of(productPojo));
 
@@ -316,7 +319,7 @@ class ProductDtoTest {
                     .thenReturn(new ProductData());
 
             Page<ProductData> result =
-                    productDto.searchProducts("name", "q", form);
+                    productDto.searchProducts(form);
 
             assertEquals(1, result.getContent().size());
         }

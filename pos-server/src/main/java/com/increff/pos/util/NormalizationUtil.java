@@ -2,10 +2,7 @@ package com.increff.pos.util;
 
 import com.increff.pos.db.ClientPojo;
 import com.increff.pos.model.data.OrderItem;
-import com.increff.pos.model.form.ClientForm;
-import com.increff.pos.model.form.OrderForm;
-import com.increff.pos.model.form.OrderItemForm;
-import com.increff.pos.model.form.ProductForm;
+import com.increff.pos.model.form.*;
 
 import java.util.List;
 
@@ -33,5 +30,14 @@ public class NormalizationUtil {
 
     public static void normalizeUsername(String username) {
         username.trim().toLowerCase();
+    }
+
+    public static void normalizeInventoryForm(InventoryForm inventoryForm) {
+        inventoryForm.setBarcode(inventoryForm.getBarcode().toLowerCase());
+    }
+
+    public static void normalizeSearchProductForm(SearchQueryForm searchProductForm) {
+        searchProductForm.setType(searchProductForm.getType().toLowerCase());
+        searchProductForm.setQuery(searchProductForm.getQuery().toLowerCase());
     }
 }
