@@ -93,7 +93,7 @@ class OrderFlowTest {
         OrderPojo result = orderFlow.editOrder(orderPojo, "order-1");
 
         assertNotNull(result);
-        verify(inventoryApi).editOrder(anyMap(), anyMap());
+        verify(inventoryApi).calculateAndUpdateDeltaInventory(anyMap(), anyMap());
     }
 
     @Test
@@ -107,7 +107,7 @@ class OrderFlowTest {
         OrderPojo result = orderFlow.editOrder(orderPojo, "order-2");
 
         assertNotNull(result);
-        verify(inventoryApi).editOrder(anyMap(), anyMap());
+        verify(inventoryApi).calculateAndUpdateDeltaInventory(anyMap(), anyMap());
     }
 
     // ---------- cancelOrder ----------

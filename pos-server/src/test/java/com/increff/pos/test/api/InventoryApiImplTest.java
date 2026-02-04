@@ -84,7 +84,7 @@ class InventoryApiImplTest {
     // ---------- editOrder ----------
 
     @Test
-    void editOrder_success() throws ApiException {
+    void calculateAndUpdateDeltaInventory_success() throws ApiException {
         Map<String, Integer> existing = Map.of("p1", 5);
         Map<String, Integer> incoming = Map.of("p1", 8, "p2", 2);
 
@@ -94,7 +94,7 @@ class InventoryApiImplTest {
             mocked.when(() -> InventoryHelper.getPojosFromMap(anyMap()))
                     .thenReturn(pojos);
 
-            inventoryApi.editOrder(existing, incoming);
+            inventoryApi.calculateAndUpdateDeltaInventory(existing, incoming);
 
             verify(inventoryDao).bulkUpdate(pojos);
         }

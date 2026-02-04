@@ -14,8 +14,8 @@ import java.time.ZonedDateTime;
 @Setter
 public abstract class AbstractPojo {
     @Id
-    private String id; //ZonedDateTime
-    @CreatedDate // These 2 annotations enable mongodb to automatically set these fields when inserting or updating a record
+    private String id;
+    @CreatedDate
     private ZonedDateTime createdAt;
     @LastModifiedDate
     private ZonedDateTime updatedAt;

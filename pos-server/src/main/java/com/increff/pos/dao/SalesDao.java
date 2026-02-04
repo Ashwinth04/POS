@@ -93,16 +93,16 @@ public class SalesDao extends AbstractDao<SalesPojo> {
         Date startDate = Date.from(start.toInstant());
         Date endDate = Date.from(end.toInstant());
 
-        // 1️⃣ Match valid orders
+        // Match valid orders
         MatchOperation matchOrders = match(
                 Criteria.where("orderStatus").is("FULFILLABLE")
                         .and("orderTime").gte(startDate).lt(endDate)
         );
 
-        // 2️⃣ Break orderItems into rows
+        // Break orderItems into rows
         UnwindOperation unwindItems = unwind("orderItems");
 
-        // 3️⃣ Compute item-level revenue
+        // Compute item-level revenue
         ProjectionOperation itemRevenueProjection = project()
                 .andExpression("$_id").as("orderId")
                 .and("orderItems.orderedQuantity").as("quantity")
@@ -112,10 +112,8 @@ public class SalesDao extends AbstractDao<SalesPojo> {
                 ).as("itemRevenue")
                 .and("orderItems.barcode").as("barcode");
 
-        // =========================
-        // SUMMARY PIPELINE
-        // =========================
 
+        // SUMMARY PIPELINE
         GroupOperation perOrderGroup = group("orderId")
                 .sum("quantity").as("totalItemsInOrder")
                 .sum("itemRevenue").as("orderRevenue");
@@ -125,10 +123,7 @@ public class SalesDao extends AbstractDao<SalesPojo> {
                 .sum("totalItemsInOrder").as("totalProducts")
                 .sum("orderRevenue").as("totalRevenue");
 
-        // =========================
         // CLIENT PIPELINE
-        // =========================
-
         AggregationOperation lookupProduct = lookup(
                 "products", "barcode", "barcode", "product"
         );
@@ -144,10 +139,8 @@ public class SalesDao extends AbstractDao<SalesPojo> {
                 .andInclude("totalProducts", "totalRevenue")
                 .andExclude("_id");
 
-        // =========================
-        // FACET
-        // =========================
 
+        // FACET
         FacetOperation facet = facet(
                 perOrderGroup,
                 summaryGroup
@@ -159,10 +152,7 @@ public class SalesDao extends AbstractDao<SalesPojo> {
                         clientProjection
                 ).as("clients");
 
-        // =========================
         // FINAL SHAPE
-        // =========================
-
         ProjectionOperation finalProjection = project()
                 .and(ArrayOperators.ArrayElemAt.arrayOf("summary.totalOrders").elementAt(0))
                 .as("totalOrders")

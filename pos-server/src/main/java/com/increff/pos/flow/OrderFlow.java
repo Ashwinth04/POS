@@ -9,7 +9,6 @@ import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.OrderHelper;
 import com.increff.pos.model.data.MessageData;
-import com.increff.pos.model.data.OrderData;
 import com.increff.pos.model.data.OrderItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -72,7 +71,7 @@ public class OrderFlow {
             aggregatedItemsIncoming = inventoryApi.aggregateItemsByProductId(incomingInventoryPojos);
         }
 
-        inventoryApi.editOrder(aggregatedItemsExisting, aggregatedItemsIncoming);
+        inventoryApi.calculateAndUpdateDeltaInventory(aggregatedItemsExisting, aggregatedItemsIncoming);
     }
 
     public MessageData cancelOrder(String orderId) throws ApiException {
@@ -132,7 +131,6 @@ public class OrderFlow {
 
         List<InventoryPojo> inventoryPojos = new ArrayList<>();
 
-        // TODO: Check if its fine to not check again
         for (OrderItem item: orderItems) {
             InventoryPojo pojo = new InventoryPojo();
             ProductPojo productPojo = barcodeToProductId.get(item.getBarcode());

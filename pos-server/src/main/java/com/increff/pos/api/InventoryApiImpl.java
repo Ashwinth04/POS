@@ -26,7 +26,7 @@ public class InventoryApiImpl implements InventoryApi{
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public boolean reserveInventory(List<InventoryPojo> items) throws ApiException {
+    public boolean reserveInventory(List<InventoryPojo> items) {
 
         boolean isFulfillable = checkOrderFulfillable(items);
 
@@ -42,7 +42,7 @@ public class InventoryApiImpl implements InventoryApi{
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public void editOrder(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) throws ApiException {
+    public void calculateAndUpdateDeltaInventory(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) throws ApiException {
 
         Map<String, Integer> delta = calculateDeltaInventory(existingItems, incomingItems);
         updateDeltaInventory(delta);

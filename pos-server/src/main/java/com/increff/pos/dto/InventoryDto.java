@@ -48,9 +48,6 @@ public class InventoryDto {
         formValidator.validate(fileForm);
         List<String[]> rows = TsvParser.parseBase64Tsv(fileForm.getBase64file());
 
-        List<InventoryPojo> validInventory = new ArrayList<>();
-        List<RowError> invalidInventory = new ArrayList<>();
-
         Map<String, Integer> headerIndexMap = extractInventoryHeaderIndexMap(rows.get(0));
         ValidationUtil.validateHeaders(headerIndexMap);
         ValidationUtil.validateRowLimit(rows);
@@ -58,6 +55,9 @@ public class InventoryDto {
         List<String> barcodes = getAllBarcodes(rows, headerIndexMap);
 
         Map<String, ProductPojo> barcodeToProductPojo = productApi.mapBarcodesToProductPojos(new ArrayList<>(barcodes));
+
+        List<InventoryPojo> validInventory = new ArrayList<>();
+        List<RowError> invalidInventory = new ArrayList<>();
 
         segragateValidAndInvalidEntries(rows, validInventory, invalidInventory, headerIndexMap, barcodeToProductPojo);
 
