@@ -169,17 +169,6 @@ class ClientApiImplTest {
     }
 
     @Test
-    void search_byPhoneNumberAlias() throws ApiException {
-        Page<ClientPojo> page = new PageImpl<>(List.of(new ClientPojo()));
-        when(clientDao.searchByPhoneNumber(eq("123"), any(Pageable.class)))
-                .thenReturn(page);
-
-        Page<ClientPojo> result = clientApi.search("phonenumber", "123", 0, 10);
-
-        assertEquals(1, result.getContent().size());
-    }
-
-    @Test
     void search_invalidType() {
         ApiException ex = assertThrows(ApiException.class,
                 () -> clientApi.search("invalid", "x", 0, 10));

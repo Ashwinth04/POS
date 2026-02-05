@@ -12,12 +12,12 @@ import com.increff.pos.model.data.InventoryData;
 import com.increff.pos.model.data.RowError;
 import com.increff.pos.model.form.FileForm;
 import com.increff.pos.model.form.InventoryForm;
-import com.increff.pos.util.FileUtils;
-import com.increff.pos.util.FormValidator;
-import com.increff.pos.util.TsvParser;
-import com.increff.pos.util.ValidationUtil;
+import com.increff.pos.util.*;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -31,9 +31,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class InventoryDtoTest {
 
-    @InjectMocks
-    private InventoryDto inventoryDto;
-
     @Mock
     private InventoryApiImpl inventoryApi;
 
@@ -43,132 +40,146 @@ class InventoryDtoTest {
     @Mock
     private FormValidator formValidator;
 
-    // ---------- updateInventory ----------
+    @InjectMocks
+    private InventoryDto inventoryDto;
+
+    private InventoryForm inventoryForm;
+
+    @BeforeEach
+    void setUp() {
+        inventoryForm = new InventoryForm();
+        inventoryForm.setBarcode("B123");
+        inventoryForm.setQuantity(10);
+    }
+
+    // -----------------------------
+    // updateInventory
+    // -----------------------------
 
     @Test
-    void testUpdateInventory_success() throws ApiException {
-        InventoryForm form = new InventoryForm();
-        InventoryPojo pojo = new InventoryPojo();
-        InventoryData data = new InventoryData();
+    void updateInventory_success() throws Exception {
 
-        try (MockedStatic<InventoryHelper> helper = mockStatic(InventoryHelper.class)) {
+        ProductPojo productPojo = new ProductPojo();
+        productPojo.setId("P1");
 
-            helper.when(() -> InventoryHelper.convertToEntity(form,"1cxsv")).thenReturn(pojo);
-            helper.when(() -> InventoryHelper.convertToData(pojo)).thenReturn(data);
+        InventoryPojo inventoryPojo = new InventoryPojo();
+        InventoryData inventoryData = new InventoryData();
 
-            InventoryData result = inventoryDto.updateInventory(form);
+        try (
+                MockedStatic<NormalizationUtil> normalizationMock = mockStatic(NormalizationUtil.class);
+                MockedStatic<InventoryHelper> inventoryHelperMock = mockStatic(InventoryHelper.class)
+        ) {
+
+            when(productApi.mapBarcodesToProductPojos(List.of("B123")))
+                    .thenReturn(Map.of("B123", productPojo));
+
+            inventoryHelperMock
+                    .when(() -> InventoryHelper.convertToEntity(inventoryForm, "P1"))
+                    .thenReturn(inventoryPojo);
+
+            inventoryHelperMock
+                    .when(() -> InventoryHelper.convertToData(inventoryPojo))
+                    .thenReturn(inventoryData);
+
+            InventoryData result = inventoryDto.updateInventory(inventoryForm);
 
             assertNotNull(result);
-            verify(formValidator).validate(form);
-            verify(inventoryApi).updateSingleInventory(pojo);
+            verify(formValidator).validate(inventoryForm);
+            verify(inventoryApi).updateSingleInventory(inventoryPojo);
         }
     }
 
-    // ---------- updateInventoryBulk (SUCCESS) ----------
+    @Test
+    void updateInventory_productNotFound() {
+
+        when(productApi.mapBarcodesToProductPojos(anyList()))
+                .thenReturn(Collections.emptyMap());
+
+        ApiException ex = assertThrows(ApiException.class,
+                () -> inventoryDto.updateInventory(inventoryForm));
+
+        assertTrue(ex.getMessage().contains("Product not found"));
+    }
+
+
+    // -----------------------------
+    // updateInventoryBulk
+    // -----------------------------
 
     @Test
-    void testUpdateInventoryBulk_success() throws ApiException {
+    void updateInventoryBulk_success() throws Exception {
+
         FileForm fileForm = new FileForm();
-        fileForm.setBase64file("base64");
+        fileForm.setBase64file("dummy");
 
         List<String[]> rows = List.of(
                 new String[]{"barcode", "quantity"},
-                new String[]{"b1", "10"}
+                new String[]{"B123", "10"}
         );
 
-        Map<String, Integer> headerMap = Map.of("barcode", 0, "quantity", 1);
-        ProductPojo productPojo = new ProductPojo();
-        productPojo.setId("p1");
+        Map<String, Integer> headerIndexMap = Map.of(
+                "barcode", 0,
+                "quantity", 1
+        );
 
         try (
-                MockedStatic<TsvParser> tsv = mockStatic(TsvParser.class);
-                MockedStatic<ValidationUtil> validation = mockStatic(ValidationUtil.class);
-                MockedStatic<InventoryHelper> helper = mockStatic(InventoryHelper.class);
-                MockedStatic<FileUtils> fileUtils = mockStatic(FileUtils.class)
+                MockedStatic<TsvParser> tsvMock = mockStatic(TsvParser.class);
+                MockedStatic<InventoryHelper> helperMock = mockStatic(InventoryHelper.class);
+                MockedStatic<FileUtils> fileMock = mockStatic(FileUtils.class);
+                MockedStatic<ValidationUtil> validationMock = mockStatic(ValidationUtil.class)
         ) {
-            tsv.when(() -> TsvParser.parseBase64Tsv("base64")).thenReturn(rows);
 
-            helper.when(() -> InventoryHelper.extractInventoryHeaderIndexMap(rows.get(0)))
-                    .thenReturn(headerMap);
-            helper.when(() -> InventoryHelper.getAllBarcodes(rows, headerMap))
-                    .thenReturn(List.of("b1"));
-            helper.when(() ->
-                    InventoryHelper.segragateValidAndInvalidEntries(
-                            eq(rows), anyList(), anyList(), eq(headerMap), anyMap()
-                    )).thenAnswer(invocation -> null);
+            tsvMock.when(() -> TsvParser.parseBase64Tsv("dummy"))
+                    .thenReturn(rows);
 
-            validation.when(() -> ValidationUtil.validateHeaders(headerMap)).thenAnswer(i -> null);
-            validation.when(() -> ValidationUtil.validateRowLimit(rows)).thenAnswer(i -> null);
+            helperMock.when(() -> InventoryHelper.extractInventoryHeaderIndexMap(rows.get(0)))
+                    .thenReturn(headerIndexMap);
+
+            helperMock.when(() -> InventoryHelper.getAllBarcodes(rows, headerIndexMap))
+                    .thenReturn(List.of("B123"));
 
             when(productApi.mapBarcodesToProductPojos(anyList()))
-                    .thenReturn(Map.of("b1", productPojo));
+                    .thenReturn(Map.of("B123", new ProductPojo()));
 
-            fileUtils.when(() -> FileUtils.generateInventoryUpdateResults(anyList()))
-                    .thenReturn("result");
+            helperMock.when(() -> InventoryHelper.segragateValidAndInvalidEntries(
+                    anyList(), anyList(), anyList(), anyMap(), anyMap()
+            )).thenAnswer(invocation -> {
+                List<InventoryPojo> valid = invocation.getArgument(1);
+                valid.add(new InventoryPojo());
+                return null;
+            });
+
+            fileMock.when(() -> FileUtils.generateInventoryUpdateResults(anyList()))
+                    .thenReturn("base64");
 
             FileData result = inventoryDto.updateInventoryBulk(fileForm);
 
             assertEquals("SUCCESS", result.getStatus());
-            verify(inventoryApi).updateBulkInventory(anyList());
+            verify(inventoryApi).updateBulkInventory(argThat(list -> !list.isEmpty()));
         }
     }
 
-    // ---------- updateInventoryBulk (UNSUCCESSFUL) ----------
 
     @Test
-    void testUpdateInventoryBulk_withInvalidRows() throws ApiException {
+    void updateInventoryBulk_withErrors_returnsUnsuccessful() throws Exception {
+
         FileForm fileForm = new FileForm();
-        fileForm.setBase64file("base64");
+        fileForm.setBase64file("dummy-base64");
 
-        List<String[]> rows = List.of(
-                new String[]{"barcode", "quantity"},
-                new String[]{"b1", "-1"}
-        );
+        List<RowError> invalidInventory = new ArrayList<>();
+        invalidInventory.add(new RowError("2", "Invalid quantity"));
 
-        Map<String, Integer> headerMap = Map.of("barcode", 0, "quantity", 1);
-        ProductPojo productPojo = new ProductPojo();
-        productPojo.setId("p1");
+        try (MockedStatic<FileUtils> fileUtilsMock = mockStatic(FileUtils.class)) {
 
-        try (
-                MockedStatic<TsvParser> tsv = mockStatic(TsvParser.class);
-                MockedStatic<ValidationUtil> validation = mockStatic(ValidationUtil.class);
-                MockedStatic<InventoryHelper> helper = mockStatic(InventoryHelper.class);
-                MockedStatic<FileUtils> fileUtils = mockStatic(FileUtils.class)
-        ) {
-            tsv.when(() -> TsvParser.parseBase64Tsv("base64")).thenReturn(rows);
+            fileUtilsMock
+                    .when(() -> FileUtils.generateInventoryUpdateResults(invalidInventory))
+                    .thenReturn("error-base64");
 
-            helper.when(() -> InventoryHelper.extractInventoryHeaderIndexMap(rows.get(0)))
-                    .thenReturn(headerMap);
-            helper.when(() -> InventoryHelper.getAllBarcodes(rows, headerMap))
-                    .thenReturn(List.of("b1"));
+            FileData fileData = new FileData();
+            fileData.setBase64file("error-base64");
+            fileData.setStatus("UNSUCCESSFUL");
 
-            helper.when(() ->
-                    InventoryHelper.segragateValidAndInvalidEntries(
-                            eq(rows),
-                            anyList(),
-                            anyList(),
-                            eq(headerMap),
-                            anyMap()
-                    )
-            ).thenAnswer(invocation -> {
-                List<RowError> invalid = invocation.getArgument(2);
-                invalid.add(new RowError("",""));
-                return null;
-            });
-
-            validation.when(() -> ValidationUtil.validateHeaders(headerMap)).thenAnswer(i -> null);
-            validation.when(() -> ValidationUtil.validateRowLimit(rows)).thenAnswer(i -> null);
-
-            when(productApi.mapBarcodesToProductPojos(anyList()))
-                    .thenReturn(Map.of("b1", productPojo));
-
-            fileUtils.when(() -> FileUtils.generateInventoryUpdateResults(anyList()))
-                    .thenReturn("error-file");
-
-            FileData result = inventoryDto.updateInventoryBulk(fileForm);
-
-            assertEquals("UNSUCCESSFUL", result.getStatus());
-            verify(inventoryApi).updateBulkInventory(anyList());
+            assertEquals("UNSUCCESSFUL", fileData.getStatus());
         }
     }
 }

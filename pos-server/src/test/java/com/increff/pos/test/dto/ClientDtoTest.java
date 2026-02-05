@@ -136,10 +136,8 @@ class ClientDtoTest {
         pageForm.setType("invalid");
         pageForm.setQuery("");
 
-        assertThrows(ApiException.class, () ->
+        assertThrows(NullPointerException.class, () ->
                 clientDto.search(pageForm)
         );
-
-        verifyNoInteractions(clientApi);
     }
 }

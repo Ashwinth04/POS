@@ -10,7 +10,7 @@ import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.OrderItemForm;
 import com.increff.pos.model.form.PageForm;
-import com.increff.pos.service.InvoiceService;
+import com.increff.pos.wrapper.InvoiceClientWrapper;
 import com.increff.pos.util.FormValidator;
 import com.increff.pos.util.NormalizationUtil;
 import com.increff.pos.util.ValidationUtil;
@@ -43,7 +43,7 @@ class OrderDtoTest {
     private OrderFlow orderFlow;
 
     @Mock
-    private InvoiceService invoiceService;
+    private InvoiceClientWrapper invoiceClientWrapper;
 
     @Mock
     private FormValidator formValidator;
@@ -173,7 +173,7 @@ class OrderDtoTest {
 
             when(orderFlow.getOrder("o3")).thenReturn(pojo);
             helper.when(() -> OrderHelper.convertToData(pojo)).thenReturn(data);
-            when(invoiceService.generateInvoice(data)).thenReturn(file);
+            when(invoiceClientWrapper.generateInvoice(data)).thenReturn(file);
 
             FileData result = orderDto.generateInvoice("o3");
 
@@ -203,7 +203,7 @@ class OrderDtoTest {
     @Test
     void testDownloadInvoice() throws ApiException {
         doNothing().when(orderFlow).checkInvoiceDownloadable("o5");
-        when(invoiceService.downloadInvoice("o5")).thenReturn(new FileData());
+        when(invoiceClientWrapper.downloadInvoice("o5")).thenReturn(new FileData());
 
         FileData result = orderDto.downloadInvoice("o5");
 

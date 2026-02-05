@@ -47,7 +47,7 @@ public class ClientDto {
         formValidator.validate(clientForm);
         NormalizationUtil.normalizeClientForm(clientForm);
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
-
+        clientApi.checkNameExists(clientPojo.getName());
         return ClientHelper.convertToData(clientApi.updateClient(clientPojo));
     }
 

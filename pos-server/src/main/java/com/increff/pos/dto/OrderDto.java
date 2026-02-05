@@ -1,7 +1,5 @@
 package com.increff.pos.dto;
 
-import com.increff.pos.api.ProductApiImpl;
-import com.increff.pos.client.InvoiceClient;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
@@ -12,12 +10,11 @@ import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.OrderItemForm;
 import com.increff.pos.model.form.PageForm;
 import com.increff.pos.model.form.SearchOrderForm;
-import com.increff.pos.service.InvoiceService;
+import com.increff.pos.wrapper.InvoiceClientWrapper;
 import com.increff.pos.util.FormValidator;
 import com.increff.pos.util.NormalizationUtil;
 import com.increff.pos.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.annotation.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +23,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 public class OrderDto {
@@ -35,7 +31,7 @@ public class OrderDto {
     private OrderFlow orderFlow;
 
     @Autowired
-    private InvoiceService invoiceService;
+    private InvoiceClientWrapper invoiceClientWrapper;
 
     @Autowired
     private FormValidator formValidator;
@@ -87,7 +83,7 @@ public class OrderDto {
 
         OrderData orderData = OrderHelper.convertToData(orderPojo);
 
-        FileData response = invoiceService.generateInvoice(orderData);
+        FileData response = invoiceClientWrapper.generateInvoice(orderData);
 
         orderFlow.updatePlacedStatus(orderId);
         return response;
@@ -97,7 +93,7 @@ public class OrderDto {
 
         orderFlow.checkInvoiceDownloadable(orderId);
 
-        return invoiceService.downloadInvoice(orderId);
+        return invoiceClientWrapper.downloadInvoice(orderId);
     }
 
     public Page<OrderData> filterOrders(LocalDate startDate, LocalDate endDate, int page, int size) throws ApiException {

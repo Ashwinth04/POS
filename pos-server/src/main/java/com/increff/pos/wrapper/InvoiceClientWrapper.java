@@ -1,4 +1,4 @@
-package com.increff.pos.service;
+package com.increff.pos.wrapper;
 
 import com.increff.pos.client.InvoiceClient;
 import com.increff.pos.exception.ApiException;
@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class InvoiceService {
+public class InvoiceClientWrapper {
 
     @Autowired
     private InvoiceClient invoiceClient;

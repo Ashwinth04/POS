@@ -23,14 +23,12 @@ public class SalesScheduler {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Kolkata");
 
-    // ✅ Runs once when application starts
     @PostConstruct
     public void onStartup() {
-        System.out.println("ON startup");
         backfillMissingDays();
     }
 
-    // ✅ Runs every day at 00:05 IST
+    // second minute hour day month year
     @Scheduled(cron = "0 5 0 * * *", zone = "Asia/Kolkata")
     public void runDaily() {
         runForYesterday();
@@ -40,7 +38,6 @@ public class SalesScheduler {
 
         ZonedDateTime latest = salesDao.findLatestDate();
 
-        // If no data exists, start from yesterday
         ZonedDateTime start = (latest == null)
                 ? LocalDate.now(ZONE).minusDays(1).atStartOfDay(ZONE)
                 : latest.plusDays(1);
@@ -49,7 +46,6 @@ public class SalesScheduler {
                 LocalDate.now(ZONE).minusDays(1).atStartOfDay(ZONE);
 
         while (!start.isAfter(yesterday)) {
-            System.out.println("CALLING");
             salesDto.storeDailySales(start, start.plusDays(1));
             start = start.plusDays(1);
         }

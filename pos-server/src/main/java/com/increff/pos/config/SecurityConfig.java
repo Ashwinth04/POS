@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/products/get-all-paginated").hasAnyRole(UserRole.SUPERVISOR.role(),UserRole.OPERATOR.role())
                         .requestMatchers("/api/clients/get-all-paginated").hasAnyRole(UserRole.SUPERVISOR.role(),UserRole.OPERATOR.role())
                         .requestMatchers("/api/clients/search").hasAnyRole(UserRole.SUPERVISOR.role(),UserRole.OPERATOR.role())
+                        .requestMatchers("/api/products/search").hasAnyRole(UserRole.SUPERVISOR.role(),UserRole.OPERATOR.role())
                         // Everything else supervisor only
                         .anyRequest().hasRole(UserRole.SUPERVISOR.role())
                 )

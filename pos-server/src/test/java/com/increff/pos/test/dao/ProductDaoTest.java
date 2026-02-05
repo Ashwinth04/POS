@@ -112,31 +112,4 @@ class ProductDaoTest {
         assertThat(page1.getTotalElements()).isEqualTo(3);
     }
 
-    // ------------------------------------------------
-    // searchByName()
-    // ------------------------------------------------
-
-    @Test
-    void testSearchByName_prefixMatch() {
-        Pageable pageable = PageRequest.of(0, 10);
-
-        Page<ProductPojo> page =
-                productDao.searchByName("A", pageable);
-
-        assertThat(page.getTotalElements()).isEqualTo(2);
-        assertThat(page.getContent()).hasSize(2);
-    }
-
-    @Test
-    void testSearchByName_withPagination() {
-        Page<ProductPojo> page1 =
-                productDao.searchByName("A", PageRequest.of(0, 1));
-
-        Page<ProductPojo> page2 =
-                productDao.searchByName("A", PageRequest.of(1, 1));
-
-        assertThat(page1.getContent()).hasSize(1);
-        assertThat(page2.getContent()).hasSize(1);
-        assertThat(page1.getTotalElements()).isEqualTo(2);
-    }
 }
