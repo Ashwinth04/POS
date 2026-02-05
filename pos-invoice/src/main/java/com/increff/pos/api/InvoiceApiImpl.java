@@ -18,6 +18,7 @@ public class InvoiceApiImpl {
 
     public FileData generateInvoice(OrderData orderData) throws ApiException {
 
+        // TODO: Move this to DTO
         try {
             String base64String = InvoiceGenerator.generate(orderData);
 

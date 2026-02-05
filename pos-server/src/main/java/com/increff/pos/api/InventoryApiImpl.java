@@ -41,6 +41,25 @@ public class InventoryApiImpl implements InventoryApi{
         return isFulfillable;
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public boolean reserveInventory2(List<InventoryPojo> items) {
+
+        Map<String, InventoryPojo> existingRecords = fetchRecordsForOrderItems(items);
+
+        for (InventoryPojo item : items) {
+            String productId = item.getProductId();
+
+            boolean fulfillable = isItemFulfillable(item,existingRecords.get(productId));
+            if (!fulfillable) return false;
+
+            item.setQuantity(-item.getQuantity());
+        }
+
+        updateBulkInventory(items);
+
+        return true;
+    }
+
     @Transactional(rollbackFor = ApiException.class)
     public void calculateAndUpdateDeltaInventory(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) throws ApiException {
 

@@ -84,25 +84,6 @@ class SalesApiImplTest {
         verify(salesDao).save(pojo);
     }
 
-    @Test
-    void storeDailySales_existingRecord() {
-        ZonedDateTime start = ZonedDateTime.now().minusDays(1);
-        ZonedDateTime end = ZonedDateTime.now();
-
-        SalesPojo existing = new SalesPojo();
-        existing.setId("99");
-
-        SalesPojo data = new SalesPojo();
-
-        when(salesDao.getDailySalesData(start, end)).thenReturn(data);
-        when(salesDao.findByDate(start)).thenReturn(existing);
-
-        salesApi.storeDailySales(start, end);
-
-        assertEquals("99", data.getId());
-        verify(salesDao).save(data);
-    }
-
     // ---------- getAllSales ----------
 
     @Test

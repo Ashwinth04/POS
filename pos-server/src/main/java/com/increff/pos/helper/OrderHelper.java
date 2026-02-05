@@ -1,6 +1,7 @@
 package com.increff.pos.helper;
 
 import com.increff.pos.db.OrderPojo;
+import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.OrderForm;
@@ -9,26 +10,26 @@ import com.increff.pos.model.form.OrderItemForm;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class OrderHelper {
 
-    public static OrderPojo convertToEntity(OrderForm orderForm) {
+    public static OrderPojo convertToEntity(OrderForm orderForm, Map<String, ProductPojo> barcodeToProductPojo) {
 
         OrderPojo orderPojo = new OrderPojo();
         orderPojo.setOrderTime(Instant.now());
 
-        List<OrderItem> items = new ArrayList<>();
+        List<OrderItemRecord> items = new ArrayList<>();
 
         for (OrderItemForm item: orderForm.getOrderItems()) {
-            OrderItem orderItem = new OrderItem();
-            orderItem.setBarcode(item.getBarcode());
-            orderItem.setOrderedQuantity(item.getOrderedQuantity());
-            orderItem.setSellingPrice(item.getSellingPrice());
+            OrderItemRecord orderItemRecord = new OrderItemRecord();
+            String barcode = item.getBarcode();
+            ProductPojo productPojo = barcodeToProductPojo.get(barcode);
 
-            items.add(orderItem);
+            orderItemRecord.setOrderedQuantity(item.getOrderedQuantity());
+            orderItemRecord.setSellingPrice(item.getSellingPrice());
+
+            items.add(orderItemRecord);
         }
 
         orderPojo.setOrderItems(items);
@@ -37,17 +38,48 @@ public class OrderHelper {
         return orderPojo;
     }
 
-    public static OrderData convertToData(OrderPojo orderPojo) {
+    public static OrderData convertToData(OrderPojo orderPojo, Map<String, ProductPojo> productIdToProductPojo) {
 
         OrderData orderData = new OrderData();
 
         orderData.setOrderId(orderPojo.getOrderId());
         orderData.setOrderTime(orderPojo.getOrderTime());
         orderData.setOrderStatus(orderPojo.getOrderStatus());
-        orderData.setOrderItems(orderPojo.getOrderItems());
+
+        List<OrderItem> orderItems = new ArrayList<>();
+
+        for (OrderItemRecord item: orderPojo.getOrderItems()) {
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrderedQuantity(item.getOrderedQuantity());
+            orderItem.setSellingPrice(item.getSellingPrice());
+            orderItem.setOrderItemId(item.getOrderItemId());
+
+            String productId = item.getProductId();
+            ProductPojo product = productIdToProductPojo.get(productId);
+
+            orderItem.setBarcode(product.getBarcode());
+            orderItem.setProductName(product.getName());
+
+            orderItems.add(orderItem);
+        }
+
+        orderData.setOrderItems(orderItems);
 
         return orderData;
     }
+
+    public static Map<String, ProductPojo> mapProductIdToProductPojo(Map<String, ProductPojo> barcodeToProductPojo) {
+        Map<String, ProductPojo> productIdToProductPojo = new HashMap<>();
+
+        for (ProductPojo product : barcodeToProductPojo.values()) {
+            String productId = product.getId();
+            productIdToProductPojo.put(productId, product);
+        }
+
+        return productIdToProductPojo;
+    }
+
 
     public static String generate() {
         String timestamp = LocalDateTime.now()

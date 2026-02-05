@@ -54,10 +54,11 @@ public class FoBuilder {
 
               <fo:table table-layout="fixed" width="100%%" border-collapse="collapse">
                 <fo:table-column column-width="8%%"/>
-                <fo:table-column column-width="32%%"/>
-                <fo:table-column column-width="15%%"/>
-                <fo:table-column column-width="20%%"/>
-                <fo:table-column column-width="25%%"/>
+                <fo:table-column column-width="25%%"/> <!-- Barcode -->
+                <fo:table-column column-width="27%%"/> <!-- Product Name -->
+                <fo:table-column column-width="10%%"/> <!-- Qty -->
+                <fo:table-column column-width="15%%"/> <!-- Price -->
+                <fo:table-column column-width="15%%"/> <!-- Total -->
 
                 <fo:table-header>
                   <fo:table-row background-color="#1a2a3a">
@@ -66,6 +67,9 @@ public class FoBuilder {
                     </fo:table-cell>
                     <fo:table-cell padding="10pt">
                       <fo:block font-weight="bold" font-size="10pt" color="white">BARCODE</fo:block>
+                    </fo:table-cell>
+                    <fo:table-cell padding="10pt">
+                      <fo:block font-weight="bold" font-size="10pt" color="white">PRODUCT NAME</fo:block>
                     </fo:table-cell>
                     <fo:table-cell padding="10pt" text-align="right">
                       <fo:block font-weight="bold" font-size="10pt" color="white">QTY</fo:block>
@@ -97,6 +101,9 @@ public class FoBuilder {
                   <fo:table-cell padding="10pt">
                     <fo:block font-size="10pt">%s</fo:block>
                   </fo:table-cell>
+                  <fo:table-cell padding="10pt">
+                    <fo:block font-size="10pt">%s</fo:block>
+                  </fo:table-cell>
                   <fo:table-cell padding="10pt" text-align="right">
                     <fo:block font-size="10pt">%d</fo:block>
                   </fo:table-cell>
@@ -107,9 +114,10 @@ public class FoBuilder {
                     <fo:block font-size="10pt" font-weight="bold">Rs. %.2f</fo:block>
                   </fo:table-cell>
                 </fo:table-row>
-        """.formatted(
+            """.formatted(
                     index++,
                     item.getBarcode(),
+                    item.getProductName(),
                     item.getOrderedQuantity(),
                     item.getSellingPrice(),
                     total

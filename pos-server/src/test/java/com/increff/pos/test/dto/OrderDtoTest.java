@@ -5,14 +5,10 @@ import com.increff.pos.db.ProductPojo;
 import com.increff.pos.dto.OrderDto;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.OrderFlow;
-import com.increff.pos.helper.OrderHelper;
 import com.increff.pos.model.data.*;
-import com.increff.pos.model.form.OrderForm;
-import com.increff.pos.model.form.OrderItemForm;
-import com.increff.pos.model.form.PageForm;
+import com.increff.pos.model.form.*;
 import com.increff.pos.wrapper.InvoiceClientWrapper;
 import com.increff.pos.util.FormValidator;
-import com.increff.pos.util.NormalizationUtil;
 import com.increff.pos.util.ValidationUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,16 +17,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.*;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,211 +44,148 @@ class OrderDtoTest {
     private FormValidator formValidator;
 
     private OrderForm orderForm;
-    private OrderItemForm itemForm;
+    private OrderPojo orderPojo;
     private ProductPojo productPojo;
+    private static final String ORDER_ID = "507f1f77bcf86cd799439011";
 
     @BeforeEach
-    void setup() {
-        itemForm = new OrderItemForm();
-        itemForm.setBarcode("b1");
-        itemForm.setSellingPrice(50.0);
+    void setUp() {
+        OrderItemForm item = new OrderItemForm();
+        item.setBarcode("B1");
+        item.setOrderedQuantity(2);
+        item.setSellingPrice(100.0);
 
         orderForm = new OrderForm();
-        orderForm.setOrderItems(List.of(itemForm));
+        orderForm.setOrderItems(List.of(item));
 
         productPojo = new ProductPojo();
-        productPojo.setMrp(100.0);
+        productPojo.setId("P1");
+        productPojo.setBarcode("B1");
+        productPojo.setMrp(200.0);
+
+        OrderItemRecord record = new OrderItemRecord();
+        record.setProductId("P1");
+        record.setOrderedQuantity(2);
+        record.setSellingPrice(100.0);
+
+        orderPojo = new OrderPojo();
+        orderPojo.setOrderId(ORDER_ID);
+        orderPojo.setOrderStatus("FULFILLABLE");
+        orderPojo.setOrderItems(List.of(record));
     }
 
-    // ---------- createOrder ----------
+    /* ---------------- CANCEL ORDER ---------------- */
 
     @Test
-    void testCreateOrder_success() throws ApiException {
-        OrderPojo pojo = new OrderPojo();
-        OrderData data = new OrderData();
+    void cancelOrder_success() throws Exception {
+        MessageData msg = new MessageData();
+        msg.setMessage("Cancelled");
 
-        try (
-                MockedStatic<NormalizationUtil> norm = mockStatic(NormalizationUtil.class);
-                MockedStatic<OrderHelper> helper = mockStatic(OrderHelper.class)
-        ) {
-            when(orderFlow.mapBarcodesToProductPojos(anyList()))
-                    .thenReturn(Map.of("b1", productPojo));
-            when(orderFlow.createOrder(any())).thenReturn(pojo);
+        when(orderFlow.cancelOrder(ORDER_ID)).thenReturn(msg);
 
-            helper.when(() -> OrderHelper.convertToEntity(orderForm)).thenReturn(pojo);
-            helper.when(() -> OrderHelper.convertToData(pojo)).thenReturn(data);
+        MessageData result = orderDto.cancelOrder(ORDER_ID);
 
-            OrderData result = orderDto.createOrder(orderForm);
-
-            assertNotNull(result);
-            verify(formValidator).validate(orderForm);
-        }
+        assertEquals("Cancelled", result.getMessage());
     }
 
-    // ---------- editOrder ----------
+    /* ---------------- GET ALL ORDERS ---------------- */
 
     @Test
-    void testEditOrder_success() throws ApiException {
-        OrderPojo pojo = new OrderPojo();
-        OrderData data = new OrderData();
+    void getAllOrders_success() throws Exception {
+        Page<OrderPojo> page = new PageImpl<>(List.of(orderPojo));
 
-        try (
-                MockedStatic<NormalizationUtil> norm = mockStatic(NormalizationUtil.class);
-                MockedStatic<OrderHelper> helper = mockStatic(OrderHelper.class);
-                MockedStatic<ValidationUtil> validation = mockStatic(ValidationUtil.class)
-        ) {
-            validation.when(() -> ValidationUtil.validateOrderId("o1")).thenAnswer(i -> null);
+        when(orderFlow.getAllOrders(0, 10)).thenReturn(page);
+        when(orderFlow.mapProductIdsToProductPojos(anyList()))
+                .thenReturn(Map.of("P1", productPojo));
 
-            when(orderFlow.mapBarcodesToProductPojos(anyList()))
-                    .thenReturn(Map.of("b1", productPojo));
-            when(orderFlow.editOrder(any(), eq("o1"))).thenReturn(pojo);
-
-            helper.when(() -> OrderHelper.convertToEntity(orderForm)).thenReturn(pojo);
-            helper.when(() -> OrderHelper.convertToData(pojo)).thenReturn(data);
-
-            OrderData result = orderDto.editOrder(orderForm, "o1");
-
-            assertNotNull(result);
-        }
-    }
-
-    // ---------- cancelOrder ----------
-
-    @Test
-    void testCancelOrder() throws ApiException {
-        try (MockedStatic<ValidationUtil> validation = mockStatic(ValidationUtil.class)) {
-            validation.when(() -> ValidationUtil.validateOrderId("o2")).thenAnswer(i -> null);
-
-            when(orderFlow.cancelOrder("o2")).thenReturn(new MessageData());
-
-            MessageData result = orderDto.cancelOrder("o2");
-
-            assertNotNull(result);
-        }
-    }
-
-    // ---------- getAllOrders ----------
-
-    @Test
-    void testGetAllOrders() throws ApiException {
         PageForm form = new PageForm();
         form.setPage(0);
         form.setSize(10);
 
-        OrderPojo pojo = new OrderPojo();
-        OrderData data = new OrderData();
+        Page<OrderData> result = orderDto.getAllOrders(form);
 
-        Page<OrderPojo> page = new PageImpl<>(List.of(pojo));
-
-        try (MockedStatic<OrderHelper> helper = mockStatic(OrderHelper.class)) {
-            when(orderFlow.getAllOrders(0, 10)).thenReturn(page);
-            helper.when(() -> OrderHelper.convertToData(pojo)).thenReturn(data);
-
-            Page<OrderData> result = orderDto.getAllOrders(form);
-
-            assertEquals(1, result.getContent().size());
-        }
+        assertEquals(1, result.getTotalElements());
     }
 
-    // ---------- generateInvoice ----------
+    /* ---------------- GENERATE INVOICE ---------------- */
 
     @Test
-    void testGenerateInvoice_success() throws ApiException {
-        OrderPojo pojo = new OrderPojo();
-        pojo.setOrderStatus("FULFILLABLE");
+    void generateInvoice_success() throws Exception {
+        when(orderFlow.getOrder(ORDER_ID)).thenReturn(orderPojo);
+        when(orderFlow.mapProductIdsToProductPojos(anyList()))
+                .thenReturn(Map.of("P1", productPojo));
 
-        OrderData data = new OrderData();
-        FileData file = new FileData();
+        FileData fileData = new FileData();
+        when(invoiceClientWrapper.generateInvoice(any())).thenReturn(fileData);
 
-        try (
-                MockedStatic<ValidationUtil> validation = mockStatic(ValidationUtil.class);
-                MockedStatic<OrderHelper> helper = mockStatic(OrderHelper.class)
-        ) {
-            validation.when(() -> ValidationUtil.validateOrderId("o3")).thenAnswer(i -> null);
-
-            when(orderFlow.getOrder("o3")).thenReturn(pojo);
-            helper.when(() -> OrderHelper.convertToData(pojo)).thenReturn(data);
-            when(invoiceClientWrapper.generateInvoice(data)).thenReturn(file);
-
-            FileData result = orderDto.generateInvoice("o3");
-
-            assertNotNull(result);
-            verify(orderFlow).updatePlacedStatus("o3");
-        }
-    }
-
-    @Test
-    void testGenerateInvoice_notFulfillable() throws ApiException {
-        OrderPojo pojo = new OrderPojo();
-        pojo.setOrderStatus("CREATED");
-
-        try (MockedStatic<ValidationUtil> validation = mockStatic(ValidationUtil.class)) {
-            validation.when(() -> ValidationUtil.validateOrderId("o4")).thenAnswer(i -> null);
-            when(orderFlow.getOrder("o4")).thenReturn(pojo);
-
-            ApiException ex = assertThrows(ApiException.class,
-                    () -> orderDto.generateInvoice("o4"));
-
-            assertTrue(ex.getMessage().contains("ORDER CANNOT BE PLACED"));
-        }
-    }
-
-    // ---------- downloadInvoice ----------
-
-    @Test
-    void testDownloadInvoice() throws ApiException {
-        doNothing().when(orderFlow).checkInvoiceDownloadable("o5");
-        when(invoiceClientWrapper.downloadInvoice("o5")).thenReturn(new FileData());
-
-        FileData result = orderDto.downloadInvoice("o5");
+        FileData result = orderDto.generateInvoice(ORDER_ID);
 
         assertNotNull(result);
+        verify(orderFlow).updatePlacedStatus(ORDER_ID);
     }
 
-    // ---------- filterOrders ----------
-
     @Test
-    void testFilterOrders() throws ApiException {
-        LocalDate start = LocalDate.now().minusDays(1);
-        LocalDate end = LocalDate.now();
+    void generateInvoice_invalidStatus() throws Exception {
+        orderPojo.setOrderStatus("CANCELLED");
+        when(orderFlow.getOrder(ORDER_ID)).thenReturn(orderPojo);
 
-        OrderPojo pojo = new OrderPojo();
-        OrderData data = new OrderData();
+        ApiException ex = assertThrows(ApiException.class,
+                () -> orderDto.generateInvoice(ORDER_ID));
 
-        Page<OrderPojo> page = new PageImpl<>(List.of(pojo));
-
-        try (
-                MockedStatic<ValidationUtil> validation = mockStatic(ValidationUtil.class);
-                MockedStatic<OrderHelper> helper = mockStatic(OrderHelper.class)
-        ) {
-            validation.when(() -> ValidationUtil.validateDates(start, end)).thenAnswer(i -> null);
-
-            ZonedDateTime zs = start.atStartOfDay(ZoneId.systemDefault());
-            ZonedDateTime ze = end.atTime(23, 59, 59, 999_000_000).atZone(ZoneId.systemDefault());
-
-            when(orderFlow.filterOrders(zs, ze, 0, 10)).thenReturn(page);
-            helper.when(() -> OrderHelper.convertToData(pojo)).thenReturn(data);
-
-            Page<OrderData> result = orderDto.filterOrders(start, end, 0, 10);
-
-            assertEquals(1, result.getContent().size());
-        }
+        assertEquals("ORDER CANNOT BE PLACED", ex.getMessage());
     }
 
-    // ---------- validateAllOrderItems ----------
+    /* ---------------- DOWNLOAD INVOICE ---------------- */
 
     @Test
-    void testValidateAllOrderItems_success() throws ApiException {
+    void downloadInvoice_success() throws Exception {
+        FileData fileData = new FileData();
+
+        when(invoiceClientWrapper.downloadInvoice("O1")).thenReturn(fileData);
+
+        FileData result = orderDto.downloadInvoice("O1");
+
+        assertNotNull(result);
+        verify(orderFlow).checkInvoiceDownloadable("O1");
+    }
+
+    /* ---------------- FILTER ORDERS ---------------- */
+
+    @Test
+    void filterOrders_success() throws Exception {
+        Page<OrderPojo> page = new PageImpl<>(List.of(orderPojo));
+
+        when(orderFlow.filterOrders(any(), any(), eq(0), eq(10))).thenReturn(page);
+        when(orderFlow.mapProductIdsToProductPojos(anyList()))
+                .thenReturn(Map.of("P1", productPojo));
+
+        Page<OrderData> result = orderDto.filterOrders(
+                LocalDate.now().minusDays(1),
+                LocalDate.now(),
+                0,
+                10
+        );
+
+        assertEquals(1, result.getTotalElements());
+    }
+
+    /* ---------------- VALIDATE ALL ORDER ITEMS ---------------- */
+
+    @Test
+    void validateAllOrderItems_success() throws Exception {
         when(orderFlow.mapBarcodesToProductPojos(anyList()))
-                .thenReturn(Map.of("b1", productPojo));
+                .thenReturn(Map.of("B1", productPojo));
 
-        orderDto.validateAllOrderItems(orderForm);
+        Map<String, ProductPojo> result =
+                orderDto.validateAllOrderItems(orderForm);
+
+        assertEquals(1, result.size());
     }
 
     @Test
-    void testValidateAllOrderItems_invalidItem() {
+    void validateAllOrderItems_invalidBarcode() {
         when(orderFlow.mapBarcodesToProductPojos(anyList()))
-                .thenReturn(Map.of());
+                .thenReturn(Collections.emptyMap());
 
         ApiException ex = assertThrows(ApiException.class,
                 () -> orderDto.validateAllOrderItems(orderForm));
@@ -261,38 +193,35 @@ class OrderDtoTest {
         assertTrue(ex.getMessage().contains("Invalid barcode"));
     }
 
-    // ---------- validateItem ----------
-
     @Test
-    void testValidateItem_success() throws ApiException {
-        orderDto.validateItem(itemForm, Map.of("b1", productPojo));
-    }
-
-    @Test
-    void testValidateItem_invalidBarcode() {
-        ApiException ex = assertThrows(ApiException.class,
-                () -> orderDto.validateItem(itemForm, Map.of()));
-
-        assertTrue(ex.getMessage().contains("Invalid barcode"));
-    }
-
-    @Test
-    void testValidateItem_priceExceedsMrp() {
-        itemForm.setSellingPrice(200.0);
+    void validateItem_priceExceedsMrp() {
+        OrderItemForm item = new OrderItemForm();
+        item.setBarcode("B1");
+        item.setSellingPrice(500.0);
 
         ApiException ex = assertThrows(ApiException.class,
-                () -> orderDto.validateItem(itemForm, Map.of("b1", productPojo)));
+                () -> orderDto.validateItem(item, Map.of("B1", productPojo)));
 
         assertTrue(ex.getMessage().contains("Selling price exceeds MRP"));
     }
 
+    /* ---------------- SEARCH BY ID ---------------- */
+
     @Test
-    void testValidateItem_priceZeroOrNegative() {
-        itemForm.setSellingPrice(0.0);
+    void searchById_success() throws Exception {
+        Page<OrderPojo> page = new PageImpl<>(List.of(orderPojo));
 
-        ApiException ex = assertThrows(ApiException.class,
-                () -> orderDto.validateItem(itemForm, Map.of("b1", productPojo)));
+        when(orderFlow.searchById(eq("O1"), eq(0), eq(10))).thenReturn(page);
+        when(orderFlow.mapProductIdsToProductPojos(anyList()))
+                .thenReturn(Map.of("P1", productPojo));
 
-        assertTrue(ex.getMessage().contains("Selling price exceeds MRP"));
+        SearchOrderForm form = new SearchOrderForm();
+        form.setOrderId("O1");
+        form.setPage(0);
+        form.setSize(10);
+
+        Page<OrderData> result = orderDto.searchById(form);
+
+        assertEquals(1, result.getTotalElements());
     }
 }

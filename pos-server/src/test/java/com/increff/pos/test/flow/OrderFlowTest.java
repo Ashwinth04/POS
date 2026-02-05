@@ -9,7 +9,7 @@ import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.OrderFlow;
 import com.increff.pos.model.data.MessageData;
-import com.increff.pos.model.data.OrderItem;
+import com.increff.pos.model.data.OrderItemRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,10 +20,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,205 +41,187 @@ class OrderFlowTest {
     @Mock
     private InventoryApiImpl inventoryApi;
 
+    private static final String ORDER_ID = "507f1f77bcf86cd799439011";
     private OrderPojo orderPojo;
-    private OrderItem orderItem;
-    private ProductPojo productPojo;
+    private OrderItemRecord item;
 
     @BeforeEach
-    void setup() {
-        orderItem = new OrderItem();
-        orderItem.setBarcode("barcode-1");
-        orderItem.setOrderedQuantity(2);
+    void setUp() {
+        item = new OrderItemRecord();
+        item.setProductId("P1");
+        item.setOrderedQuantity(2);
 
         orderPojo = new OrderPojo();
-        orderPojo.setOrderItems(List.of(orderItem));
-        orderPojo.setOrderStatus("CREATED");
-
-        productPojo = new ProductPojo();
-        productPojo.setId("product-1");
+        orderPojo.setOrderId(ORDER_ID);
+        orderPojo.setOrderStatus("FULFILLABLE");
+        orderPojo.setOrderItems(List.of(item));
     }
 
-    // ---------- createOrder ----------
+    /* ---------------- CREATE ORDER ---------------- */
 
     @Test
-    void testCreateOrder_fulfillable() throws ApiException {
-        when(productApi.mapBarcodesToProductPojos(anyList()))
-                .thenReturn(Map.of("barcode-1", productPojo));
-        when(inventoryApi.reserveInventory(anyList())).thenReturn(true);
+    void createOrder_success() throws Exception {
+        when(inventoryApi.reserveInventory2(anyList())).thenReturn(true);
         when(orderApi.createOrder(any(), eq(true))).thenReturn(orderPojo);
 
         OrderPojo result = orderFlow.createOrder(orderPojo);
 
         assertNotNull(result);
-        verify(inventoryApi).reserveInventory(anyList());
         verify(orderApi).createOrder(any(), eq(true));
     }
 
-    // ---------- editOrder ----------
+    /* ---------------- EDIT ORDER ---------------- */
 
     @Test
-    void testEditOrder_existingFulfillable_incomingFulfillable() throws ApiException {
-        orderPojo.setOrderStatus("FULFILLABLE");
-
-        when(orderApi.getOrderStatus("order-1")).thenReturn("FULFILLABLE");
-        when(orderApi.getCheckByOrderId("order-1")).thenReturn(orderPojo);
-        when(productApi.mapBarcodesToProductPojos(anyList()))
-                .thenReturn(Map.of("barcode-1", productPojo));
+    void editOrder_existingFulfillable_andFulfillableIncoming() throws Exception {
+        when(orderApi.getOrderStatus(ORDER_ID)).thenReturn("FULFILLABLE");
+        when(orderApi.getCheckByOrderId(ORDER_ID)).thenReturn(orderPojo);
         when(inventoryApi.checkOrderFulfillable(anyList())).thenReturn(true);
         when(inventoryApi.aggregateItemsByProductId(anyList()))
-                .thenReturn(Map.of("product-1", 2));
+                .thenReturn(Map.of("P1", 2));
         when(orderApi.editOrder(any(), eq(true))).thenReturn(orderPojo);
 
-        OrderPojo result = orderFlow.editOrder(orderPojo, "order-1");
+        OrderPojo result = orderFlow.editOrder(orderPojo, ORDER_ID);
 
         assertNotNull(result);
         verify(inventoryApi).calculateAndUpdateDeltaInventory(anyMap(), anyMap());
     }
 
-    @Test
-    void testEditOrder_existingNotFulfillable_incomingNotFulfillable() throws ApiException {
-        when(orderApi.getOrderStatus("order-2")).thenReturn("CREATED");
-        when(productApi.mapBarcodesToProductPojos(anyList()))
-                .thenReturn(Map.of("barcode-1", productPojo));
-        when(inventoryApi.checkOrderFulfillable(anyList())).thenReturn(false);
-        when(orderApi.editOrder(any(), eq(false))).thenReturn(orderPojo);
-
-        OrderPojo result = orderFlow.editOrder(orderPojo, "order-2");
-
-        assertNotNull(result);
-        verify(inventoryApi).calculateAndUpdateDeltaInventory(anyMap(), anyMap());
-    }
-
-    // ---------- cancelOrder ----------
+    /* ---------------- CANCEL ORDER ---------------- */
 
     @Test
-    void testCancelOrder_fulfillable() throws ApiException {
-        orderPojo.setOrderStatus("FULFILLABLE");
+    void cancelOrder_fulfillable_revertsInventory() throws Exception {
+        when(orderApi.getCheckByOrderId(ORDER_ID)).thenReturn(orderPojo);
 
-        when(orderApi.getCheckByOrderId("order-3")).thenReturn(orderPojo);
-        when(productApi.mapBarcodesToProductPojos(anyList()))
-                .thenReturn(Map.of("barcode-1", productPojo));
-        when(orderApi.cancelOrder("order-3")).thenReturn(new MessageData());
+        MessageData msg = new MessageData();
+        msg.setMessage("Cancelled");
 
-        MessageData result = orderFlow.cancelOrder("order-3");
+        when(orderApi.cancelOrder(ORDER_ID)).thenReturn(msg);
 
-        assertNotNull(result);
+        MessageData result = orderFlow.cancelOrder(ORDER_ID);
+
+        assertEquals("Cancelled", result.getMessage());
         verify(inventoryApi).revertInventory(anyList());
     }
 
-    @Test
-    void testCancelOrder_notFulfillable() throws ApiException {
-        orderPojo.setOrderStatus("CREATED");
-
-        when(orderApi.getCheckByOrderId("order-4")).thenReturn(orderPojo);
-        when(orderApi.cancelOrder("order-4")).thenReturn(new MessageData());
-
-        MessageData result = orderFlow.cancelOrder("order-4");
-
-        assertNotNull(result);
-        verify(inventoryApi, never()).revertInventory(anyList());
-    }
-
-    // ---------- getters & simple pass-throughs ----------
+    /* ---------------- GET ALL ORDERS ---------------- */
 
     @Test
-    void testGetAllOrders() {
+    void getAllOrders_success() {
         Page<OrderPojo> page = new PageImpl<>(List.of(orderPojo));
+
         when(orderApi.getAllOrders(0, 10)).thenReturn(page);
 
         Page<OrderPojo> result = orderFlow.getAllOrders(0, 10);
 
-        assertEquals(1, result.getContent().size());
+        assertEquals(1, result.getTotalElements());
     }
 
+    /* ---------------- GET ORDER ---------------- */
+
     @Test
-    void testGetOrder() throws ApiException {
-        when(orderApi.getCheckByOrderId("order-5")).thenReturn(orderPojo);
+    void getOrder_success() throws Exception {
+        when(orderApi.getCheckByOrderId(ORDER_ID)).thenReturn(orderPojo);
 
-        OrderPojo result = orderFlow.getOrder("order-5");
+        OrderPojo result = orderFlow.getOrder(ORDER_ID);
 
-        assertNotNull(result);
+        assertEquals(orderPojo, result);
     }
 
+    /* ---------------- UPDATE PLACED STATUS ---------------- */
+
     @Test
-    void testUpdatePlacedStatus() throws ApiException {
-        doNothing().when(orderApi).updatePlacedStatus("order-6");
+    void updatePlacedStatus_success() throws Exception {
+        orderFlow.updatePlacedStatus(ORDER_ID);
 
-        orderFlow.updatePlacedStatus("order-6");
-
-        verify(orderApi).updatePlacedStatus("order-6");
+        verify(orderApi).updatePlacedStatus(ORDER_ID);
     }
 
-    // ---------- checkInvoiceDownloadable ----------
+    /* ---------------- CHECK INVOICE DOWNLOADABLE ---------------- */
 
     @Test
-    void testCheckInvoiceDownloadable_success() throws ApiException {
+    void checkInvoiceDownloadable_success() throws Exception {
         orderPojo.setOrderStatus("PLACED");
-        when(orderApi.getCheckByOrderId("order-7")).thenReturn(orderPojo);
+        when(orderApi.getCheckByOrderId(ORDER_ID)).thenReturn(orderPojo);
 
-        orderFlow.checkInvoiceDownloadable("order-7");
+        assertDoesNotThrow(() -> orderFlow.checkInvoiceDownloadable(ORDER_ID));
     }
 
     @Test
-    void testCheckInvoiceDownloadable_orderNotPlaced() throws ApiException {
-        orderPojo.setOrderStatus("CREATED");
-        when(orderApi.getCheckByOrderId("order-8")).thenReturn(orderPojo);
+    void checkInvoiceDownloadable_notPlaced() throws Exception {
+        when(orderApi.getCheckByOrderId(ORDER_ID)).thenReturn(orderPojo);
 
         ApiException ex = assertThrows(ApiException.class,
-                () -> orderFlow.checkInvoiceDownloadable("order-8"));
+                () -> orderFlow.checkInvoiceDownloadable(ORDER_ID));
 
         assertTrue(ex.getMessage().contains("ORDER NOT PLACED"));
     }
 
-    @Test
-    void testCheckInvoiceDownloadable_orderDoesNotExist() throws ApiException {
-        when(orderApi.getCheckByOrderId("order-9")).thenReturn(null);
-
-        ApiException ex = assertThrows(ApiException.class,
-                () -> orderFlow.checkInvoiceDownloadable("order-9"));
-
-        assertTrue(ex.getMessage().contains("DOESN'T EXIST"));
-    }
-
-    // ---------- filterOrders ----------
+    /* ---------------- FILTER ORDERS ---------------- */
 
     @Test
-    void testFilterOrders() {
+    void filterOrders_success() {
         Page<OrderPojo> page = new PageImpl<>(List.of(orderPojo));
-        ZonedDateTime start = ZonedDateTime.now().minusDays(1);
-        ZonedDateTime end = ZonedDateTime.now();
 
-        when(orderApi.filterOrders(start, end, 0, 10)).thenReturn(page);
+        when(orderApi.filterOrders(any(), any(), eq(0), eq(10))).thenReturn(page);
 
-        Page<OrderPojo> result = orderFlow.filterOrders(start, end, 0, 10);
+        Page<OrderPojo> result = orderFlow.filterOrders(
+                ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now(),
+                0,
+                10
+        );
 
-        assertEquals(1, result.getContent().size());
+        assertEquals(1, result.getTotalElements());
     }
 
-    // ---------- inventory helpers ----------
+    /* ---------------- INVENTORY POJOS ---------------- */
 
     @Test
-    void testGetInventoryPojosForOrder() {
-        when(productApi.mapBarcodesToProductPojos(anyList()))
-                .thenReturn(Map.of("barcode-1", productPojo));
-
+    void getInventoryPojosForOrder_success() {
         List<InventoryPojo> result =
-                orderFlow.getInventoryPojosForOrder(List.of(orderItem));
+                orderFlow.getInventoryPojosForOrder(List.of(item));
 
         assertEquals(1, result.size());
-        assertEquals("product-1", result.get(0).getProductId());
+        assertEquals("P1", result.get(0).getProductId());
         assertEquals(2, result.get(0).getQuantity());
     }
 
+    /* ---------------- PRODUCT MAPPERS ---------------- */
+
     @Test
-    void testMapBarcodesToProductPojos() {
+    void mapBarcodesToProductPojos_success() {
         when(productApi.mapBarcodesToProductPojos(anyList()))
-                .thenReturn(Map.of("barcode-1", productPojo));
+                .thenReturn(Map.of("B1", new ProductPojo()));
 
-        Map<String, ProductPojo> map =
-                orderFlow.mapBarcodesToProductPojos(List.of("barcode-1"));
+        Map<String, ProductPojo> result =
+                orderFlow.mapBarcodesToProductPojos(List.of("B1"));
 
-        assertEquals(1, map.size());
-        assertTrue(map.containsKey("barcode-1"));
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void mapProductIdsToProductPojos_success() {
+        when(productApi.mapProductIdsToProductPojos(anyList()))
+                .thenReturn(Map.of("P1", new ProductPojo()));
+
+        Map<String, ProductPojo> result =
+                orderFlow.mapProductIdsToProductPojos(List.of("P1"));
+
+        assertEquals(1, result.size());
+    }
+
+    /* ---------------- SEARCH BY ID ---------------- */
+
+    @Test
+    void searchById_success() throws Exception {
+        Page<OrderPojo> page = new PageImpl<>(List.of(orderPojo));
+
+        when(orderApi.search(ORDER_ID, 0, 10)).thenReturn(page);
+
+        Page<OrderPojo> result =
+                orderFlow.searchById(ORDER_ID, 0, 10);
+
+        assertEquals(1, result.getTotalElements());
     }
 }

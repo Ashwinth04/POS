@@ -1,6 +1,7 @@
 package com.increff.pos.dao;
 
 import com.increff.pos.db.SalesPojo;
+import com.increff.pos.model.data.DailyClientSalesData;
 import com.increff.pos.model.data.ProductRow;
 import org.bson.BsonNull;
 import org.bson.Document;
@@ -16,6 +17,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 
@@ -35,35 +37,31 @@ public class SalesDao extends AbstractDao<SalesPojo> {
         return mongoOperations.findOne(query, SalesPojo.class);
     }
 
-    public ZonedDateTime findLatestDate() {
-
-        Query query = new Query()
-                .with(Sort.by(Sort.Direction.DESC, "date"))
-                .limit(1);
-
-        SalesPojo pojo = mongoOperations.findOne(query, SalesPojo.class);
-        return pojo != null ? pojo.getDate() : null;
-    }
-
     public List<ProductRow> getSalesReport(String clientName,
                                            ZonedDateTime startDate,
                                            ZonedDateTime endDate) {
 
         MatchOperation dateMatch = match(
-                Criteria.where("orderStatus").is("FULFILLABLE")
+                Criteria.where("orderStatus").is("PLACED")
                         .and("orderTime").gte(startDate).lt(endDate)
         );
 
-        UnwindOperation unwindItems = Aggregation.unwind("orderItems");
+        UnwindOperation unwindItems = unwind("orderItems");
 
-        LookupOperation lookupProduct = Aggregation.lookup(
+        // Convert productId String to ObjectId
+        AggregationOperation addProductIdObj = context ->
+                new org.bson.Document("$addFields",
+                        new org.bson.Document("orderItems.productIdObj",
+                                new org.bson.Document("$toObjectId", "$orderItems.productId")));
+
+        LookupOperation lookupProduct = lookup(
                 "products",
-                "orderItems.barcode",
-                "barcode",
+                "orderItems.productIdObj",
+                "_id",
                 "product"
         );
 
-        UnwindOperation unwindProduct = Aggregation.unwind("product");
+        UnwindOperation unwindProduct = unwind("product");
 
         MatchOperation clientMatch = match(
                 Criteria.where("product.clientName").is(clientName)
@@ -72,20 +70,20 @@ public class SalesDao extends AbstractDao<SalesPojo> {
         GroupOperation group = group("product.barcode")
                 .sum("orderItems.orderedQuantity").as("quantity")
                 .sum(
-                        ArithmeticOperators.Multiply
-                                .valueOf("orderItems.orderedQuantity")
+                        ArithmeticOperators.Multiply.valueOf("orderItems.orderedQuantity")
                                 .multiplyBy("orderItems.sellingPrice")
                 ).as("revenue");
 
         ProjectionOperation project = project()
+                .andExclude("_id")
                 .and("_id").as("product")
                 .and("quantity").as("quantity")
-                .and("revenue").as("revenue")
-                .andExclude("_id");
+                .and("revenue").as("revenue");
 
-        Aggregation aggregation = Aggregation.newAggregation(
+        Aggregation aggregation = newAggregation(
                 dateMatch,
                 unwindItems,
+                addProductIdObj,
                 lookupProduct,
                 unwindProduct,
                 clientMatch,
@@ -101,90 +99,68 @@ public class SalesDao extends AbstractDao<SalesPojo> {
 
     public SalesPojo getDailySalesData(ZonedDateTime start, ZonedDateTime end) {
 
-        Date startDate = Date.from(start.toInstant());
-        Date endDate = Date.from(end.toInstant());
-
-        // Match valid orders
-        MatchOperation matchOrders = match(
-                Criteria.where("orderStatus").is("FULFILLABLE")
-                        .and("orderTime").gte(startDate).lt(endDate)
+        MatchOperation filterOrders = match(
+                Criteria.where("orderStatus").is("PLACED")
+                        .and("orderTime").gte(start).lt(end)
         );
 
-        // Break orderItems into rows
-        UnwindOperation unwindItems = unwind("orderItems");
-
-        // Compute item-level revenue
-        ProjectionOperation itemRevenueProjection = project()
-                .andExpression("$_id").as("orderId")
-                .and("orderItems.orderedQuantity").as("quantity")
-                .and(
-                        ArithmeticOperators.Multiply.valueOf("orderItems.orderedQuantity")
-                                .multiplyBy("orderItems.sellingPrice")
-                ).as("itemRevenue")
-                .and("orderItems.barcode").as("barcode");
-
-
-        // SUMMARY PIPELINE
-        GroupOperation perOrderGroup = group("orderId")
-                .sum("quantity").as("totalItemsInOrder")
-                .sum("itemRevenue").as("orderRevenue");
+        // Summary Steps
+        ProjectionOperation summaryProject = project()
+                .and(AccumulatorOperators.Sum.sumOf(
+                        VariableOperators.Map.itemsOf("orderItems")
+                                .as("item")
+                                .andApply(ArithmeticOperators.Multiply.valueOf("$$item.orderedQuantity")
+                                        .multiplyBy("$$item.sellingPrice"))
+                )).as("orderRevenue")
+                .and(AccumulatorOperators.Sum.sumOf("orderItems.orderedQuantity")).as("totalItemsInOrder");
 
         GroupOperation summaryGroup = group()
                 .count().as("totalOrders")
                 .sum("totalItemsInOrder").as("totalProducts")
                 .sum("orderRevenue").as("totalRevenue");
 
-        // CLIENT PIPELINE
-        AggregationOperation lookupProduct = lookup(
-                "products", "barcode", "barcode", "product"
-        );
+        // Client Steps
+        UnwindOperation unwindItems = unwind("orderItems");
 
+        AggregationOperation addProductIdObj = context ->
+                new org.bson.Document("$addFields",
+                        new org.bson.Document("orderItems.productIdObj",
+                                new org.bson.Document("$toObjectId", "$orderItems.productId")));
+
+        LookupOperation lookupProduct = lookup("products", "orderItems.productIdObj", "_id", "product");
         UnwindOperation unwindProduct = unwind("product");
 
         GroupOperation clientGroup = group("product.clientName")
-                .sum("quantity").as("totalProducts")
-                .sum("itemRevenue").as("totalRevenue");
+                .sum("orderItems.orderedQuantity").as("totalProducts")
+                .sum(ArithmeticOperators.Multiply.valueOf("orderItems.orderedQuantity")
+                        .multiplyBy("orderItems.sellingPrice")).as("totalRevenue");
 
-        ProjectionOperation clientProjection = project()
+        ProjectionOperation clientProject = project()
                 .and("_id").as("clientName")
-                .andInclude("totalProducts", "totalRevenue")
+                .and("totalProducts").as("totalProducts")
+                .and("totalRevenue").as("totalRevenue")
                 .andExclude("_id");
 
+        FacetOperation facetOperation = facet()
+                .and(summaryProject, summaryGroup, project().andExclude("_id")).as("summary")
+                .and(unwindItems, addProductIdObj, lookupProduct, unwindProduct, clientGroup, clientProject).as("clients");
 
-        // FACET
-        FacetOperation facet = facet(
-                perOrderGroup,
-                summaryGroup
-        ).as("summary")
-                .and(
-                        lookupProduct,
-                        unwindProduct,
-                        clientGroup,
-                        clientProjection
-                ).as("clients");
-
-        // FINAL SHAPE
-        ProjectionOperation finalProjection = project()
-                .and(ArrayOperators.ArrayElemAt.arrayOf("summary.totalOrders").elementAt(0))
-                .as("totalOrders")
-                .and(ArrayOperators.ArrayElemAt.arrayOf("summary.totalProducts").elementAt(0))
-                .as("totalProducts")
-                .and(ArrayOperators.ArrayElemAt.arrayOf("summary.totalRevenue").elementAt(0))
-                .as("totalRevenue")
+        ProjectionOperation finalProject = project()
+                .and("summary.totalOrders").arrayElementAt(0).as("totalOrders")
+                .and("summary.totalProducts").arrayElementAt(0).as("totalProducts")
+                .and("summary.totalRevenue").arrayElementAt(0).as("totalRevenue")
                 .and("clients").as("clients");
 
         Aggregation aggregation = newAggregation(
-                matchOrders,
-                unwindItems,
-                itemRevenueProjection,
-                facet,
-                finalProjection
+                filterOrders,
+                facetOperation,
+                finalProject
         );
 
-        return mongoOperations
-                .aggregate(aggregation, "orders", SalesPojo.class)
-                .getUniqueMappedResult();
+        AggregationResults<SalesPojo> results = mongoOperations.aggregate(aggregation, "orders", SalesPojo.class);
+        return results.getUniqueMappedResult();
     }
+
 
 
 

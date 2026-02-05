@@ -28,21 +28,25 @@ public class SalesApiImpl {
     }
 
     public SalesPojo getDailySales(ZonedDateTime start, ZonedDateTime end) {
+        try {
+            return salesDao.getDailySalesData(start, end);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
 
-        return salesDao.getDailySalesData(start, end);
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void storeDailySales(ZonedDateTime start, ZonedDateTime end) {
 
-        SalesPojo data = salesDao.getDailySalesData(start, end);
-
-        data.setDate(start);
-
         SalesPojo existing = salesDao.findByDate(start);
         if (existing != null) {
-            data.setId(existing.getId());
+            return;
         }
+
+        SalesPojo data = salesDao.getDailySalesData(start, end);
+        data.setDate(start);
 
         salesDao.save(data);
     }

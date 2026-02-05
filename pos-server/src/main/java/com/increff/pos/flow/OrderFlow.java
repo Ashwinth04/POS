@@ -10,6 +10,7 @@ import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.OrderHelper;
 import com.increff.pos.model.data.MessageData;
 import com.increff.pos.model.data.OrderItem;
+import com.increff.pos.model.data.OrderItemRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ public class OrderFlow {
 
         List<InventoryPojo> orderInventoryPojos = getInventoryPojosForOrder(orderPojo.getOrderItems());
 
-        boolean isFulfillable = inventoryApi.reserveInventory(orderInventoryPojos);
+        boolean isFulfillable = inventoryApi.reserveInventory2(orderInventoryPojos);
 
         return orderApi.createOrder(orderPojo, isFulfillable);
     }
@@ -90,7 +91,7 @@ public class OrderFlow {
     }
 
     private void createOrderItemIds(OrderPojo orderPojo) {
-        for (OrderItem item : orderPojo.getOrderItems()) {
+        for (OrderItemRecord item : orderPojo.getOrderItems()) {
             item.setOrderItemId(UUID.randomUUID().toString());
         }
     }
@@ -120,21 +121,13 @@ public class OrderFlow {
         return orderApi.filterOrders(startDate, endDate, page, size);
     }
 
-    public List<InventoryPojo> getInventoryPojosForOrder(List<OrderItem> orderItems) {
-
-        List<String> barcodes = orderItems
-                .stream()
-                .map(OrderItem::getBarcode)
-                .toList();
-
-        Map<String, ProductPojo> barcodeToProductId = productApi.mapBarcodesToProductPojos(barcodes);
+    public List<InventoryPojo> getInventoryPojosForOrder(List<OrderItemRecord> orderItems) {
 
         List<InventoryPojo> inventoryPojos = new ArrayList<>();
 
-        for (OrderItem item: orderItems) {
+        for (OrderItemRecord item: orderItems) {
             InventoryPojo pojo = new InventoryPojo();
-            ProductPojo productPojo = barcodeToProductId.get(item.getBarcode());
-            pojo.setProductId(productPojo.getId());
+            pojo.setProductId(item.getProductId());
             pojo.setQuantity(item.getOrderedQuantity());
 
             inventoryPojos.add(pojo);
@@ -145,6 +138,10 @@ public class OrderFlow {
 
     public Map<String, ProductPojo> mapBarcodesToProductPojos(List<String> barcodes) {
         return productApi.mapBarcodesToProductPojos(barcodes);
+    }
+
+    public Map<String, ProductPojo> mapProductIdsToProductPojos(List<String> barcodes) {
+        return productApi.mapProductIdsToProductPojos(barcodes);
     }
 
     public Page<OrderPojo> searchById(String orderId, int page, int size) throws ApiException {

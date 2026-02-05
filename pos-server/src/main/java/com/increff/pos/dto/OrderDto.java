@@ -23,6 +23,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderDto {
@@ -40,11 +42,23 @@ public class OrderDto {
 
         formValidator.validate(orderForm);
         NormalizationUtil.normalizeOrderForm(orderForm);
-        validateAllOrderItems(orderForm);
-        OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
+        Map<String, ProductPojo> barcodeToProductPojo = validateAllOrderItems(orderForm);
+        OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm, barcodeToProductPojo);
         OrderPojo resultOrderPojo = orderFlow.createOrder(orderPojo);
 
-        return OrderHelper.convertToData(resultOrderPojo);
+        System.out.println("size: " + resultOrderPojo.getOrderItems().size());
+
+        for (OrderItemRecord item: resultOrderPojo.getOrderItems()) {
+            System.out.println("item: " + item.getProductId());
+        }
+
+        Map<String, ProductPojo> productIdToProductPojo = OrderHelper.mapProductIdToProductPojo(barcodeToProductPojo);
+
+        for (String productId: productIdToProductPojo.keySet()) {
+            System.out.println("PID: " + productId + " " + productIdToProductPojo.get(productId).getBarcode());
+        }
+
+        return OrderHelper.convertToData(resultOrderPojo, productIdToProductPojo);
     }
 
     public OrderData editOrder(OrderForm orderForm, String orderId) throws ApiException {
@@ -52,12 +66,14 @@ public class OrderDto {
         formValidator.validate(orderForm);
         ValidationUtil.validateOrderId(orderId);
         NormalizationUtil.normalizeOrderForm(orderForm);
-        validateAllOrderItems(orderForm);
-        OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm);
+        Map<String, ProductPojo> barcodeToProductPojo = validateAllOrderItems(orderForm);
+        OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm, barcodeToProductPojo);
         orderPojo.setOrderId(orderId);
         OrderPojo resultOrderPojo = orderFlow.editOrder(orderPojo, orderId);
 
-        return OrderHelper.convertToData(resultOrderPojo);
+        Map<String, ProductPojo> productIdToProductPojo = OrderHelper.mapProductIdToProductPojo(barcodeToProductPojo);
+
+        return OrderHelper.convertToData(resultOrderPojo, productIdToProductPojo);
     }
 
     public MessageData cancelOrder(String orderId) throws ApiException {
@@ -69,7 +85,14 @@ public class OrderDto {
 
         formValidator.validate(form);
         Page<OrderPojo> orderPage = orderFlow.getAllOrders(form.getPage(), form.getSize());
-        return orderPage.map(OrderHelper::convertToData);
+
+        List<String> productIds = orderPage.stream()
+                .flatMap(order -> order.getOrderItems().stream())
+                .map(OrderItemRecord::getProductId)
+                .toList();
+
+        Map<String, ProductPojo> productIdToProductPojo = orderFlow.mapProductIdsToProductPojos(productIds);
+        return orderPage.map(orderPojo -> OrderHelper.convertToData(orderPojo, productIdToProductPojo));
     }
 
     public FileData generateInvoice(String orderId) throws ApiException {
@@ -81,7 +104,13 @@ public class OrderDto {
 
         if (!status.equals("FULFILLABLE")) throw new ApiException("ORDER CANNOT BE PLACED");
 
-        OrderData orderData = OrderHelper.convertToData(orderPojo);
+        List<String> productIds = orderPojo.getOrderItems()
+                .stream()
+                .map(OrderItemRecord::getProductId)
+                .toList();
+
+        Map<String, ProductPojo> productIdToProductPojo = orderFlow.mapProductIdsToProductPojos(productIds);
+        OrderData orderData = OrderHelper.convertToData(orderPojo, productIdToProductPojo);
 
         FileData response = invoiceClientWrapper.generateInvoice(orderData);
 
@@ -107,10 +136,17 @@ public class OrderDto {
 
         Page<OrderPojo> orderPage =  orderFlow.filterOrders(start, end, page, size);
 
-        return orderPage.map(OrderHelper::convertToData);
+        List<String> productIds = orderPage.stream()
+                .flatMap(order -> order.getOrderItems().stream())
+                .map(OrderItemRecord::getProductId)
+                .toList();
+
+        Map<String, ProductPojo> productIdToProductPojo = orderFlow.mapProductIdsToProductPojos(productIds);
+        return orderPage.map(orderPojo -> OrderHelper.convertToData(orderPojo, productIdToProductPojo));
+
     }
 
-    public void validateAllOrderItems(OrderForm orderForm) throws ApiException {
+    public Map<String, ProductPojo> validateAllOrderItems(OrderForm orderForm) throws ApiException {
 
         List<OrderItemForm> orderItems = orderForm.getOrderItems();
 
@@ -126,8 +162,11 @@ public class OrderDto {
             }
         }
 
+        return barcodeToProductPojos;
+
     }
 
+    // TODO: move it to validation util
     public void validateItem(OrderItemForm item, Map<String, ProductPojo> productMap) throws ApiException {
 
         String barcode = item.getBarcode();
@@ -146,6 +185,13 @@ public class OrderDto {
 
         formValidator.validate(searchOrderForm);
         Page<OrderPojo> orderPage = orderFlow.searchById(searchOrderForm.getOrderId(), searchOrderForm.getPage(), searchOrderForm.getSize());
-        return orderPage.map(OrderHelper::convertToData);
+        List<String> productIds = orderPage.stream()
+                .flatMap(order -> order.getOrderItems().stream())
+                .map(OrderItemRecord::getProductId)
+                .toList();
+
+        Map<String, ProductPojo> productIdToProductPojo = orderFlow.mapProductIdsToProductPojos(productIds);
+        return orderPage.map(orderPojo -> OrderHelper.convertToData(orderPojo, productIdToProductPojo));
+
     }
 }

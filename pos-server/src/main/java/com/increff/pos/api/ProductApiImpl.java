@@ -95,6 +95,27 @@ public class ProductApiImpl implements ProductApi {
         return barcodeToProductId;
     }
 
+    public Map<String, ProductPojo> mapProductIdsToProductPojos(List<String> productIds) {
+
+        if (productIds == null || productIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<ProductPojo> products = productDao.findAllById(productIds);
+
+        Map<String, ProductPojo> productIdToProductPojo = new HashMap<>();
+
+        for (ProductPojo product : products) {
+            productIdToProductPojo.put(
+                    product.getId(),
+                    product
+            );
+        }
+
+        return productIdToProductPojo;
+
+    }
+
     public ProductPojo getCheckByBarcode(String barcode) throws ApiException {
 
         ProductPojo record = productDao.findByBarcode(barcode);

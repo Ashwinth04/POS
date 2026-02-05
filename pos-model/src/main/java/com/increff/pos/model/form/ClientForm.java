@@ -22,7 +22,7 @@ public class ClientForm {
     @Size(
             min = 5,
             max = 30,
-            message = "Phone number must be exactly 10 digits"
+            message = "Location should contain 5 to 30 characters"
     )
     private String location;
     @NotBlank(message = "Phone number is required")
