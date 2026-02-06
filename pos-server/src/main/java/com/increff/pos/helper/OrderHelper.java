@@ -28,6 +28,7 @@ public class OrderHelper {
 
             orderItemRecord.setOrderedQuantity(item.getOrderedQuantity());
             orderItemRecord.setSellingPrice(item.getSellingPrice());
+            orderItemRecord.setProductId(productPojo.getId());
 
             items.add(orderItemRecord);
         }

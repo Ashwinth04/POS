@@ -61,7 +61,7 @@ class OrderFlowTest {
 
     @Test
     void createOrder_success() throws Exception {
-        when(inventoryApi.reserveInventory2(anyList())).thenReturn(true);
+        when(inventoryApi.reserveInventory(anyList())).thenReturn(true);
         when(orderApi.createOrder(any(), eq(true))).thenReturn(orderPojo);
 
         OrderPojo result = orderFlow.createOrder(orderPojo);

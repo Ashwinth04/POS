@@ -36,7 +36,7 @@ public class OrderFlow {
 
         List<InventoryPojo> orderInventoryPojos = getInventoryPojosForOrder(orderPojo.getOrderItems());
 
-        boolean isFulfillable = inventoryApi.reserveInventory2(orderInventoryPojos);
+        boolean isFulfillable = inventoryApi.reserveInventory(orderInventoryPojos);
 
         return orderApi.createOrder(orderPojo, isFulfillable);
     }

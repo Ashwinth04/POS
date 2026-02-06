@@ -25,24 +25,8 @@ public class InventoryApiImpl implements InventoryApi{
         return inventoryPojo;
     }
 
-    @Transactional(rollbackFor = ApiException.class)
-    public boolean reserveInventory(List<InventoryPojo> items) {
-
-        boolean isFulfillable = checkOrderFulfillable(items);
-
-        if (isFulfillable) {
-
-            for (InventoryPojo item: items) {
-                item.setQuantity(-item.getQuantity());
-            }
-
-            updateBulkInventory(items);
-        }
-        return isFulfillable;
-    }
-
     @Transactional(rollbackFor = Exception.class)
-    public boolean reserveInventory2(List<InventoryPojo> items) {
+    public boolean reserveInventory(List<InventoryPojo> items) {
 
         Map<String, InventoryPojo> existingRecords = fetchRecordsForOrderItems(items);
 

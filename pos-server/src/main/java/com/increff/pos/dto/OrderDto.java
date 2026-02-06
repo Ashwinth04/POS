@@ -43,20 +43,12 @@ public class OrderDto {
         formValidator.validate(orderForm);
         NormalizationUtil.normalizeOrderForm(orderForm);
         Map<String, ProductPojo> barcodeToProductPojo = validateAllOrderItems(orderForm);
+
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm, barcodeToProductPojo);
+
         OrderPojo resultOrderPojo = orderFlow.createOrder(orderPojo);
 
-        System.out.println("size: " + resultOrderPojo.getOrderItems().size());
-
-        for (OrderItemRecord item: resultOrderPojo.getOrderItems()) {
-            System.out.println("item: " + item.getProductId());
-        }
-
         Map<String, ProductPojo> productIdToProductPojo = OrderHelper.mapProductIdToProductPojo(barcodeToProductPojo);
-
-        for (String productId: productIdToProductPojo.keySet()) {
-            System.out.println("PID: " + productId + " " + productIdToProductPojo.get(productId).getBarcode());
-        }
 
         return OrderHelper.convertToData(resultOrderPojo, productIdToProductPojo);
     }
