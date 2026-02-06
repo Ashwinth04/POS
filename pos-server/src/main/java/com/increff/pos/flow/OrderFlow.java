@@ -4,13 +4,13 @@ import com.increff.pos.api.InventoryApiImpl;
 import com.increff.pos.api.OrderApiImpl;
 import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.InventoryPojo;
+import com.increff.pos.db.OrderItemPojo;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.OrderHelper;
 import com.increff.pos.model.data.MessageData;
 import com.increff.pos.model.data.OrderItem;
-import com.increff.pos.model.data.OrderItemRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -32,8 +32,10 @@ public class OrderFlow {
 
     public OrderPojo createOrder(OrderPojo orderPojo) throws ApiException {
 
+        // TODO: This should happen inside DTO
         createOrderItemIds(orderPojo);
 
+        // TODO: DOnt convert to pojos, just send a list of product ids
         List<InventoryPojo> orderInventoryPojos = getInventoryPojosForOrder(orderPojo.getOrderItems());
 
         boolean isFulfillable = inventoryApi.reserveInventory(orderInventoryPojos);
@@ -91,25 +93,13 @@ public class OrderFlow {
     }
 
     private void createOrderItemIds(OrderPojo orderPojo) {
-        for (OrderItemRecord item : orderPojo.getOrderItems()) {
+        for (OrderItemPojo item : orderPojo.getOrderItems()) {
             item.setOrderItemId(UUID.randomUUID().toString());
         }
     }
 
-    public Page<OrderPojo> getAllOrders(int page, int size) {
-        return orderApi.getAllOrders(page, size);
-    }
-
-    public OrderPojo getOrder(String orderId) throws ApiException {
-        return orderApi.getCheckByOrderId(orderId);
-    }
-
-    public void updatePlacedStatus(String orderId) throws ApiException {
-        orderApi.updatePlacedStatus(orderId);
-    }
-
     public void checkInvoiceDownloadable(String orderId) throws ApiException {
-        OrderPojo orderPojo = getOrder(orderId);
+        OrderPojo orderPojo = orderApi.getCheckByOrderId(orderId);
 
         if (orderPojo == null) throw new ApiException("ORDER WITH THE GIVEN ID DOESN'T EXIST");
 
@@ -117,15 +107,11 @@ public class OrderFlow {
         if (!status.equals("PLACED")) throw new ApiException("ORDER NOT PLACED YET. PLEASE PLACE THE ORDER TO DOWNLOAD INVOICE");
     }
 
-    public Page<OrderPojo> filterOrders(ZonedDateTime startDate, ZonedDateTime endDate, int page, int size) {
-        return orderApi.filterOrders(startDate, endDate, page, size);
-    }
-
-    public List<InventoryPojo> getInventoryPojosForOrder(List<OrderItemRecord> orderItems) {
+    public List<InventoryPojo> getInventoryPojosForOrder(List<OrderItemPojo> orderItems) {
 
         List<InventoryPojo> inventoryPojos = new ArrayList<>();
 
-        for (OrderItemRecord item: orderItems) {
+        for (OrderItemPojo item: orderItems) {
             InventoryPojo pojo = new InventoryPojo();
             pojo.setProductId(item.getProductId());
             pojo.setQuantity(item.getOrderedQuantity());

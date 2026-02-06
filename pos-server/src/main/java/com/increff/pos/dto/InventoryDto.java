@@ -74,6 +74,7 @@ public class InventoryDto {
         return fileData;
     }
 
+    // TODO: Dont use this, ust use productApi's method for single update as well
     private String getProductIdFromBarcode(String barcode) throws ApiException {
 
         Map<String, ProductPojo> barcodeToProductId = productApi.mapBarcodesToProductPojos(Collections.singletonList(barcode));

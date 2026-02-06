@@ -29,6 +29,7 @@ public class ClientApiImpl implements ClientApi {
         return clientDao.save(clientPojo);
     }
 
+    // TODO: try to add an index on createdAt
     public Page<ClientPojo> getAllClients(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return clientDao.findAll(pageRequest);

@@ -26,7 +26,8 @@ public class ClientDto {
     private FormValidator formValidator;
 
     public ClientData createClient(ClientForm clientForm) throws ApiException {
-
+        System.out.println("Inside dto");
+        // TODO: handle empty input cases
         formValidator.validate(clientForm);
         NormalizationUtil.normalizeClientForm(clientForm);
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);

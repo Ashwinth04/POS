@@ -4,12 +4,12 @@ import com.increff.pos.api.InventoryApiImpl;
 import com.increff.pos.api.OrderApiImpl;
 import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.InventoryPojo;
+import com.increff.pos.db.OrderItemPojo;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.OrderFlow;
 import com.increff.pos.model.data.MessageData;
-import com.increff.pos.model.data.OrderItemRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,11 +43,11 @@ class OrderFlowTest {
 
     private static final String ORDER_ID = "507f1f77bcf86cd799439011";
     private OrderPojo orderPojo;
-    private OrderItemRecord item;
+    private OrderItemPojo item;
 
     @BeforeEach
     void setUp() {
-        item = new OrderItemRecord();
+        item = new OrderItemPojo();
         item.setProductId("P1");
         item.setOrderedQuantity(2);
 
@@ -112,7 +112,7 @@ class OrderFlowTest {
 
         when(orderApi.getAllOrders(0, 10)).thenReturn(page);
 
-        Page<OrderPojo> result = orderFlow.getAllOrders(0, 10);
+        Page<OrderPojo> result = orderApi.getAllOrders(0, 10);
 
         assertEquals(1, result.getTotalElements());
     }
@@ -123,7 +123,7 @@ class OrderFlowTest {
     void getOrder_success() throws Exception {
         when(orderApi.getCheckByOrderId(ORDER_ID)).thenReturn(orderPojo);
 
-        OrderPojo result = orderFlow.getOrder(ORDER_ID);
+        OrderPojo result = orderApi.getCheckByOrderId(ORDER_ID);
 
         assertEquals(orderPojo, result);
     }
@@ -132,7 +132,7 @@ class OrderFlowTest {
 
     @Test
     void updatePlacedStatus_success() throws Exception {
-        orderFlow.updatePlacedStatus(ORDER_ID);
+        orderApi.updatePlacedStatus(ORDER_ID);
 
         verify(orderApi).updatePlacedStatus(ORDER_ID);
     }
@@ -165,7 +165,7 @@ class OrderFlowTest {
 
         when(orderApi.filterOrders(any(), any(), eq(0), eq(10))).thenReturn(page);
 
-        Page<OrderPojo> result = orderFlow.filterOrders(
+        Page<OrderPojo> result = orderApi.filterOrders(
                 ZonedDateTime.now().minusDays(1),
                 ZonedDateTime.now(),
                 0,

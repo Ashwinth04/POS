@@ -1,5 +1,7 @@
 package com.increff.pos.dto;
 
+import com.increff.pos.api.OrderApiImpl;
+import com.increff.pos.db.OrderItemPojo;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
@@ -23,14 +25,18 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
+import static com.increff.pos.util.ValidationUtil.validateOrderItem;
+
+// TODO: read what happens if you use component here
 @Service
 public class OrderDto {
 
     @Autowired
     private OrderFlow orderFlow;
+
+    @Autowired
+    private OrderApiImpl orderApi;
 
     @Autowired
     private InvoiceClientWrapper invoiceClientWrapper;
@@ -48,6 +54,7 @@ public class OrderDto {
 
         OrderPojo resultOrderPojo = orderFlow.createOrder(orderPojo);
 
+        // TODO: DONT USE THIS, USE ORDER FORM TO COVNERT TO DATA
         Map<String, ProductPojo> productIdToProductPojo = OrderHelper.mapProductIdToProductPojo(barcodeToProductPojo);
 
         return OrderHelper.convertToData(resultOrderPojo, productIdToProductPojo);
@@ -55,6 +62,7 @@ public class OrderDto {
 
     public OrderData editOrder(OrderForm orderForm, String orderId) throws ApiException {
 
+        // TODO: First check should if order is present or not
         formValidator.validate(orderForm);
         ValidationUtil.validateOrderId(orderId);
         NormalizationUtil.normalizeOrderForm(orderForm);
@@ -76,11 +84,11 @@ public class OrderDto {
     public Page<OrderData> getAllOrders(PageForm form) throws ApiException {
 
         formValidator.validate(form);
-        Page<OrderPojo> orderPage = orderFlow.getAllOrders(form.getPage(), form.getSize());
+        Page<OrderPojo> orderPage = orderApi.getAllOrders(form.getPage(), form.getSize());
 
         List<String> productIds = orderPage.stream()
                 .flatMap(order -> order.getOrderItems().stream())
-                .map(OrderItemRecord::getProductId)
+                .map(OrderItemPojo::getProductId)
                 .toList();
 
         Map<String, ProductPojo> productIdToProductPojo = orderFlow.mapProductIdsToProductPojos(productIds);
@@ -90,7 +98,7 @@ public class OrderDto {
     public FileData generateInvoice(String orderId) throws ApiException {
 
         ValidationUtil.validateOrderId(orderId);
-        OrderPojo orderPojo = orderFlow.getOrder(orderId);
+        OrderPojo orderPojo = orderApi.getCheckByOrderId(orderId); // TODO: Call api directly
 
         String status = orderPojo.getOrderStatus();
 
@@ -98,7 +106,7 @@ public class OrderDto {
 
         List<String> productIds = orderPojo.getOrderItems()
                 .stream()
-                .map(OrderItemRecord::getProductId)
+                .map(OrderItemPojo::getProductId)
                 .toList();
 
         Map<String, ProductPojo> productIdToProductPojo = orderFlow.mapProductIdsToProductPojos(productIds);
@@ -106,7 +114,7 @@ public class OrderDto {
 
         FileData response = invoiceClientWrapper.generateInvoice(orderData);
 
-        orderFlow.updatePlacedStatus(orderId);
+        orderApi.updatePlacedStatus(orderId);
         return response;
     }
 
@@ -126,11 +134,11 @@ public class OrderDto {
         ZonedDateTime start = startDate.atStartOfDay(zone);
         ZonedDateTime end = endDate.atTime(23, 59, 59, 999_000_000).atZone(zone);
 
-        Page<OrderPojo> orderPage =  orderFlow.filterOrders(start, end, page, size);
+        Page<OrderPojo> orderPage =  orderApi.filterOrders(start, end, page, size);
 
         List<String> productIds = orderPage.stream()
                 .flatMap(order -> order.getOrderItems().stream())
-                .map(OrderItemRecord::getProductId)
+                .map(OrderItemPojo::getProductId)
                 .toList();
 
         Map<String, ProductPojo> productIdToProductPojo = orderFlow.mapProductIdsToProductPojos(productIds);
@@ -148,7 +156,7 @@ public class OrderDto {
 
         for (OrderItemForm item : orderForm.getOrderItems()) {
             try {
-                validateItem(item, barcodeToProductPojos);
+                validateOrderItem(item, barcodeToProductPojos);
             } catch (ApiException e) {
                 throw new ApiException(e.getMessage());
             }
@@ -158,28 +166,13 @@ public class OrderDto {
 
     }
 
-    // TODO: move it to validation util
-    public void validateItem(OrderItemForm item, Map<String, ProductPojo> productMap) throws ApiException {
-
-        String barcode = item.getBarcode();
-        ProductPojo product = productMap.get(barcode);
-
-        if (product == null) {
-            throw new ApiException("Invalid barcode: " + barcode);
-        }
-
-        if (item.getSellingPrice() > product.getMrp() || item.getSellingPrice() <= 0) {
-            throw new ApiException("Selling price exceeds MRP for barcode: " + barcode);
-        }
-    }
-
     public Page<OrderData> searchById(SearchOrderForm searchOrderForm) throws ApiException {
 
         formValidator.validate(searchOrderForm);
         Page<OrderPojo> orderPage = orderFlow.searchById(searchOrderForm.getOrderId(), searchOrderForm.getPage(), searchOrderForm.getSize());
         List<String> productIds = orderPage.stream()
                 .flatMap(order -> order.getOrderItems().stream())
-                .map(OrderItemRecord::getProductId)
+                .map(OrderItemPojo::getProductId)
                 .toList();
 
         Map<String, ProductPojo> productIdToProductPojo = orderFlow.mapProductIdsToProductPojos(productIds);

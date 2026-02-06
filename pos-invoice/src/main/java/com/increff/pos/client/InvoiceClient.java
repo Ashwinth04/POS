@@ -16,6 +16,7 @@ public class InvoiceClient {
 
     private final WebClient webClient;
 
+    // TODO: Use a class for appplication.properties
     public InvoiceClient(
             @Value("${invoice.service.base-url}") String baseUrl
     ) {

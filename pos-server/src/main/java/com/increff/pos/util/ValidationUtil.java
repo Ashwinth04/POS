@@ -278,4 +278,18 @@ public class ValidationUtil {
             throw new ApiException("Not logged in");
         }
     }
+
+    public static void validateOrderItem(OrderItemForm item, Map<String, ProductPojo> productMap) throws ApiException {
+
+        String barcode = item.getBarcode();
+        ProductPojo product = productMap.get(barcode);
+
+        if (product == null) {
+            throw new ApiException("Invalid barcode: " + barcode);
+        }
+
+        if (item.getSellingPrice() > product.getMrp() || item.getSellingPrice() <= 0) {
+            throw new ApiException("Selling price exceeds MRP for barcode: " + barcode);
+        }
+    }
 } 

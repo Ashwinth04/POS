@@ -1,5 +1,6 @@
 package com.increff.pos.helper;
 
+import com.increff.pos.db.OrderItemPojo;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
@@ -19,18 +20,18 @@ public class OrderHelper {
         OrderPojo orderPojo = new OrderPojo();
         orderPojo.setOrderTime(Instant.now());
 
-        List<OrderItemRecord> items = new ArrayList<>();
+        List<OrderItemPojo> items = new ArrayList<>();
 
         for (OrderItemForm item: orderForm.getOrderItems()) {
-            OrderItemRecord orderItemRecord = new OrderItemRecord();
+            OrderItemPojo OrderItemPojo = new OrderItemPojo();
             String barcode = item.getBarcode();
             ProductPojo productPojo = barcodeToProductPojo.get(barcode);
 
-            orderItemRecord.setOrderedQuantity(item.getOrderedQuantity());
-            orderItemRecord.setSellingPrice(item.getSellingPrice());
-            orderItemRecord.setProductId(productPojo.getId());
+            OrderItemPojo.setOrderedQuantity(item.getOrderedQuantity());
+            OrderItemPojo.setSellingPrice(item.getSellingPrice());
+            OrderItemPojo.setProductId(productPojo.getId());
 
-            items.add(orderItemRecord);
+            items.add(OrderItemPojo);
         }
 
         orderPojo.setOrderItems(items);
@@ -49,7 +50,7 @@ public class OrderHelper {
 
         List<OrderItem> orderItems = new ArrayList<>();
 
-        for (OrderItemRecord item: orderPojo.getOrderItems()) {
+        for (OrderItemPojo item: orderPojo.getOrderItems()) {
 
             OrderItem orderItem = new OrderItem();
             orderItem.setOrderedQuantity(item.getOrderedQuantity());

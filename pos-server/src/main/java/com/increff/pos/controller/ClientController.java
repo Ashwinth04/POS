@@ -35,12 +35,14 @@ public class ClientController {
         return clientDto.getAllClients(form);
     }
 
+    // TODO: Dont use this
     @Operation(summary = "Update client details")
     @RequestMapping(path = "/update", method = RequestMethod.PUT)
     public ClientData updateClient(@RequestBody ClientForm clientForm) throws ApiException {
         return clientDto.updateClientDetails(clientForm);
     }
 
+    // TODO: Use enum for type
     @RequestMapping(path = "/search", method = RequestMethod.POST)
     public Page<ClientData> searchClients(@RequestBody SearchQueryForm searchForm) throws ApiException {
         return clientDto.search(searchForm);

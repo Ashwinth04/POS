@@ -16,23 +16,6 @@ public class InvoiceApiImpl {
     @Autowired
     private StorageService storageService;
 
-    public FileData generateInvoice(OrderData orderData) throws ApiException {
-
-        // TODO: Move this to DTO
-        try {
-            String base64String = InvoiceGenerator.generate(orderData);
-
-            FileData fileData = new FileData();
-            fileData.setStatus("SUCCESS");
-            fileData.setBase64file(base64String);
-
-            return fileData;
-        } catch (Exception e) {
-            throw new ApiException("Error occurred during file generation");
-        }
-
-    }
-
     public FileData downloadInvoice(String orderId) throws IOException {
 
         String base64String = storageService.readInvoice(orderId);

@@ -1,15 +1,13 @@
-package com.increff.pos.model.data;
+package com.increff.pos.db;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.mongodb.core.index.Indexed;
 
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public class OrderItemRecord {
+public class OrderItemPojo extends AbstractPojo {
+    @Indexed(unique = true)
     private String orderItemId;
     private String productId;
     private Integer orderedQuantity;

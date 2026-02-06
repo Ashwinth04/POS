@@ -30,6 +30,7 @@ public class InventoryApiImpl implements InventoryApi{
 
         Map<String, InventoryPojo> existingRecords = fetchRecordsForOrderItems(items);
 
+        // TODO: Dont use item as the name
         for (InventoryPojo item : items) {
             String productId = item.getProductId();
 
@@ -91,6 +92,7 @@ public class InventoryApiImpl implements InventoryApi{
         inventoryDao.saveAll(inventoryPojos);
     }
 
+    // TODO: Change the name
     public Map<String, InventoryPojo> fetchRecordsForOrderItems(List<InventoryPojo> items) {
 
         List<String> productIds = items.stream()

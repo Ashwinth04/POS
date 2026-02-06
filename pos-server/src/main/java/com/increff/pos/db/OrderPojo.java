@@ -1,6 +1,5 @@
 package com.increff.pos.db;
 
-import com.increff.pos.model.data.OrderItemRecord;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,5 +22,5 @@ public class OrderPojo extends AbstractPojo {
     private String orderId;
     private Instant orderTime;
     private String orderStatus;
-    private List<OrderItemRecord> orderItems;
+    private List<OrderItemPojo> orderItems;
 }

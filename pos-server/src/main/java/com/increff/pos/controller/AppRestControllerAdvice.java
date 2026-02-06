@@ -73,9 +73,7 @@ public class AppRestControllerAdvice {
         String message = ex.getBindingResult()
                 .getFieldError()
                 .getDefaultMessage();
-
         return ResponseEntity.badRequest().body(Map.of("message", message));
     }
-
 
 }
