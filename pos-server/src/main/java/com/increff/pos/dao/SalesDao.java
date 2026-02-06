@@ -161,7 +161,4 @@ public class SalesDao extends AbstractDao<SalesPojo> {
         return results.getUniqueMappedResult();
     }
 
-
-
-
 }

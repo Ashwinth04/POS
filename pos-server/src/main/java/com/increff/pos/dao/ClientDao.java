@@ -32,6 +32,11 @@ public class ClientDao extends AbstractDao<ClientPojo> {
     }
 
     public ClientPojo findByName(String name) {
+
+        if (name == null || name.trim().isEmpty()) {
+            return null;
+        }
+
         Query query = Query.query(Criteria.where("name").is(name));
         return mongoOperations.findOne(query, ClientPojo.class);
     }
@@ -50,7 +55,12 @@ public class ClientDao extends AbstractDao<ClientPojo> {
         return mongoOperations.find(query, ClientPojo.class);
     }
 
-    public Page<ClientPojo> searchByName(String name, Pageable pageable) {
+    public Page<ClientPojo> searchByName(String name, Pageable pageable) throws ApiException {
+
+        if (name == null || name.isEmpty()) {
+            throw new ApiException("Search text cannot be empty");
+        }
+
 
         String pattern = ".*" + Pattern.quote(name) + ".*";
         Query query = new Query(
@@ -66,7 +76,11 @@ public class ClientDao extends AbstractDao<ClientPojo> {
         return new PageImpl<>(results, pageable, total);
     }
 
-    public Page<ClientPojo> searchByEmail(String email, Pageable pageable) {
+    public Page<ClientPojo> searchByEmail(String email, Pageable pageable) throws ApiException {
+
+        if (email == null || email.isEmpty()) {
+            throw new ApiException("Search text cannot be empty");
+        }
 
         String pattern = ".*" + Pattern.quote(email) + ".*";
         Query query = new Query(
@@ -82,7 +96,11 @@ public class ClientDao extends AbstractDao<ClientPojo> {
         return new PageImpl<>(results, pageable, total);
     }
 
-    public Page<ClientPojo> searchByPhoneNumber(String phoneNumber, Pageable pageable) {
+    public Page<ClientPojo> searchByPhoneNumber(String phoneNumber, Pageable pageable) throws ApiException {
+
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            throw new ApiException("Search text cannot be empty");
+        }
 
         String pattern = ".*" + Pattern.quote(phoneNumber) + ".*";
         Query query = new Query(

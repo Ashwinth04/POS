@@ -3,6 +3,7 @@ package com.increff.pos.test.dao;
 import com.increff.pos.config.TestConfig;
 import com.increff.pos.dao.ClientDao;
 import com.increff.pos.db.ClientPojo;
+import com.increff.pos.exception.ApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,7 +121,7 @@ class ClientDaoTest {
     // ------------------------------------------------
 
     @Test
-    void testSearchByName_caseInsensitive() {
+    void testSearchByName_caseInsensitive() throws ApiException {
         Pageable pageable = PageRequest.of(0, 10);
 
         Page<ClientPojo> page =
@@ -131,7 +132,7 @@ class ClientDaoTest {
     }
 
     @Test
-    void testSearchByName_withPagination() {
+    void testSearchByName_withPagination() throws ApiException {
         Page<ClientPojo> page1 =
                 clientDao.searchByName("client", PageRequest.of(0, 2));
 
@@ -148,7 +149,7 @@ class ClientDaoTest {
     // ------------------------------------------------
 
     @Test
-    void testSearchByEmail_found() {
+    void testSearchByEmail_found() throws ApiException {
         Pageable pageable = PageRequest.of(0, 5);
 
         Page<ClientPojo> page =
@@ -160,7 +161,7 @@ class ClientDaoTest {
     }
 
     @Test
-    void testSearchByEmail_notFound() {
+    void testSearchByEmail_notFound() throws ApiException {
         Pageable pageable = PageRequest.of(0, 5);
 
         Page<ClientPojo> page =
@@ -175,7 +176,7 @@ class ClientDaoTest {
     // ------------------------------------------------
 
     @Test
-    void testSearchByPhoneNumber_found() {
+    void testSearchByPhoneNumber_found() throws ApiException {
         Pageable pageable = PageRequest.of(0, 5);
 
         Page<ClientPojo> page =
@@ -187,7 +188,7 @@ class ClientDaoTest {
     }
 
     @Test
-    void testSearchByPhoneNumber_notFound() {
+    void testSearchByPhoneNumber_notFound() throws ApiException {
         Pageable pageable = PageRequest.of(0, 5);
 
         Page<ClientPojo> page =
