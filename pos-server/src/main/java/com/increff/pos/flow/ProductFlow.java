@@ -5,6 +5,7 @@ import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.model.constants.ProductSearchType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -58,7 +59,7 @@ public class ProductFlow {
 
     }
 
-    public Page<ProductPojo> searchProducts(String type, String query, int page,int size) throws ApiException {
+    public Page<ProductPojo> searchProducts(ProductSearchType type, String query, int page, int size) throws ApiException {
         return productApi.searchProducts(type, query, page, size);
     }
 

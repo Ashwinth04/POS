@@ -2,10 +2,11 @@ package com.increff.pos.controller;
 
 import com.increff.pos.dto.ClientDto;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.model.constants.ClientSearchType;
 import com.increff.pos.model.data.ClientData;
 import com.increff.pos.model.form.ClientForm;
+import com.increff.pos.model.form.ClientSearchForm;
 import com.increff.pos.model.form.PageForm;
-import com.increff.pos.model.form.SearchQueryForm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -44,7 +45,7 @@ public class ClientController {
 
     // TODO: Use enum for type
     @RequestMapping(path = "/search", method = RequestMethod.POST)
-    public Page<ClientData> searchClients(@RequestBody SearchQueryForm searchForm) throws ApiException {
+    public Page<ClientData> searchClients(@RequestBody ClientSearchForm searchForm) throws ApiException {
         return clientDto.search(searchForm);
     }
 

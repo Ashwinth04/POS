@@ -6,6 +6,7 @@ import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.ProductFlow;
+import com.increff.pos.model.constants.ProductSearchType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -141,11 +142,11 @@ class ProductFlowTest {
         Page<ProductPojo> page =
                 new PageImpl<>(List.of(product("p1")));
 
-        when(productApi.searchProducts("name", "prod", 0, 10))
+        when(productApi.searchProducts(ProductSearchType.NAME, "prod", 0, 10))
                 .thenReturn(page);
 
         Page<ProductPojo> result =
-                productFlow.searchProducts("name", "prod", 0, 10);
+                productFlow.searchProducts(ProductSearchType.NAME, "prod", 0, 10);
 
         assertEquals(1, result.getTotalElements());
     }

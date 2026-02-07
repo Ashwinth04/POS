@@ -16,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Map;
 
+import static com.increff.pos.model.constants.ProductSearchType.BARCODE;
+import static com.increff.pos.model.constants.ProductSearchType.NAME;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -238,7 +240,7 @@ class ProductApiImplTest {
                 .thenReturn(page);
 
         Page<ProductPojo> result =
-                productApi.searchProducts("barcode", "b1", 0, 10);
+                productApi.searchProducts(BARCODE, "b1", 0, 10);
 
         assertEquals(1, result.getContent().size());
     }
@@ -251,16 +253,16 @@ class ProductApiImplTest {
                 .thenReturn(page);
 
         Page<ProductPojo> result =
-                productApi.searchProducts("name", "prod", 0, 10);
+                productApi.searchProducts(NAME, "prod", 0, 10);
 
         assertEquals(1, result.getContent().size());
     }
 
-    @Test
-    void searchProducts_invalidType() {
-        ApiException ex = assertThrows(ApiException.class,
-                () -> productApi.searchProducts("invalid", "x", 0, 10));
-
-        assertEquals("Invalid search type: invalid", ex.getMessage());
-    }
+//    @Test
+//    void searchProducts_invalidType() {
+//        ApiException ex = assertThrows(ApiException.class,
+//                () -> productApi.searchProducts("", "x", 0, 10));
+//
+//        assertEquals("Invalid search type: invalid", ex.getMessage());
+//    }
 }

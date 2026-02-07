@@ -8,6 +8,7 @@ import com.increff.pos.dto.ProductDto;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.ProductFlow;
 import com.increff.pos.helper.ProductHelper;
+import com.increff.pos.model.constants.ProductSearchType;
 import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.*;
 import com.increff.pos.util.FormValidator;
@@ -300,16 +301,16 @@ class ProductDtoTest {
     @Test
     void testSearchProducts() throws ApiException {
 
-        SearchQueryForm form = new SearchQueryForm();
+        ProductSearchForm form = new ProductSearchForm();
         form.setPage(0);
         form.setSize(10);
-        form.setType("name");
+        form.setType(ProductSearchType.NAME);
         form.setQuery("q");
 
         Page<ProductPojo> page = new PageImpl<>(List.of(productPojo));
 
         try (MockedStatic<ProductHelper> helper = mockStatic(ProductHelper.class)) {
-            when(productFlow.searchProducts("name", "q", 0, 10))
+            when(productFlow.searchProducts(ProductSearchType.NAME, "q", 0, 10))
                     .thenReturn(page);
             when(productFlow.getInventoryForProducts(page))
                     .thenReturn(Map.of());

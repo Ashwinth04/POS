@@ -36,8 +36,7 @@ public class NormalizationUtil {
         inventoryForm.setBarcode(inventoryForm.getBarcode().toLowerCase());
     }
 
-    public static void normalizeSearchProductForm(SearchQueryForm searchProductForm) {
-        searchProductForm.setType(searchProductForm.getType().toLowerCase());
+    public static void normalizeSearchProductForm(ProductSearchForm searchProductForm) {
         searchProductForm.setQuery(searchProductForm.getQuery().toLowerCase());
     }
 }

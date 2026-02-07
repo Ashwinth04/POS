@@ -4,6 +4,7 @@ import com.increff.pos.dao.ProductDao;
 import com.increff.pos.db.OrderPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.model.constants.ProductSearchType;
 import com.increff.pos.model.data.OrderItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -127,18 +128,15 @@ public class ProductApiImpl implements ProductApi {
         return record;
     }
 
-    public Page<ProductPojo> searchProducts(String type, String query, int page, int size) throws ApiException {
+    public Page<ProductPojo> searchProducts(ProductSearchType type, String query, int page, int size) throws ApiException {
         Pageable pageable = PageRequest.of(page, size);
 
-        return switch (type.toLowerCase()) {
-            case "barcode" ->
+        return switch (type) {
+            case BARCODE ->
                     productDao.searchByBarcode(query, pageable);
 
-            case "name" ->
+            case NAME ->
                     productDao.searchByName(query, pageable);
-
-            default ->
-                    throw new ApiException("Invalid search type: " + type);
         };
     }
 

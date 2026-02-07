@@ -144,7 +144,7 @@ public class ProductDto {
         return fileData;
     }
 
-    public Page<ProductData> searchProducts(SearchQueryForm searchForm) throws ApiException {
+    public Page<ProductData> searchProducts(ProductSearchForm searchForm) throws ApiException {
 
         formValidator.validate(searchForm);
         NormalizationUtil.normalizeSearchProductForm(searchForm);

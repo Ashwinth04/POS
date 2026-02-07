@@ -1,6 +1,6 @@
 package com.increff.pos.api;
 
-import com.increff.pos.constants.ClientSearchType;
+import com.increff.pos.model.constants.ClientSearchType;
 import com.increff.pos.dao.ClientDao;
 import com.increff.pos.db.ClientPojo;
 import com.increff.pos.exception.ApiException;
@@ -66,12 +66,10 @@ public class ClientApiImpl implements ClientApi {
 
     }
 
-    public Page<ClientPojo> search(String type, String query, int page, int size) throws ApiException {
-
+    public Page<ClientPojo> search(ClientSearchType type, String query, int page, int size) throws ApiException {
         Pageable pageable = PageRequest.of(page, size);
-        ClientSearchType searchType = ClientSearchType.from(type);
 
-        return switch (searchType) {
+        return switch (type) {
             case NAME -> clientDao.searchByName(query, pageable);
             case EMAIL -> clientDao.searchByEmail(query, pageable);
             case PHONE -> clientDao.searchByPhoneNumber(query, pageable);
