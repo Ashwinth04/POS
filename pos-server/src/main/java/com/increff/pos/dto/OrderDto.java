@@ -62,10 +62,11 @@ public class OrderDto {
 
     public OrderData editOrder(OrderForm orderForm, String orderId) throws ApiException {
 
-        // TODO: First check should if order is present or not
+        // TODO: First check should if order is present or not (Done)
         formValidator.validate(orderForm);
         ValidationUtil.validateOrderId(orderId);
         NormalizationUtil.normalizeOrderForm(orderForm);
+        orderApi.getCheckByOrderId(orderId);
         Map<String, ProductPojo> barcodeToProductPojo = validateAllOrderItems(orderForm);
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm, barcodeToProductPojo);
         orderPojo.setOrderId(orderId);
@@ -95,10 +96,23 @@ public class OrderDto {
         return orderPage.map(orderPojo -> OrderHelper.convertToData(orderPojo, productIdToProductPojo));
     }
 
+    public Page<OrderData> searchById(SearchOrderForm searchOrderForm) throws ApiException {
+
+        formValidator.validate(searchOrderForm);
+        Page<OrderPojo> orderPage = orderApi.search(searchOrderForm.getOrderId(), searchOrderForm.getPage(), searchOrderForm.getSize());
+        List<String> productIds = orderPage.stream()
+                .flatMap(order -> order.getOrderItems().stream())
+                .map(OrderItemPojo::getProductId)
+                .toList();
+
+        Map<String, ProductPojo> productIdToProductPojo = orderFlow.mapProductIdsToProductPojos(productIds);
+        return orderPage.map(orderPojo -> OrderHelper.convertToData(orderPojo, productIdToProductPojo));
+    }
+
     public FileData generateInvoice(String orderId) throws ApiException {
 
         ValidationUtil.validateOrderId(orderId);
-        OrderPojo orderPojo = orderApi.getCheckByOrderId(orderId); // TODO: Call api directly
+        OrderPojo orderPojo = orderApi.getCheckByOrderId(orderId);
 
         String status = orderPojo.getOrderStatus();
 
@@ -163,20 +177,5 @@ public class OrderDto {
         }
 
         return barcodeToProductPojos;
-
-    }
-
-    public Page<OrderData> searchById(SearchOrderForm searchOrderForm) throws ApiException {
-
-        formValidator.validate(searchOrderForm);
-        Page<OrderPojo> orderPage = orderFlow.searchById(searchOrderForm.getOrderId(), searchOrderForm.getPage(), searchOrderForm.getSize());
-        List<String> productIds = orderPage.stream()
-                .flatMap(order -> order.getOrderItems().stream())
-                .map(OrderItemPojo::getProductId)
-                .toList();
-
-        Map<String, ProductPojo> productIdToProductPojo = orderFlow.mapProductIdsToProductPojos(productIds);
-        return orderPage.map(orderPojo -> OrderHelper.convertToData(orderPojo, productIdToProductPojo));
-
     }
 }

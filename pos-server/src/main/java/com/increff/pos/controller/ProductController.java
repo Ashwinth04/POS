@@ -27,13 +27,13 @@ public class ProductController {
     private ProductDto productDto;
 
     @Operation(summary = "Create a new product")
-    @RequestMapping(path = "/add", method = RequestMethod.POST)
+    @PostMapping
     public ProductData createProduct(@RequestBody ProductForm productForm) throws ApiException {
         return productDto.createProduct(productForm);
     }
 
     @Operation(summary = "Edit product details")
-    @RequestMapping(path = "/edit", method = RequestMethod.POST)
+    @PutMapping
     public ProductData editProductDetails(@RequestBody ProductForm productForm) throws ApiException {
         return productDto.editProduct(productForm);
     }

@@ -1,6 +1,7 @@
 package com.increff.pos.test.dto;
 
 import com.increff.pos.api.ClientApiImpl;
+import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
@@ -40,6 +41,9 @@ class ProductDtoTest {
 
     @Mock
     private ProductFlow productFlow;
+
+    @Mock
+    private ProductApiImpl productApi;
 
     @Mock
     private ClientApiImpl clientApi;
@@ -98,7 +102,7 @@ class ProductDtoTest {
             helper.when(() -> ProductHelper.convertToData(productPojo)).thenReturn(data);
 
             when(clientApi.getCheckByClientName("client1")).thenReturn(new ClientPojo());
-            when(productFlow.editProduct(productPojo)).thenReturn(productPojo);
+            when(productApi.editProduct(productPojo)).thenReturn(productPojo);
 
             ProductData result = productDto.editProduct(productForm);
 
@@ -118,7 +122,7 @@ class ProductDtoTest {
         InventoryPojo inventoryPojo = new InventoryPojo();
 
         try (MockedStatic<ProductHelper> helper = mockStatic(ProductHelper.class)) {
-            when(productFlow.getAllProducts(0, 10)).thenReturn(page);
+            when(productApi.getAllProducts(0, 10)).thenReturn(page);
             when(productFlow.getInventoryForProducts(page))
                     .thenReturn(Map.of("id", inventoryPojo));
 

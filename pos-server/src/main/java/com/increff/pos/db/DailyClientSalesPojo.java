@@ -1,4 +1,4 @@
-package com.increff.pos.model.data;
+package com.increff.pos.db;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,11 +7,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public class DailyClientSalesData {
+public class DailyClientSalesPojo {
     private String clientName;
     private int totalProducts;
     private double totalRevenue;
 }
-

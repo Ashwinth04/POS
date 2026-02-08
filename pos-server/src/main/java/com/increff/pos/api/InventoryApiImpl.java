@@ -26,21 +26,21 @@ public class InventoryApiImpl implements InventoryApi{
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public boolean reserveInventory(List<InventoryPojo> items) {
+    public boolean reserveInventory(List<InventoryPojo> inventoryUpdatePojos) {
 
-        Map<String, InventoryPojo> existingRecords = fetchRecordsForOrderItems(items);
+        Map<String, InventoryPojo> existingRecords = fetchExistingInventoryPojos(inventoryUpdatePojos);
 
-        // TODO: Dont use item as the name
-        for (InventoryPojo item : items) {
-            String productId = item.getProductId();
+        // TODO: Dont use item as the name (Done)
+        for (InventoryPojo inventoryUpdatePojo : inventoryUpdatePojos) {
+            String productId = inventoryUpdatePojo.getProductId();
 
-            boolean fulfillable = isItemFulfillable(item,existingRecords.get(productId));
+            boolean fulfillable = isItemFulfillable(inventoryUpdatePojo,existingRecords.get(productId));
             if (!fulfillable) return false;
 
-            item.setQuantity(-item.getQuantity());
+            inventoryUpdatePojo.setQuantity(-inventoryUpdatePojo.getQuantity());
         }
 
-        updateBulkInventory(items);
+        updateBulkInventory(inventoryUpdatePojos);
 
         return true;
     }
@@ -92,8 +92,8 @@ public class InventoryApiImpl implements InventoryApi{
         inventoryDao.saveAll(inventoryPojos);
     }
 
-    // TODO: Change the name
-    public Map<String, InventoryPojo> fetchRecordsForOrderItems(List<InventoryPojo> items) {
+    // TODO: Change the name (Done)
+    public Map<String, InventoryPojo> fetchExistingInventoryPojos(List<InventoryPojo> items) {
 
         List<String> productIds = items.stream()
                 .map(InventoryPojo::getProductId)
@@ -112,7 +112,7 @@ public class InventoryApiImpl implements InventoryApi{
 
     public boolean checkOrderFulfillable(List<InventoryPojo> items) {
 
-        Map<String, InventoryPojo> existingRecords = fetchRecordsForOrderItems(items);
+        Map<String, InventoryPojo> existingRecords = fetchExistingInventoryPojos(items);
 
         boolean allFulfillable = true;
 

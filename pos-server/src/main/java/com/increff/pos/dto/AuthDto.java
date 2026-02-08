@@ -32,20 +32,20 @@ public class AuthDto {
 
         formValidator.validate(request);
         String email = request.getEmail();
-        NormalizationUtil.normalizeEmail(email);
+        String normalizedEmail = NormalizationUtil.normalizeEmail(email);
         String password = request.getPassword();
 
-        return authApi.login(email, password, httpRequest, httpResponse);
+        return authApi.login(normalizedEmail, password, httpRequest, httpResponse);
     }
 
     public void createOperator(CreateUserRequest request) throws ApiException {
 
         formValidator.validate(request);
         String email = request.getEmail();
-        NormalizationUtil.normalizeEmail(email);
+        String normalizedEmail = NormalizationUtil.normalizeEmail(email);
         String password = request.getPassword();
 
-        authApi.createOperator(email, password);
+        authApi.createOperator(normalizedEmail, password);
     }
 
     public LoginResponse me(Authentication authentication) throws ApiException {

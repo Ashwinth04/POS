@@ -10,33 +10,33 @@ public class NormalizationUtil {
 
     public static void normalizeClientForm(ClientForm clientForm) {
 
-        String location = clientForm.getLocation().toLowerCase();
-        clientForm.setEmail(clientForm.getEmail().toLowerCase());
+        String location = clientForm.getLocation().trim().toLowerCase();
+        clientForm.setEmail(clientForm.getEmail().trim().toLowerCase());
         clientForm.setLocation(location);
     }
 
     public static void normalizeOrderForm(OrderForm orderForm) {
 
         for (OrderItemForm orderItem: orderForm.getOrderItems()) {
-            orderItem.setBarcode(orderItem.getBarcode().toLowerCase());
+            orderItem.setBarcode(orderItem.getBarcode().trim().toLowerCase());
         }
     }
 
     public static void normalizeProductForm(ProductForm productForm) {
-        // TODO: trim the barcode
-        productForm.setBarcode(productForm.getBarcode().toLowerCase());
-        productForm.setClientName(productForm.getClientName());
+        String normalizedBarcode = productForm.getBarcode().trim().toLowerCase();
+        productForm.setBarcode(normalizedBarcode);
+        productForm.setClientName(productForm.getClientName().trim());
     }
 
-    public static void normalizeEmail(String email) {
-        email.trim().toLowerCase();
+    public static String normalizeEmail(String email) {
+        return email.trim().toLowerCase();
     }
 
     public static void normalizeInventoryForm(InventoryForm inventoryForm) {
-        inventoryForm.setBarcode(inventoryForm.getBarcode().toLowerCase());
+        inventoryForm.setBarcode(inventoryForm.getBarcode().trim().toLowerCase());
     }
 
     public static void normalizeSearchProductForm(ProductSearchForm searchProductForm) {
-        searchProductForm.setQuery(searchProductForm.getQuery().toLowerCase());
+        searchProductForm.setQuery(searchProductForm.getQuery().trim().toLowerCase());
     }
 }

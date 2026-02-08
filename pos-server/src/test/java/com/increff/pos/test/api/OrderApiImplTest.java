@@ -193,18 +193,4 @@ class OrderApiImplTest {
         assertEquals(1, result.getContent().size());
     }
 
-    // ---------- getOrderStatus ----------
-
-    @Test
-    void getOrderStatus_success() throws ApiException {
-        OrderPojo pojo = new OrderPojo();
-        pojo.setOrderId("o1");
-        pojo.setOrderStatus("PLACED");
-
-        when(orderDao.findByOrderId("o1")).thenReturn(pojo);
-
-        String status = orderApi.getOrderStatus("o1");
-
-        assertEquals("PLACED", status);
-    }
 }

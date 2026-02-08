@@ -70,7 +70,7 @@ public class AuthApiImpl {
 
         checkUserExists(email);
 
-        // TODO: Move this to helper
+        // TODO: Move this to helper (Is it possible ?)
         UserPojo user = new UserPojo();
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));

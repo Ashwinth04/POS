@@ -1,6 +1,7 @@
 package com.increff.pos.dto;
 
 import com.increff.pos.api.ClientApiImpl;
+import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
@@ -29,6 +30,9 @@ public class ProductDto {
     private ProductFlow productFlow;
 
     @Autowired
+    private ProductApiImpl productApi;
+
+    @Autowired
     private ClientApiImpl clientApi;
 
     @Autowired
@@ -51,7 +55,7 @@ public class ProductDto {
         NormalizationUtil.normalizeProductForm(productForm);
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
         clientApi.getCheckByClientName(productPojo.getClientName());
-        ProductPojo editedPojo = productFlow.editProduct(productPojo);
+        ProductPojo editedPojo = productApi.editProduct(productPojo);
 
         return ProductHelper.convertToData(editedPojo);
     }
@@ -59,7 +63,7 @@ public class ProductDto {
     public Page<ProductData> getAllProducts(PageForm form) throws ApiException {
 
         formValidator.validate(form);
-        Page<ProductPojo> productPage = productFlow.getAllProducts(form.getPage(), form.getSize());
+        Page<ProductPojo> productPage = productApi.getAllProducts(form.getPage(), form.getSize());
         Map<String, InventoryPojo> productIdToInventoryPojo = productFlow.getInventoryForProducts(productPage);
 
         return productPage.map(
@@ -130,7 +134,7 @@ public class ProductDto {
                 .map(ProductPojo::getBarcode)
                 .toList();
 
-        return productFlow.findExistingProducts(barcodes);
+        return productApi.findExistingProducts(barcodes);
     }
 
     public FileData convertProductResultsToBase64(List<RowError> results) {

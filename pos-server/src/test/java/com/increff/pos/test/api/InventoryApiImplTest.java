@@ -145,10 +145,10 @@ class InventoryApiImplTest {
         verify(inventoryDao).saveAll(anyList());
     }
 
-    // ---------- fetchRecordsForOrderItems ----------
+    // ---------- fetchExistingInventoryPojos ----------
 
     @Test
-    void fetchRecordsForOrderItems_success() {
+    void fetchExistingInventoryPojos_success() {
         InventoryPojo orderItem = new InventoryPojo();
         orderItem.setProductId("p1");
 
@@ -160,7 +160,7 @@ class InventoryApiImplTest {
                 .thenReturn(List.of(inventory));
 
         Map<String, InventoryPojo> result =
-                inventoryApi.fetchRecordsForOrderItems(List.of(orderItem));
+                inventoryApi.fetchExistingInventoryPojos(List.of(orderItem));
 
         assertEquals(1, result.size());
         assertTrue(result.containsKey("p1"));

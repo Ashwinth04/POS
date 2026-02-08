@@ -7,7 +7,6 @@ import org.springframework.data.mongodb.core.index.Indexed;
 @Getter
 @Setter
 public class OrderItemPojo extends AbstractPojo {
-    @Indexed(unique = true)
     private String orderItemId;
     private String productId;
     private Integer orderedQuantity;

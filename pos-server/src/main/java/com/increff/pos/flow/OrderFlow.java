@@ -30,10 +30,7 @@ public class OrderFlow {
     @Autowired
     private InventoryApiImpl inventoryApi;
 
-    public OrderPojo createOrder(OrderPojo orderPojo) throws ApiException {
-
-        // TODO: This should happen inside DTO
-        createOrderItemIds(orderPojo);
+    public OrderPojo createOrder(OrderPojo orderPojo) {
 
         // TODO: DOnt convert to pojos, just send a list of product ids
         List<InventoryPojo> orderInventoryPojos = getInventoryPojosForOrder(orderPojo.getOrderItems());
@@ -45,9 +42,8 @@ public class OrderFlow {
 
     public OrderPojo editOrder(OrderPojo orderPojo, String orderId) throws ApiException {
 
-        createOrderItemIds(orderPojo);
-
-        String existingStatus = orderApi.getOrderStatus(orderId);
+        OrderPojo existingOrder = orderApi.getCheckByOrderId(orderId);
+        String existingStatus = existingOrder.getOrderId();
         OrderHelper.checkOrderEditable(existingStatus);
 
         List<InventoryPojo> orderInventoryPojos = getInventoryPojosForOrder(orderPojo.getOrderItems());
@@ -90,12 +86,6 @@ public class OrderFlow {
         }
 
         return orderApi.cancelOrder(orderId);
-    }
-
-    private void createOrderItemIds(OrderPojo orderPojo) {
-        for (OrderItemPojo item : orderPojo.getOrderItems()) {
-            item.setOrderItemId(UUID.randomUUID().toString());
-        }
     }
 
     public void checkInvoiceDownloadable(String orderId) throws ApiException {

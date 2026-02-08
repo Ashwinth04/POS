@@ -33,11 +33,6 @@ public class ClientDao extends AbstractDao<ClientPojo> {
 
     public ClientPojo findByName(String name) {
 
-        // TODO: Dont trim here
-        if (name == null || name.trim().isEmpty()) {
-            return null;
-        }
-
         Query query = Query.query(Criteria.where("name").is(name));
         return mongoOperations.findOne(query, ClientPojo.class);
     }

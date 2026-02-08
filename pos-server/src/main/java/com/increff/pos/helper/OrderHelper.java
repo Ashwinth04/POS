@@ -30,7 +30,7 @@ public class OrderHelper {
             OrderItemPojo.setOrderedQuantity(item.getOrderedQuantity());
             OrderItemPojo.setSellingPrice(item.getSellingPrice());
             OrderItemPojo.setProductId(productPojo.getId());
-
+            OrderItemPojo.setOrderItemId(UUID.randomUUID().toString());
             items.add(OrderItemPojo);
         }
 

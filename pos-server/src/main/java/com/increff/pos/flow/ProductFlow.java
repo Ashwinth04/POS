@@ -30,15 +30,6 @@ public class ProductFlow {
         return res;
     }
 
-    public ProductPojo editProduct(ProductPojo productPojo) throws ApiException {
-
-        return productApi.editProduct(productPojo);
-    }
-
-    public Page<ProductPojo> getAllProducts(int page, int size) {
-        return productApi.getAllProducts(page, size);
-    }
-
     public Map<String, InventoryPojo> getInventoryForProducts(Page<ProductPojo> page) {
         List<String> productIds = page.getContent()
                 .stream()

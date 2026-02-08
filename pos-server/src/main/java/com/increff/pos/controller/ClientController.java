@@ -25,7 +25,7 @@ public class ClientController {
     private ClientDto clientDto;
 
     @Operation(summary = "Create a new client")
-    @RequestMapping(value = "/add",method = RequestMethod.POST)
+    @PostMapping
     public ClientData createNewClient(@Valid @RequestBody ClientForm clientForm) throws ApiException {
         return clientDto.createClient(clientForm);
     }
@@ -36,14 +36,13 @@ public class ClientController {
         return clientDto.getAllClients(form);
     }
 
-    // TODO: Dont use this
+    // TODO: Dont use this (Done for clients and products) - check if required for other controllers as well
     @Operation(summary = "Update client details")
-    @RequestMapping(path = "/update", method = RequestMethod.PUT)
+    @PutMapping
     public ClientData updateClient(@RequestBody ClientForm clientForm) throws ApiException {
         return clientDto.updateClientDetails(clientForm);
     }
 
-    // TODO: Use enum for type
     @RequestMapping(path = "/search", method = RequestMethod.POST)
     public Page<ClientData> searchClients(@RequestBody ClientSearchForm searchForm) throws ApiException {
         return clientDto.search(searchForm);

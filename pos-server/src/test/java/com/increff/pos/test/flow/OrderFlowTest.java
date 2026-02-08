@@ -74,7 +74,7 @@ class OrderFlowTest {
 
     @Test
     void editOrder_existingFulfillable_andFulfillableIncoming() throws Exception {
-        when(orderApi.getOrderStatus(ORDER_ID)).thenReturn("FULFILLABLE");
+
         when(orderApi.getCheckByOrderId(ORDER_ID)).thenReturn(orderPojo);
         when(inventoryApi.checkOrderFulfillable(anyList())).thenReturn(true);
         when(inventoryApi.aggregateItemsByProductId(anyList()))

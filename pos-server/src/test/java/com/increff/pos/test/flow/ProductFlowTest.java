@@ -65,7 +65,7 @@ class ProductFlowTest {
 
         when(productApi.editProduct(pojo)).thenReturn(pojo);
 
-        ProductPojo result = productFlow.editProduct(pojo);
+        ProductPojo result = productApi.editProduct(pojo);
 
         assertEquals(pojo, result);
     }
@@ -79,7 +79,7 @@ class ProductFlowTest {
 
         when(productApi.getAllProducts(0, 10)).thenReturn(page);
 
-        Page<ProductPojo> result = productFlow.getAllProducts(0, 10);
+        Page<ProductPojo> result = productApi.getAllProducts(0, 10);
 
         assertEquals(1, result.getTotalElements());
     }

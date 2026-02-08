@@ -82,13 +82,9 @@ public class OrderApiImpl implements OrderApi {
         return new PageImpl<>(dataList, pojoPage.getPageable(), pojoPage.getTotalElements());
     }
 
-    public String getOrderStatus(String orderId) throws ApiException {
-        return getCheckByOrderId(orderId).getOrderStatus();
-    }
-
     public Page<OrderPojo> search(String orderId, int page, int size) throws ApiException {
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderTime"));
 
         return orderDao.search(orderId, pageable);
 

@@ -62,9 +62,10 @@ public class OrderDao extends AbstractDao<OrderPojo> {
         String pattern = ".*" + Pattern.quote(orderId) + ".*";
 
         Query query = new Query(Criteria.where("orderId").regex(pattern, "i")); // "i" = case-insensitive
-        query.with(pageable);
 
         long total = mongoOperations.count(query, OrderPojo.class);
+        query.with(pageable);
+
         List<OrderPojo> results = mongoOperations.find(query, OrderPojo.class);
 
         return new PageImpl<>(results, pageable, total);
