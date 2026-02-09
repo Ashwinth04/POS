@@ -53,16 +53,8 @@ public class ClientApiImpl implements ClientApi {
         }
     }
 
-    public Map<String, ClientPojo> fetchExistingClientNames(List<String> clientNames) {
-
-        List<ClientPojo> clientPojos = clientDao.findExistingClientNames(clientNames);
-
-        return clientPojos.stream()
-                        .collect(Collectors.toMap(
-                                ClientPojo::getName,
-                                Function.identity()
-                        ));
-
+    public List<ClientPojo> fetchExistingClientNames(List<String> clientNames) {
+       return clientDao.findExistingClientNames(clientNames);
     }
 
     public Page<ClientPojo> search(ClientSearchType type, String query, int page, int size) throws ApiException {

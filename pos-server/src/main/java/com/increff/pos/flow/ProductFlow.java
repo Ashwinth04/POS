@@ -1,7 +1,9 @@
 package com.increff.pos.flow;
 
+import com.increff.pos.api.ClientApiImpl;
 import com.increff.pos.api.InventoryApiImpl;
 import com.increff.pos.api.ProductApiImpl;
+import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductFlow {
@@ -21,6 +25,9 @@ public class ProductFlow {
 
     @Autowired
     private InventoryApiImpl inventoryApi;
+
+    @Autowired
+    private ClientApiImpl clientApi;
 
     public ProductPojo addProduct(ProductPojo productPojo) throws ApiException {
 
@@ -36,7 +43,16 @@ public class ProductFlow {
                 .map(ProductPojo::getId)
                 .toList();
 
-        return inventoryApi.getInventoryForProductIds(productIds);
+        List<InventoryPojo> inventoryPojos = inventoryApi.getInventoryForProductIds(productIds);
+
+        Map<String, InventoryPojo> productIdToInventory = inventoryPojos
+                .stream()
+                .collect(Collectors.toMap(
+                        InventoryPojo::getProductId,
+                        Function.identity()
+                ));
+
+        return productIdToInventory;
     }
 
 
@@ -55,6 +71,26 @@ public class ProductFlow {
     }
 
     public Map<String, ProductPojo> findExistingProducts(List<String> barcodes) {
-        return productApi.findExistingProducts(barcodes);
+        List<ProductPojo> existingPojos = productApi.findExistingProducts(barcodes);
+
+        return existingPojos.stream()
+                .collect(Collectors.toMap(
+                        ProductPojo::getBarcode,
+                        Function.identity()
+                ));
+    }
+
+    public ClientPojo getCheckByClientName(String clientName) throws ApiException {
+        return clientApi.getCheckByClientName(clientName);
+    }
+
+    public Map<String, ClientPojo> fetchExistingClientNames(List<String> clientNames) {
+        List<ClientPojo> clientPojos = clientApi.fetchExistingClientNames(clientNames);
+
+        return clientPojos.stream()
+                .collect(Collectors.toMap(
+                        ClientPojo::getName,
+                        Function.identity()
+                ));
     }
 }

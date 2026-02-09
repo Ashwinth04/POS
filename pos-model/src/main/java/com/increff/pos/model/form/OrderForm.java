@@ -11,6 +11,9 @@ import java.util.List;
 @Getter
 @Setter
 public class OrderForm {
+
+    private String orderId;
+
     @NotNull(message = "orderItems cannot be null")
     @NotEmpty(message = "orderItems cannot be empty")
     @Valid

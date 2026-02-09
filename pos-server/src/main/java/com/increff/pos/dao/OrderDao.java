@@ -33,7 +33,7 @@ public class OrderDao extends AbstractDao<OrderPojo> {
         return mongoOperations.findOne(query, OrderPojo.class);
     }
 
-    public Page<OrderPojo> findOrdersBetween(ZonedDateTime start, ZonedDateTime end, int page, int size) {
+    public Page<OrderPojo> findOrdersBetween(ZonedDateTime start, ZonedDateTime end, PageRequest pageable) {
 
         Query query = new Query();
 
@@ -44,24 +44,22 @@ public class OrderDao extends AbstractDao<OrderPojo> {
         );
 
         long total = mongoOperations.count(query, OrderPojo.class);
-
-        query.with(Sort.by(Sort.Direction.DESC, "orderTime"));
-        query.skip((long) page * size).limit(size);
+        query.with(pageable);
 
         List<OrderPojo> orders = mongoOperations.find(query, OrderPojo.class);
 
         return new PageImpl<>(
                 orders,
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderTime")),
+                pageable,
                 total
         );
     }
 
-    public Page<OrderPojo> search(String orderId, Pageable pageable) throws ApiException {
+    public Page<OrderPojo> search(String orderId, PageRequest pageable) throws ApiException {
 
         String pattern = ".*" + Pattern.quote(orderId) + ".*";
 
-        Query query = new Query(Criteria.where("orderId").regex(pattern, "i")); // "i" = case-insensitive
+        Query query = new Query(Criteria.where("orderId").regex(pattern, "i"));
 
         long total = mongoOperations.count(query, OrderPojo.class);
         query.with(pageable);

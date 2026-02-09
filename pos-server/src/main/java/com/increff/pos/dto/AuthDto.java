@@ -25,12 +25,9 @@ public class AuthDto {
     @Autowired
     private AuthApiImpl authApi;
 
-    @Autowired
-    private FormValidator formValidator;
-
     public LoginResponse login(LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ApiException {
 
-        formValidator.validate(request);
+        FormValidator.validate(request);
         String email = request.getEmail();
         String normalizedEmail = NormalizationUtil.normalizeEmail(email);
         String password = request.getPassword();
@@ -40,14 +37,14 @@ public class AuthDto {
 
     public void createOperator(CreateUserRequest request) throws ApiException {
 
-        formValidator.validate(request);
+        FormValidator.validate(request);
         String email = request.getEmail();
         String normalizedEmail = NormalizationUtil.normalizeEmail(email);
         String password = request.getPassword();
 
         authApi.createOperator(normalizedEmail, password);
     }
-
+    // change the function name
     public LoginResponse me(Authentication authentication) throws ApiException {
 
         ValidationUtil.validateAuthentication(authentication);
@@ -56,7 +53,7 @@ public class AuthDto {
 
     public Page<OperatorData> getAllOperators(PageForm form) throws ApiException {
 
-        formValidator.validate(form);
+        FormValidator.validate(form);
         Page<UserPojo> operatorPage = authApi.getAllOperators(form.getPage(), form.getSize());
         return operatorPage.map(AuthHelper::convertToData);
     }

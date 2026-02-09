@@ -40,7 +40,7 @@ public class ProductController {
 
     @Operation(summary = "Upload a list of products")
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
-    public FileData createProductsBulk(@RequestBody FileForm fileForm) throws ApiException { // Use base64 string
+    public FileData createProductsBulk(@RequestBody FileForm fileForm) throws ApiException {
         return productDto.createProducts(fileForm);
     }
 

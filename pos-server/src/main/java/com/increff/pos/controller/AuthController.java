@@ -48,6 +48,5 @@ public class AuthController {
     public Page<OperatorData> getAllOperatorsPaginated(@RequestBody PageForm form) throws ApiException {
         return authDto.getAllOperators(form);
     }
-
 }
 

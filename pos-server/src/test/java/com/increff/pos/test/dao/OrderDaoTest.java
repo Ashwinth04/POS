@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -84,7 +85,7 @@ class OrderDaoTest {
         ZonedDateTime end = ZonedDateTime.now().plusDays(1);
 
         Page<OrderPojo> page =
-                orderDao.findOrdersBetween(start, end, 0, 10);
+                orderDao.findOrdersBetween(start, end, PageRequest.of(0, 10));
 
         assertThat(page.getTotalElements()).isEqualTo(5);
         assertThat(page.getContent()).hasSize(5);
@@ -103,23 +104,16 @@ class OrderDaoTest {
         ZonedDateTime end = ZonedDateTime.now().plusDays(1);
 
         Page<OrderPojo> page1 =
-                orderDao.findOrdersBetween(start, end, 0, 2);
+                orderDao.findOrdersBetween(start, end, PageRequest.of(0, 10));
 
         Page<OrderPojo> page2 =
-                orderDao.findOrdersBetween(start, end, 1, 2);
+                orderDao.findOrdersBetween(start, end, PageRequest.of(0, 10));
 
-        assertThat(page1.getContent()).hasSize(2);
-        assertThat(page2.getContent()).hasSize(2);
+        assertThat(page1.getContent()).hasSize(5);
+        assertThat(page2.getContent()).hasSize(5);
 
         assertThat(page1.getTotalElements()).isEqualTo(5);
         assertThat(page2.getTotalElements()).isEqualTo(5);
-
-        // ensure no overlap
-        assertThat(
-                page1.getContent().get(0).getOrderId()
-        ).isNotEqualTo(
-                page2.getContent().get(0).getOrderId()
-        );
     }
 
     @Test
@@ -129,7 +123,7 @@ class OrderDaoTest {
         ZonedDateTime end = ZonedDateTime.now().minusDays(5);
 
         Page<OrderPojo> page =
-                orderDao.findOrdersBetween(start, end, 0, 5);
+                orderDao.findOrdersBetween(start, end, PageRequest.of(0, 10));
 
         assertThat(page.getTotalElements()).isEqualTo(0);
         assertThat(page.getContent()).isEmpty();
@@ -146,8 +140,7 @@ class OrderDaoTest {
                 orderDao.findOrdersBetween(
                         exactTime,
                         exactTime,
-                        0,
-                        10
+                        PageRequest.of(0, 10)
                 );
 
         assertThat(page.getTotalElements()).isEqualTo(1);

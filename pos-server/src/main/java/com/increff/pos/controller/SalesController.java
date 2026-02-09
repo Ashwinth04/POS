@@ -2,8 +2,9 @@ package com.increff.pos.controller;
 
 import com.increff.pos.dto.SalesDto;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.model.data.ClientSalesData;
 import com.increff.pos.model.data.DailySalesData;
-import com.increff.pos.model.data.ProductRow;
+import com.increff.pos.model.data.ProductRevenueRow;
 import com.increff.pos.model.form.PageForm;
 import org.apache.coyote.Request;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ public class SalesController {
     private SalesDto salesDto;
 
     @RequestMapping(value = "/get-client-sales", method = RequestMethod.GET)
-    public List<ProductRow> getSalesReport(@RequestParam String clientName, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) throws ApiException {
+    public ClientSalesData getSalesReport(@RequestParam String clientName, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) throws ApiException {
         return salesDto.getSalesForClient(clientName, startDate, endDate);
     }
 

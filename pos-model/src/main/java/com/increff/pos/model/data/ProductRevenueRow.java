@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProductRow {
+public class ProductRevenueRow {
     private String product;   // barcode
     private int quantity;
     private double revenue;

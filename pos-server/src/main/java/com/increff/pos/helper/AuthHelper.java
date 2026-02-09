@@ -8,4 +8,13 @@ public class AuthHelper {
         operatorData.setUsername(userPojo.getEmail());
         return operatorData;
     }
+
+    public static UserPojo createUserPojo(String encodedPassword, String email, String role) {
+        UserPojo user = new UserPojo();
+        user.setPassword(encodedPassword);
+        user.setEmail(email);
+        user.setRole(role);
+
+        return user;
+    }
 }

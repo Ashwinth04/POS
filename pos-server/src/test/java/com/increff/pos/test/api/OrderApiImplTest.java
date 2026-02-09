@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -40,7 +41,7 @@ class OrderApiImplTest {
         when(orderDao.save(any(OrderPojo.class)))
                 .thenAnswer(i -> i.getArgument(0));
 
-        OrderPojo result = orderApi.createOrder(pojo, true);
+        OrderPojo result = orderApi.createOrder(pojo);
 
         assertEquals("FULFILLABLE", result.getOrderStatus());
         verify(orderDao).save(pojo);
@@ -54,7 +55,7 @@ class OrderApiImplTest {
         when(orderDao.save(any(OrderPojo.class)))
                 .thenAnswer(i -> i.getArgument(0));
 
-        OrderPojo result = orderApi.createOrder(pojo, false);
+        OrderPojo result = orderApi.createOrder(pojo);
 
         assertEquals("UNFULFILLABLE", result.getOrderStatus());
     }
@@ -74,7 +75,7 @@ class OrderApiImplTest {
         when(orderDao.save(any(OrderPojo.class)))
                 .thenAnswer(i -> i.getArgument(0));
 
-        OrderPojo result = orderApi.editOrder(updated, true);
+        OrderPojo result = orderApi.editOrder(updated);
 
         assertEquals("FULFILLABLE", result.getOrderStatus());
         assertEquals("10", result.getId());
@@ -88,7 +89,7 @@ class OrderApiImplTest {
         when(orderDao.findByOrderId("missing")).thenReturn(null);
 
         ApiException ex = assertThrows(ApiException.class,
-                () -> orderApi.editOrder(pojo, true));
+                () -> orderApi.editOrder(pojo));
 
         assertEquals("ORDER WITH THE GIVEN ID DOESN'T EXIST", ex.getMessage());
     }
@@ -183,7 +184,7 @@ class OrderApiImplTest {
         Page<OrderPojo> page =
                 new PageImpl<>(List.of(pojo), PageRequest.of(0, 10), 1);
 
-        when(orderDao.findOrdersBetween(start, end, 0, 10))
+        when(orderDao.findOrdersBetween(start, end, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "orderId"))))
                 .thenReturn(page);
 
         Page<OrderPojo> result =

@@ -145,27 +145,6 @@ class InventoryApiImplTest {
         verify(inventoryDao).saveAll(anyList());
     }
 
-    // ---------- fetchExistingInventoryPojos ----------
-
-    @Test
-    void fetchExistingInventoryPojos_success() {
-        InventoryPojo orderItem = new InventoryPojo();
-        orderItem.setProductId("p1");
-
-        InventoryPojo inventory = new InventoryPojo();
-        inventory.setProductId("p1");
-        inventory.setQuantity(10);
-
-        when(inventoryDao.findByProductIds(List.of("p1")))
-                .thenReturn(List.of(inventory));
-
-        Map<String, InventoryPojo> result =
-                inventoryApi.fetchExistingInventoryPojos(List.of(orderItem));
-
-        assertEquals(1, result.size());
-        assertTrue(result.containsKey("p1"));
-    }
-
     // ---------- checkOrderFulfillable ----------
 
     @Test
@@ -258,10 +237,10 @@ class InventoryApiImplTest {
         when(inventoryDao.findByProductIds(List.of("p1")))
                 .thenReturn(List.of(pojo));
 
-        Map<String, InventoryPojo> result =
+        List<InventoryPojo> result =
                 inventoryApi.getInventoryForProductIds(List.of("p1"));
 
         assertEquals(1, result.size());
-        assertTrue(result.containsKey("p1"));
+        assertTrue(result.contains("p1"));
     }
 }

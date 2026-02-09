@@ -14,6 +14,7 @@ import com.increff.pos.model.data.OrderItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -30,20 +31,23 @@ public class OrderFlow {
     @Autowired
     private InventoryApiImpl inventoryApi;
 
+    @Transactional(rollbackFor = Exception.class)
     public OrderPojo createOrder(OrderPojo orderPojo) {
 
-        // TODO: DOnt convert to pojos, just send a list of product ids
-        List<InventoryPojo> orderInventoryPojos = getInventoryPojosForOrder(orderPojo.getOrderItems());
+        List<InventoryPojo> inventoryPojos = getInventoryPojosForOrder(orderPojo.getOrderItems());
 
-        boolean isFulfillable = inventoryApi.reserveInventory(orderInventoryPojos);
+        boolean isFulfillable = inventoryApi.reserveInventory(inventoryPojos);
 
-        return orderApi.createOrder(orderPojo, isFulfillable);
+        orderPojo.setOrderStatus(isFulfillable ? "FULFILLABLE" : "UNFULFILLABLE");
+        return orderApi.createOrder(orderPojo);
     }
 
+    // TODO: non need to send orderId
+    @Transactional
     public OrderPojo editOrder(OrderPojo orderPojo, String orderId) throws ApiException {
 
         OrderPojo existingOrder = orderApi.getCheckByOrderId(orderId);
-        String existingStatus = existingOrder.getOrderId();
+        String existingStatus = existingOrder.getOrderStatus();
         OrderHelper.checkOrderEditable(existingStatus);
 
         List<InventoryPojo> orderInventoryPojos = getInventoryPojosForOrder(orderPojo.getOrderItems());
@@ -52,7 +56,8 @@ public class OrderFlow {
 
         aggregateAndUpdateInventory(orderId, orderInventoryPojos, existingStatus, isFulfillable);
 
-        return orderApi.editOrder(orderPojo, isFulfillable);
+        orderPojo.setOrderStatus(isFulfillable ? "FULFILLABLE" : "UNFULFILLABLE");
+        return orderApi.editOrder(orderPojo);
     }
 
     private void aggregateAndUpdateInventory(String orderId, List<InventoryPojo> incomingInventoryPojos, String existingStatus, boolean isFulfillable) throws ApiException {
@@ -112,15 +117,34 @@ public class OrderFlow {
         return inventoryPojos;
     }
 
+    // TODO: change method name
     public Map<String, ProductPojo> mapBarcodesToProductPojos(List<String> barcodes) {
-        return productApi.mapBarcodesToProductPojos(barcodes);
+        List<ProductPojo> products = productApi.mapBarcodesToProductPojos(barcodes);
+
+        Map<String, ProductPojo> barcodeToProductId = new HashMap<>();
+
+        for (ProductPojo product : products) {
+            barcodeToProductId.put(
+                    product.getBarcode(),
+                    product
+            );
+        }
+
+        return barcodeToProductId;
     }
 
-    public Map<String, ProductPojo> mapProductIdsToProductPojos(List<String> barcodes) {
-        return productApi.mapProductIdsToProductPojos(barcodes);
-    }
+    public Map<String, ProductPojo> mapProductIdsToProductPojos(List<String> productIds) {
+        List<ProductPojo> products = productApi.mapProductIdsToProductPojos(productIds);
 
-    public Page<OrderPojo> searchById(String orderId, int page, int size) throws ApiException {
-        return orderApi.search(orderId, page, size);
+        Map<String, ProductPojo> productIdToProductPojo = new HashMap<>();
+
+        for (ProductPojo product : products) {
+            productIdToProductPojo.put(
+                    product.getId(),
+                    product
+            );
+        }
+
+        return productIdToProductPojo;
     }
 }

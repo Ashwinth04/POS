@@ -6,6 +6,7 @@ import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.InventoryPojo;
 import com.increff.pos.db.ProductPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.flow.OrderFlow;
 import com.increff.pos.flow.ProductFlow;
 import com.increff.pos.helper.ProductHelper;
 import com.increff.pos.model.data.*;
@@ -19,6 +20,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.increff.pos.helper.ProductHelper.convertRowToProductPojo;
 import static com.increff.pos.util.FileUtils.*;
@@ -32,18 +35,12 @@ public class ProductDto {
     @Autowired
     private ProductApiImpl productApi;
 
-    @Autowired
-    private ClientApiImpl clientApi;
-
-    @Autowired
-    private FormValidator formValidator;
-
     public ProductData createProduct(ProductForm productForm) throws ApiException {
 
-        formValidator.validate(productForm);
+        FormValidator.validate(productForm);
         NormalizationUtil.normalizeProductForm(productForm);
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
-        clientApi.getCheckByClientName(productPojo.getClientName());
+        productFlow.getCheckByClientName(productPojo.getClientName());
         ProductPojo savedProductPojo = productFlow.addProduct(productPojo);
 
         return ProductHelper.convertToData(savedProductPojo);
@@ -51,10 +48,10 @@ public class ProductDto {
 
     public ProductData editProduct(ProductForm productForm) throws ApiException {
 
-        formValidator.validate(productForm);
+        FormValidator.validate(productForm);
         NormalizationUtil.normalizeProductForm(productForm);
         ProductPojo productPojo = ProductHelper.convertToEntity(productForm);
-        clientApi.getCheckByClientName(productPojo.getClientName());
+        productFlow.getCheckByClientName(productPojo.getClientName());
         ProductPojo editedPojo = productApi.editProduct(productPojo);
 
         return ProductHelper.convertToData(editedPojo);
@@ -62,7 +59,7 @@ public class ProductDto {
 
     public Page<ProductData> getAllProducts(PageForm form) throws ApiException {
 
-        formValidator.validate(form);
+        FormValidator.validate(form);
         Page<ProductPojo> productPage = productApi.getAllProducts(form.getPage(), form.getSize());
         Map<String, InventoryPojo> productIdToInventoryPojo = productFlow.getInventoryForProducts(productPage);
 
@@ -83,7 +80,7 @@ public class ProductDto {
 
     public FileData createProducts(FileForm fileForm) throws ApiException {
 
-        formValidator.validate(fileForm);
+        FormValidator.validate(fileForm);
         List<String[]> rows = TsvParser.parseBase64Tsv(fileForm.getBase64file());
 
         List<ProductPojo> validProducts = new ArrayList<>();
@@ -125,7 +122,7 @@ public class ProductDto {
                 .map(ProductPojo::getClientName)
                 .toList();
 
-        return clientApi.fetchExistingClientNames(clientNames);
+        return productFlow.fetchExistingClientNames(clientNames);
     }
 
     public Map<String, ProductPojo> getValidBarcodes(List<ProductPojo> validProducts) {
@@ -134,7 +131,13 @@ public class ProductDto {
                 .map(ProductPojo::getBarcode)
                 .toList();
 
-        return productApi.findExistingProducts(barcodes);
+        List<ProductPojo> existingPojos = productApi.findExistingProducts(barcodes);
+
+        return existingPojos.stream()
+                .collect(Collectors.toMap(
+                        ProductPojo::getBarcode,
+                        Function.identity()
+                ));
     }
 
     public FileData convertProductResultsToBase64(List<RowError> results) {
@@ -150,7 +153,7 @@ public class ProductDto {
 
     public Page<ProductData> searchProducts(ProductSearchForm searchForm) throws ApiException {
 
-        formValidator.validate(searchForm);
+        FormValidator.validate(searchForm);
         NormalizationUtil.normalizeSearchProductForm(searchForm);
         Page<ProductPojo> productPage = productFlow.searchProducts(searchForm.getType(), searchForm.getQuery(), searchForm.getPage(), searchForm.getSize());
         Map<String, InventoryPojo> productIdToInventoryPojo = productFlow.getInventoryForProducts(productPage);

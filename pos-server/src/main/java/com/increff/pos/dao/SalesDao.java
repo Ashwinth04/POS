@@ -2,7 +2,8 @@ package com.increff.pos.dao;
 
 import com.increff.pos.db.SalesPojo;
 import com.increff.pos.model.data.DailyClientSalesData;
-import com.increff.pos.model.data.ProductRow;
+import com.increff.pos.model.data.ProductRevenueRow;
+import com.increff.pos.model.data.ProductRevenueRow;
 import org.bson.BsonNull;
 import org.bson.Document;
 import org.springframework.data.domain.Sort;
@@ -37,9 +38,9 @@ public class SalesDao extends AbstractDao<SalesPojo> {
         return mongoOperations.findOne(query, SalesPojo.class);
     }
 
-    public List<ProductRow> getSalesReport(String clientName,
-                                           ZonedDateTime startDate,
-                                           ZonedDateTime endDate) {
+    public List<ProductRevenueRow> getSalesReport(String clientName,
+                                                  ZonedDateTime startDate,
+                                                  ZonedDateTime endDate) {
 
         MatchOperation dateMatch = match(
                 Criteria.where("orderStatus").is("PLACED")
@@ -91,8 +92,8 @@ public class SalesDao extends AbstractDao<SalesPojo> {
                 project
         );
 
-        AggregationResults<ProductRow> results =
-                mongoOperations.aggregate(aggregation, "orders", ProductRow.class);
+        AggregationResults<ProductRevenueRow> results =
+                mongoOperations.aggregate(aggregation, "orders", ProductRevenueRow.class);
 
         return results.getMappedResults();
     }

@@ -5,8 +5,9 @@ import com.increff.pos.db.SalesPojo;
 import com.increff.pos.dto.SalesDto;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.SalesHelper;
+import com.increff.pos.model.data.ClientSalesData;
 import com.increff.pos.model.data.DailySalesData;
-import com.increff.pos.model.data.ProductRow;
+import com.increff.pos.model.data.ProductRevenueRow;
 import com.increff.pos.model.form.PageForm;
 import com.increff.pos.util.FormValidator;
 import com.increff.pos.util.ValidationUtil;
@@ -46,7 +47,7 @@ class SalesDtoTest {
         LocalDate start = LocalDate.now().minusDays(2);
         LocalDate end = LocalDate.now();
 
-        List<ProductRow> rows = List.of(new ProductRow());
+        List<ProductRevenueRow> rows = List.of(new ProductRevenueRow());
 
         try (MockedStatic<ValidationUtil> validation = mockStatic(ValidationUtil.class)) {
 
@@ -62,10 +63,10 @@ class SalesDtoTest {
             when(salesApi.getSalesForClient("client1", zs, ze))
                     .thenReturn(rows);
 
-            List<ProductRow> result =
+            ClientSalesData result =
                     salesDto.getSalesForClient("client1", start, end);
 
-            assertEquals(1, result.size());
+            assertEquals(1, result.getProducts().size());
         }
     }
 

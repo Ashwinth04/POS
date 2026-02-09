@@ -185,9 +185,9 @@ class ProductDtoTest {
                     .thenReturn(productPojo);
 
             when(clientApi.fetchExistingClientNames(anyList()))
-                    .thenReturn(Map.of("client1", new ClientPojo()));
-            when(productFlow.findExistingProducts(anyList()))
-                    .thenReturn(Map.of());
+                    .thenReturn(List.of(new ClientPojo()));
+            when(productApi.findExistingProducts(anyList()))
+                    .thenReturn(List.of());
             doNothing().when(productFlow).addProductsBulk(anyList());
 
             fileUtils.when(() -> generateProductUploadResults(anyList()))
@@ -248,7 +248,7 @@ class ProductDtoTest {
     @Test
     void testGetValidClients() {
         when(clientApi.fetchExistingClientNames(anyList()))
-                .thenReturn(Map.of("client1", new ClientPojo()));
+                .thenReturn(List.of(new ClientPojo()));
 
         Map<String, ClientPojo> result =
                 productDto.getValidClients(List.of(productPojo));
@@ -260,8 +260,8 @@ class ProductDtoTest {
 
     @Test
     void testGetValidBarcodes() {
-        when(productFlow.findExistingProducts(anyList()))
-                .thenReturn(Map.of("b1", productPojo));
+        when(productApi.findExistingProducts(anyList()))
+                .thenReturn(List.of(productPojo));
 
         Map<String, ProductPojo> result =
                 productDto.getValidBarcodes(List.of(productPojo));

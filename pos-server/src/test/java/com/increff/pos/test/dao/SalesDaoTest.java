@@ -3,7 +3,6 @@ package com.increff.pos.test.dao;
 import com.increff.pos.config.TestConfig;
 import com.increff.pos.dao.SalesDao;
 import com.increff.pos.db.SalesPojo;
-import com.increff.pos.model.data.ProductRow;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

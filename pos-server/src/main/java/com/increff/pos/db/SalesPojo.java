@@ -19,5 +19,5 @@ public class SalesPojo extends AbstractPojo{
     private int totalOrders;
     private int totalProducts;
     private double totalRevenue;
-    private List<DailyClientSalesData> clients;
+    private List<DailyClientSalesPojo> clients;
 }

@@ -26,19 +26,14 @@ public class ProductApiImpl implements ProductApi {
 
     @Transactional(rollbackFor = ApiException.class)
     public ProductPojo addProduct(ProductPojo productPojo) throws ApiException {
-
         checkBarcodeExists(productPojo.getBarcode());
-
         return productDao.save(productPojo);
     }
 
     @Transactional(rollbackFor = ApiException.class)
     public ProductPojo editProduct(ProductPojo productPojo) throws ApiException {
-
         ProductPojo existingRecord = getCheckByBarcode(productPojo.getBarcode());
-
         productPojo.setId(existingRecord.getId());
-
         return productDao.save(productPojo);
     }
 
@@ -49,72 +44,36 @@ public class ProductApiImpl implements ProductApi {
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public List<ProductPojo> addProductsBulk(List<ProductPojo> pojos) throws ApiException {
-
-        try {
-            return productDao.saveAll(pojos);
-        } catch (Exception e) {
-            throw new ApiException("Failed to insert valid products");
-        }
+    public List<ProductPojo> addProductsBulk(List<ProductPojo> pojos) {
+        return productDao.saveAll(pojos);
     }
 
     public void checkBarcodeExists(String barcode) throws ApiException {
 
         ProductPojo result = productDao.findByBarcode(barcode);
-
         if (Objects.nonNull(result)) { throw new ApiException("Barcode already exists"); }
     }
 
-    public Map<String, ProductPojo> findExistingProducts(List<String> barcodes) {
-
-        List<ProductPojo> existingBarcodes = productDao.findByBarcodes(barcodes);
-
-        return existingBarcodes.stream()
-                .collect(Collectors.toMap(
-                        ProductPojo::getBarcode,
-                        Function.identity()
-                ));
+    public List<ProductPojo> findExistingProducts(List<String> barcodes) {
+        return productDao.findByBarcodes(barcodes);
     }
 
-    public Map<String, ProductPojo> mapBarcodesToProductPojos(List<String> barcodes) {
+    public List<ProductPojo> mapBarcodesToProductPojos(List<String> barcodes) {
 
-        if (barcodes == null || barcodes.isEmpty()) {
-            return Collections.emptyMap();
+        if (Objects.isNull(barcodes) || barcodes.isEmpty()) {
+            return Collections.emptyList();
         }
 
-        List<ProductPojo> products = productDao.findByBarcodes(barcodes);
-
-        Map<String, ProductPojo> barcodeToProductId = new HashMap<>();
-
-        for (ProductPojo product : products) {
-            barcodeToProductId.put(
-                    product.getBarcode(),
-                    product
-            );
-        }
-
-        return barcodeToProductId;
+        return productDao.findByBarcodes(barcodes);
     }
 
-    public Map<String, ProductPojo> mapProductIdsToProductPojos(List<String> productIds) {
+    public List<ProductPojo> mapProductIdsToProductPojos(List<String> productIds) {
 
-        if (productIds == null || productIds.isEmpty()) {
-            return Collections.emptyMap();
+        if (Objects.isNull(productIds) || productIds.isEmpty()) {
+            return Collections.emptyList();
         }
 
-        List<ProductPojo> products = productDao.findAllById(productIds);
-
-        Map<String, ProductPojo> productIdToProductPojo = new HashMap<>();
-
-        for (ProductPojo product : products) {
-            productIdToProductPojo.put(
-                    product.getId(),
-                    product
-            );
-        }
-
-        return productIdToProductPojo;
-
+        return productDao.findAllById(productIds);
     }
 
     public ProductPojo getCheckByBarcode(String barcode) throws ApiException {
@@ -139,5 +98,4 @@ public class ProductApiImpl implements ProductApi {
                     productDao.searchByName(query, pageable);
         };
     }
-
 }

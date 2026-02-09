@@ -22,13 +22,9 @@ public class ClientDto {
     @Autowired
     private ClientApiImpl clientApi;
 
-    @Autowired
-    private FormValidator formValidator;
-
     public ClientData createClient(ClientForm clientForm) throws ApiException {
-        // TODO: handle empty input cases (Done)
-        formValidator.validate(clientForm);
         NormalizationUtil.normalizeClientForm(clientForm);
+        FormValidator.validate(clientForm);
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
         clientApi.checkNameExists(clientPojo.getName());
         ClientPojo savedClientPojo = clientApi.addClient(clientPojo);
@@ -37,21 +33,21 @@ public class ClientDto {
 
     public Page<ClientData> getAllClients(PageForm form) throws ApiException {
 
-        formValidator.validate(form);
+        FormValidator.validate(form);
         Page<ClientPojo> clientPage = clientApi.getAllClients(form.getPage(), form.getSize());
         return clientPage.map(ClientHelper::convertToData);
     }
 
     public ClientData updateClientDetails(ClientForm clientForm) throws ApiException {
 
-        formValidator.validate(clientForm);
         NormalizationUtil.normalizeClientForm(clientForm);
+        FormValidator.validate(clientForm);
         ClientPojo clientPojo = ClientHelper.convertToEntity(clientForm);
         return ClientHelper.convertToData(clientApi.updateClient(clientPojo));
     }
 
     public Page<ClientData> search(ClientSearchForm searchForm) throws ApiException {
-        formValidator.validate(searchForm);
+        FormValidator.validate(searchForm);
         Page<ClientPojo> clientPage = clientApi.search(searchForm.getType(), searchForm.getQuery(), searchForm.getPage(), searchForm.getSize());
         return clientPage.map(ClientHelper::convertToData);
     }

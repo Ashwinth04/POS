@@ -60,8 +60,10 @@ public class OrderHelper {
             String productId = item.getProductId();
             ProductPojo product = productIdToProductPojo.get(productId);
 
-            orderItem.setBarcode(product.getBarcode());
-            orderItem.setProductName(product.getName());
+            if (product != null) {
+                orderItem.setBarcode(product.getBarcode());
+                orderItem.setProductName(product.getName());
+            }
 
             orderItems.add(orderItem);
         }

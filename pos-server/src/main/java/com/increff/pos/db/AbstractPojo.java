@@ -16,7 +16,7 @@ public abstract class AbstractPojo {
     @Id
     private String id;
     @CreatedDate
-    private ZonedDateTime createdAt;
+    private ZonedDateTime createdAt; // TODO: Check if you can index inside only one implementation
     @LastModifiedDate
     private ZonedDateTime updatedAt;
 } 

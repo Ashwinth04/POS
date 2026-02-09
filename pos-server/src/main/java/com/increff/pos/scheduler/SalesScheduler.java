@@ -1,6 +1,5 @@
 package com.increff.pos.scheduler;
 
-import com.increff.pos.api.SalesApiImpl;
 import com.increff.pos.dto.SalesDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,9 +17,9 @@ public class SalesScheduler {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Kolkata");
 
-    // Runs every 5 minutes
+    // second - minute - hour - day - month - year
     @Scheduled(cron = "0 */5 * * * *", zone = "Asia/Kolkata")
-    public void runEveryFiveMinutes() {
+    public void storeDailySales() {
         ZonedDateTime yesterdayStart = LocalDate.now(ZONE).minusDays(1).atStartOfDay(ZONE);
         ZonedDateTime yesterdayEnd = yesterdayStart.plusDays(1);
 

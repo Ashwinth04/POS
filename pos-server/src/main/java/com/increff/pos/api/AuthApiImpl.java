@@ -6,6 +6,7 @@ import com.increff.pos.dao.UserDao;
 import com.increff.pos.db.ClientPojo;
 import com.increff.pos.db.UserPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.helper.AuthHelper;
 import com.increff.pos.model.data.LoginResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -70,11 +71,9 @@ public class AuthApiImpl {
 
         checkUserExists(email);
 
-        // TODO: Move this to helper (Is it possible ?)
-        UserPojo user = new UserPojo();
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setRole(UserRole.OPERATOR.role());
+        String encodedPassword = passwordEncoder.encode(password);
+        String role = UserRole.OPERATOR.role();
+        UserPojo user = AuthHelper.createUserPojo(encodedPassword, email, role);
 
         userDao.save(user);
     }

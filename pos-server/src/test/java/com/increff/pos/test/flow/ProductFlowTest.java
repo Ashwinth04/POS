@@ -102,10 +102,7 @@ class ProductFlowTest {
         inv2.setQuantity(0);
 
         when(inventoryApi.getInventoryForProductIds(List.of("p1", "p2")))
-                .thenReturn(Map.of(
-                        "p1", inv1,
-                        "p2", inv2
-                ));
+                .thenReturn(List.of( inv1, inv2));
 
         Map<String, InventoryPojo> result =
                 productFlow.getInventoryForProducts(page);

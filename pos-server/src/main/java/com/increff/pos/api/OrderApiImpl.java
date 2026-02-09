@@ -19,21 +19,13 @@ public class OrderApiImpl implements OrderApi {
     @Autowired
     private OrderDao orderDao;
 
-    @Transactional(rollbackFor = ApiException.class)
-    public OrderPojo createOrder(OrderPojo orderPojo, boolean isFulFillable) {
-
-        orderPojo.setOrderStatus(isFulFillable ? "FULFILLABLE" : "UNFULFILLABLE");
-
+    public OrderPojo createOrder(OrderPojo orderPojo) {
         return orderDao.save(orderPojo);
     }
 
-    @Transactional(rollbackFor = ApiException.class)
-    public OrderPojo editOrder(OrderPojo orderPojo, boolean isFulFillable) throws ApiException {
-
-        orderPojo.setOrderStatus(isFulFillable ? "FULFILLABLE" : "UNFULFILLABLE");
+    public OrderPojo editOrder(OrderPojo orderPojo) throws ApiException {
 
         OrderPojo record = getCheckByOrderId(orderPojo.getOrderId());
-
         orderPojo.setId(record.getId());
         return orderDao.save(orderPojo);
     }
@@ -42,23 +34,19 @@ public class OrderApiImpl implements OrderApi {
     public MessageData cancelOrder(String orderId) throws ApiException {
 
         OrderPojo record = getCheckByOrderId(orderId);
-
         record.setOrderStatus("CANCELLED");
         orderDao.save(record);
-
         return new MessageData("Order cancelled successfully!");
     }
 
     public Page<OrderPojo> getAllOrders(int page, int size) {
-
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderTime"));
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderId"));
         return orderDao.findAll(pageRequest);
     }
 
     public OrderPojo getCheckByOrderId(String orderId) throws ApiException {
 
         OrderPojo pojo = orderDao.findByOrderId(orderId);
-
         if (Objects.isNull(pojo)) throw new ApiException("ORDER WITH THE GIVEN ID DOESN'T EXIST");
 
         return pojo;
@@ -74,7 +62,8 @@ public class OrderApiImpl implements OrderApi {
 
     public Page<OrderPojo> filterOrders(ZonedDateTime start, ZonedDateTime end, int page, int size) {
 
-        Page<OrderPojo> pojoPage = orderDao.findOrdersBetween(start, end, page, size);
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderId"));
+        Page<OrderPojo> pojoPage = orderDao.findOrdersBetween(start, end, pageable);
 
         List<OrderPojo> dataList = pojoPage.getContent().stream()
                 .toList();
@@ -83,11 +72,7 @@ public class OrderApiImpl implements OrderApi {
     }
 
     public Page<OrderPojo> search(String orderId, int page, int size) throws ApiException {
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderTime"));
-
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderId"));
         return orderDao.search(orderId, pageable);
-
     }
-
 }

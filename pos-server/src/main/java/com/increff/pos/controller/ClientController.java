@@ -26,21 +26,20 @@ public class ClientController {
 
     @Operation(summary = "Create a new client")
     @PostMapping
-    public ClientData createNewClient(@Valid @RequestBody ClientForm clientForm) throws ApiException {
+    public ClientData createNewClient(@RequestBody ClientForm clientForm) throws ApiException {
         return clientDto.createClient(clientForm);
+    }
+
+    @Operation(summary = "Update client details")
+    @PutMapping
+    public ClientData updateClient(@RequestBody ClientForm clientForm) throws ApiException {
+        return clientDto.updateClientDetails(clientForm);
     }
 
     @Operation(summary = "Get all clients with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
     public Page<ClientData> getAllClients(@RequestBody PageForm form) throws ApiException {
         return clientDto.getAllClients(form);
-    }
-
-    // TODO: Dont use this (Done for clients and products) - check if required for other controllers as well
-    @Operation(summary = "Update client details")
-    @PutMapping
-    public ClientData updateClient(@RequestBody ClientForm clientForm) throws ApiException {
-        return clientDto.updateClientDetails(clientForm);
     }
 
     @RequestMapping(path = "/search", method = RequestMethod.POST)

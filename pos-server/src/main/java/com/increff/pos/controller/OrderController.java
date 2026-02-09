@@ -30,15 +30,15 @@ public class OrderController {
     private OrderDto orderDto;
 
     @Operation(summary = "Create new order")
-    @RequestMapping(value = "/create", method = RequestMethod.POST)
+    @PostMapping
     public OrderData createOrder(@RequestBody OrderForm orderForm) throws ApiException {
         return orderDto.createOrder(orderForm);
     }
 
     @Operation(summary = "Edit order")
-    @RequestMapping(value = "/edit/{orderId}", method = RequestMethod.POST)
-    public OrderData editOrder(@RequestBody OrderForm orderForm, @PathVariable String orderId) throws ApiException {
-        return orderDto.editOrder(orderForm, orderId);
+    @PutMapping
+    public OrderData editOrder(@RequestBody OrderForm orderForm) throws ApiException {
+        return orderDto.editOrder(orderForm);
     }
 
     @Operation(summary = "Cancel order")
@@ -57,6 +57,7 @@ public class OrderController {
         return orderDto.downloadInvoice(orderId);
     }
 
+    // TODO: Change this to post. merge this to get all and make the date params optional
     @RequestMapping(value = "/filter-orders", method = RequestMethod.GET)
     public Page<OrderData> filterOrders(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate, @RequestParam int page,@RequestParam int size) throws ApiException {
         return orderDto.filterOrders(startDate, endDate, page, size);

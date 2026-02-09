@@ -18,7 +18,6 @@ public class ClientForm {
     )
     private String email;
 
-    // TODO: Check if it checks empty spaces as well
     @NotBlank(message = "Location cannot be empty")
     @Size(
             min = 5,

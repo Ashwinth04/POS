@@ -3,7 +3,7 @@ package com.increff.pos.test.api;
 import com.increff.pos.api.SalesApiImpl;
 import com.increff.pos.dao.SalesDao;
 import com.increff.pos.db.SalesPojo;
-import com.increff.pos.model.data.ProductRow;
+import com.increff.pos.model.data.ProductRevenueRow;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,7 +35,7 @@ class SalesApiImplTest {
 
     @Test
     void getSalesForClient_success() {
-        ProductRow row = new ProductRow();
+        ProductRevenueRow row = new ProductRevenueRow();
 
         ZonedDateTime start = ZonedDateTime.now().minusDays(5);
         ZonedDateTime end = ZonedDateTime.now();
@@ -43,7 +43,7 @@ class SalesApiImplTest {
         when(salesDao.getSalesReport("client1", start, end))
                 .thenReturn(List.of(row));
 
-        List<ProductRow> result =
+        List<ProductRevenueRow> result =
                 salesApi.getSalesForClient("client1", start, end);
 
         assertEquals(1, result.size());

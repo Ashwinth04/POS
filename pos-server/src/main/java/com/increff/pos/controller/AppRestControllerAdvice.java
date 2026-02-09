@@ -62,12 +62,6 @@ public class AppRestControllerAdvice {
                 .body("Missing required parameter: " + ex.getParameterName());
     }
 
-    @ExceptionHandler(ConversionFailedException.class)
-    public ResponseEntity<String> handleConversionError() {
-        return ResponseEntity.badRequest()
-                .body("Invalid date format. Expected yyyy-MM-dd");
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult()

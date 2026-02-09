@@ -25,18 +25,32 @@ public class InventoryDto {
     @Autowired
     private InventoryApiImpl inventoryApi;
 
+    // TODO: Create inventory flow
     @Autowired
     private ProductApiImpl productApi;
 
-    @Autowired
-    private FormValidator formValidator;
-
     public InventoryData updateInventory(InventoryForm inventoryForm) throws ApiException {
 
-        formValidator.validate(inventoryForm);
+        FormValidator.validate(inventoryForm);
         NormalizationUtil.normalizeInventoryForm(inventoryForm);
         String barcode = inventoryForm.getBarcode();
-        String productId = getProductIdFromBarcode(barcode);
+        List<ProductPojo> products = productApi.mapBarcodesToProductPojos(Collections.singletonList(barcode));
+
+        // TODO: Move this to helper
+        Map<String, ProductPojo> barcodeToProductId = new HashMap<>();
+
+        for (ProductPojo product : products) {
+            barcodeToProductId.put(
+                    product.getBarcode(),
+                    product
+            );
+        }
+
+        ProductPojo productPojo = barcodeToProductId.get(barcode);
+        if (productPojo == null) {
+            throw new ApiException("Product not found for barcode: " + barcode);
+        }
+        String productId = productPojo.getId();
         InventoryPojo inventoryPojo = InventoryHelper.convertToEntity(inventoryForm, productId);
         inventoryApi.updateSingleInventory(inventoryPojo);
         return InventoryHelper.convertToData(inventoryPojo);
@@ -44,7 +58,7 @@ public class InventoryDto {
 
     public FileData updateInventoryBulk(FileForm fileForm) throws ApiException {
 
-        formValidator.validate(fileForm);
+        FormValidator.validate(fileForm);
         List<String[]> rows = TsvParser.parseBase64Tsv(fileForm.getBase64file());
 
         Map<String, Integer> headerIndexMap = extractInventoryHeaderIndexMap(rows.get(0));
@@ -53,7 +67,16 @@ public class InventoryDto {
 
         List<String> barcodes = getAllBarcodes(rows, headerIndexMap);
 
-        Map<String, ProductPojo> barcodeToProductPojo = productApi.mapBarcodesToProductPojos(new ArrayList<>(barcodes));
+        List<ProductPojo> products = productApi.mapBarcodesToProductPojos(new ArrayList<>(barcodes));
+
+        Map<String, ProductPojo> barcodeToProductPojo = new HashMap<>();
+
+        for (ProductPojo product : products) {
+            barcodeToProductPojo.put(
+                    product.getBarcode(),
+                    product
+            );
+        }
 
         List<InventoryPojo> validInventory = new ArrayList<>();
         List<RowError> invalidInventory = new ArrayList<>();
@@ -74,15 +97,4 @@ public class InventoryDto {
         return fileData;
     }
 
-    // TODO: Dont use this, ust use productApi's method for single update as well
-    private String getProductIdFromBarcode(String barcode) throws ApiException {
-
-        Map<String, ProductPojo> barcodeToProductId = productApi.mapBarcodesToProductPojos(Collections.singletonList(barcode));
-        ProductPojo productPojo = barcodeToProductId.get(barcode);
-        if (productPojo == null) {
-            throw new ApiException("Product not found for barcode: " + barcode);
-        }
-
-        return productPojo.getId();
-    }
 }

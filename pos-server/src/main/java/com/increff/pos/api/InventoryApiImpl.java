@@ -25,10 +25,21 @@ public class InventoryApiImpl implements InventoryApi{
         return inventoryPojo;
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public boolean reserveInventory(List<InventoryPojo> inventoryUpdatePojos) {
 
-        Map<String, InventoryPojo> existingRecords = fetchExistingInventoryPojos(inventoryUpdatePojos);
+        List<String> productIds = inventoryUpdatePojos.stream()
+                .map(InventoryPojo::getProductId)
+                .distinct()
+                .toList();
+
+        List<InventoryPojo> inventoryPojos = getInventoryForProductIds(productIds);
+
+        Map<String, InventoryPojo> existingRecords = inventoryPojos
+                .stream()
+                .collect(Collectors.toMap(
+                        InventoryPojo::getProductId,
+                        Function.identity()
+                ));
 
         // TODO: Dont use item as the name (Done)
         for (InventoryPojo inventoryUpdatePojo : inventoryUpdatePojos) {
@@ -41,7 +52,6 @@ public class InventoryApiImpl implements InventoryApi{
         }
 
         updateBulkInventory(inventoryUpdatePojos);
-
         return true;
     }
 
@@ -92,31 +102,26 @@ public class InventoryApiImpl implements InventoryApi{
         inventoryDao.saveAll(inventoryPojos);
     }
 
-    // TODO: Change the name (Done)
-    public Map<String, InventoryPojo> fetchExistingInventoryPojos(List<InventoryPojo> items) {
+    // TODO change names
+    public boolean checkOrderFulfillable(List<InventoryPojo> inventories) {
 
-        List<String> productIds = items.stream()
+        List<String> productIds = inventories.stream()
                 .map(InventoryPojo::getProductId)
                 .distinct()
                 .toList();
 
-        List<InventoryPojo> inventoryList = inventoryDao.findByProductIds(productIds);
+        List<InventoryPojo> inventoryPojos = getInventoryForProductIds(productIds);
 
-        return inventoryList.stream()
+        Map<String, InventoryPojo> existingRecords = inventoryPojos
+                .stream()
                 .collect(Collectors.toMap(
                         InventoryPojo::getProductId,
-                        inv -> inv
+                        Function.identity()
                 ));
-
-    }
-
-    public boolean checkOrderFulfillable(List<InventoryPojo> items) {
-
-        Map<String, InventoryPojo> existingRecords = fetchExistingInventoryPojos(items);
 
         boolean allFulfillable = true;
 
-        for (InventoryPojo item : items) {
+        for (InventoryPojo item : inventories) {
             String productId = item.getProductId();
             boolean fulfillable = isItemFulfillable(item,existingRecords.get(productId));
 
@@ -126,15 +131,14 @@ public class InventoryApiImpl implements InventoryApi{
         return allFulfillable;
     }
 
+    // TODO: Move this to helper
     private boolean isItemFulfillable(InventoryPojo item, InventoryPojo existingRecord) {
-
         int available = existingRecord.getQuantity();
         int required = item.getQuantity();
         return available >= required;
     }
 
     public void updateBulkInventory(List<InventoryPojo> pojos) {
-
         inventoryDao.bulkUpdate(pojos);
     }
 
@@ -142,9 +146,9 @@ public class InventoryApiImpl implements InventoryApi{
 
         List<InventoryPojo> pojos = InventoryHelper.getPojosFromMap(delta);
         inventoryDao.bulkUpdate(pojos);
-
     }
 
+    // TODO: Check if this can be here
     private Map<String, Integer> calculateDeltaInventory(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) {
 
         Map<String, Integer> delta = new HashMap<>();
@@ -176,17 +180,8 @@ public class InventoryApiImpl implements InventoryApi{
         return aggregatedItems;
     }
 
-    public Map<String, InventoryPojo> getInventoryForProductIds(List<String> productIds) {
-
-        Map<String, InventoryPojo> productIdToInventory =
-                inventoryDao.findByProductIds(productIds)
-                        .stream()
-                        .collect(Collectors.toMap(
-                                InventoryPojo::getProductId,
-                                Function.identity()
-                        ));
-
-        return productIdToInventory;
-
+    // TODO: Return a list here
+    public List<InventoryPojo> getInventoryForProductIds(List<String> productIds) {
+        return inventoryDao.findByProductIds(productIds);
     }
 }
