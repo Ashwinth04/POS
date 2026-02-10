@@ -1,7 +1,7 @@
 package com.increff.pos.test.api;
 
 import com.increff.pos.api.AuthUserDetailsService;
-import com.increff.pos.config.SupervisorConfig;
+import com.increff.pos.config.ApplicationProperties;
 import com.increff.pos.constants.Constants;
 import com.increff.pos.dao.UserDao;
 import com.increff.pos.db.documents.UserPojo;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 class AuthUserDetailsServiceTest {
 
     @Mock
-    private SupervisorConfig supervisorConfig;
+    private ApplicationProperties applicationProperties;
 
     @Mock
     private UserDao userDao;
@@ -46,8 +46,8 @@ class AuthUserDetailsServiceTest {
     @Test
     void testLoadUserByUsername_supervisor() {
 
-        when(supervisorConfig.getEmail()).thenReturn("admin");
-        when(supervisorConfig.getPassword()).thenReturn("secret");
+        when(applicationProperties.getSupervisorEmail()).thenReturn("admin");
+        when(applicationProperties.getSupervisorPassword()).thenReturn("secret");
         when(passwordEncoder.encode("secret")).thenReturn("ENCODED");
 
         UserDetails user =
@@ -69,7 +69,7 @@ class AuthUserDetailsServiceTest {
     @Test
     void testLoadUserByUsername_operator_active() {
 
-        when(supervisorConfig.getEmail()).thenReturn("admin");
+        when(applicationProperties.getSupervisorEmail()).thenReturn("admin");
 
         UserPojo pojo = new UserPojo();
         pojo.setEmail("operator1");
@@ -95,7 +95,7 @@ class AuthUserDetailsServiceTest {
     @Test
     void testLoadUserByUsername_userNotFound() {
 
-        when(supervisorConfig.getEmail()).thenReturn("adminn@gmail.com");
+        when(applicationProperties.getSupervisorEmail()).thenReturn("adminn@gmail.com");
         when(userDao.findByEmail("missing"))
                 .thenReturn(null);
 

@@ -8,12 +8,17 @@ import org.springframework.stereotype.Component;
 @Component
 @Getter
 @Setter
-//TODO::Change the name to Application properties and add the application properties in this class only and rename the fields
-public class SupervisorConfig {
+public class ApplicationProperties {
 
     @Value("${app.supervisor.email}")
-    private String email;
+    private String supervisorEmail;
 
     @Value("${app.supervisor.password}")
-    private String password;
+    private String supervisorPassword;
+
+    @Value("${invoice.service.base-url}")
+    private String invoiceUrl;
+
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
 }

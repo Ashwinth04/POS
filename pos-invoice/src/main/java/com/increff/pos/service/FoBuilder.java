@@ -15,7 +15,7 @@ public class FoBuilder {
                 .ofPattern("MMM dd, yyyy, hh:mm a")
                 .withZone(ZoneId.systemDefault());
 
-        String formattedTime = formatter.format(order.getOrderTime());
+        String formattedTime = formatter.format(order.getCreatedAt());
 
         fo.append("""
         <fo:root xmlns:fo="http://www.w3.org/1999/XSL/Format">

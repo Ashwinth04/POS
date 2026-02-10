@@ -12,7 +12,6 @@ import java.util.List;
 @Setter
 public class OrderData {
     private String orderId;
-    private Instant orderTime;
     private ZonedDateTime createdAt;
     private String orderStatus;
     private List<OrderItem> orderItems;

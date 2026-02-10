@@ -1,6 +1,6 @@
 package com.increff.pos.api;
 
-import com.increff.pos.config.SupervisorConfig;
+import com.increff.pos.config.ApplicationProperties;
 import com.increff.pos.constants.Constants;
 import com.increff.pos.dao.UserDao;
 import com.increff.pos.db.documents.UserPojo;
@@ -15,7 +15,7 @@ import java.util.Objects;
 public class AuthUserDetailsService implements UserDetailsService {
 
     @Autowired
-    private SupervisorConfig supervisorConfig;
+    private ApplicationProperties applicationProperties;
 
     @Autowired
     private UserDao userDao;
@@ -25,10 +25,10 @@ public class AuthUserDetailsService implements UserDetailsService {
 
     public UserDetails loadUserByUsername(String username) {
 
-        if (username.equals(supervisorConfig.getEmail())) {
+        if (username.equals(applicationProperties.getSupervisorEmail())) {
             return User.builder()
-                    .username(supervisorConfig.getEmail())
-                    .password(encoder.encode(supervisorConfig.getPassword()))
+                    .username(applicationProperties.getSupervisorEmail())
+                    .password(encoder.encode(applicationProperties.getSupervisorPassword()))
                     .roles(Constants.SUPERVISOR)
                     .build();
         }
