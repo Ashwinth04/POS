@@ -1,5 +1,6 @@
 package com.increff.pos.util;
 
+import com.increff.pos.model.data.FileData;
 import com.increff.pos.model.data.ProductUploadResult;
 import com.increff.pos.model.data.RowError;
 
@@ -56,5 +57,16 @@ public class FileUtils {
             return null;
         }
         return row[index].trim();
+    }
+
+    public static FileData convertProductResultsToBase64(List<RowError> results) {
+
+        String resultFile = generateProductUploadResults(results);
+
+        FileData fileData = new FileData();
+        fileData.setStatus(results.isEmpty() ? "SUCCESS" : "UNSUCCESSFUL");
+        fileData.setBase64file(resultFile);
+
+        return fileData;
     }
 }

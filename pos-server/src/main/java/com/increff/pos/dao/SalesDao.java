@@ -1,12 +1,7 @@
 package com.increff.pos.dao;
 
-import com.increff.pos.db.SalesPojo;
-import com.increff.pos.model.data.DailyClientSalesData;
+import com.increff.pos.db.documents.SalesPojo;
 import com.increff.pos.model.data.ProductRevenueRow;
-import com.increff.pos.model.data.ProductRevenueRow;
-import org.bson.BsonNull;
-import org.bson.Document;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -15,10 +10,7 @@ import org.springframework.data.mongodb.repository.support.MongoRepositoryFactor
 import org.springframework.stereotype.Repository;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 
@@ -49,7 +41,6 @@ public class SalesDao extends AbstractDao<SalesPojo> {
 
         UnwindOperation unwindItems = unwind("orderItems");
 
-        // Convert productId String to ObjectId
         AggregationOperation addProductIdObj = context ->
                 new org.bson.Document("$addFields",
                         new org.bson.Document("orderItems.productIdObj",
@@ -99,7 +90,6 @@ public class SalesDao extends AbstractDao<SalesPojo> {
     }
 
     public SalesPojo getDailySalesData(ZonedDateTime start, ZonedDateTime end) {
-
         MatchOperation filterOrders = match(
                 Criteria.where("orderStatus").is("PLACED")
                         .and("orderTime").gte(start).lt(end)
@@ -161,5 +151,4 @@ public class SalesDao extends AbstractDao<SalesPojo> {
         AggregationResults<SalesPojo> results = mongoOperations.aggregate(aggregation, "orders", SalesPojo.class);
         return results.getUniqueMappedResult();
     }
-
 }

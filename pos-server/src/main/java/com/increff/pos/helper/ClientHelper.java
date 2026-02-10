@@ -1,6 +1,6 @@
 package com.increff.pos.helper;
 
-import com.increff.pos.db.ClientPojo;
+import com.increff.pos.db.documents.ClientPojo;
 import com.increff.pos.model.data.ClientData;
 import com.increff.pos.model.form.ClientForm;
 

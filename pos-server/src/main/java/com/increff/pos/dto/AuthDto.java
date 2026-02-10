@@ -1,7 +1,7 @@
 package com.increff.pos.dto;
 
 import com.increff.pos.api.AuthApiImpl;
-import com.increff.pos.db.UserPojo;
+import com.increff.pos.db.documents.UserPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.AuthHelper;
 import com.increff.pos.model.data.LoginResponse;

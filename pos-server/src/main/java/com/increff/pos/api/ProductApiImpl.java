@@ -1,11 +1,9 @@
 package com.increff.pos.api;
 
 import com.increff.pos.dao.ProductDao;
-import com.increff.pos.db.OrderPojo;
-import com.increff.pos.db.ProductPojo;
+import com.increff.pos.db.documents.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.constants.ProductSearchType;
-import com.increff.pos.model.data.OrderItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,8 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductApiImpl implements ProductApi {
@@ -38,7 +34,6 @@ public class ProductApiImpl implements ProductApi {
     }
 
     public Page<ProductPojo> getAllProducts(int page, int size) {
-
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
         return productDao.findAll(pageRequest);
     }
@@ -49,7 +44,6 @@ public class ProductApiImpl implements ProductApi {
     }
 
     public void checkBarcodeExists(String barcode) throws ApiException {
-
         ProductPojo result = productDao.findByBarcode(barcode);
         if (Objects.nonNull(result)) { throw new ApiException("Barcode already exists"); }
     }
@@ -58,21 +52,19 @@ public class ProductApiImpl implements ProductApi {
         return productDao.findByBarcodes(barcodes);
     }
 
-    public List<ProductPojo> mapBarcodesToProductPojos(List<String> barcodes) {
+    public List<ProductPojo> getProductPojosForBarcodes(List<String> barcodes) {
 
         if (Objects.isNull(barcodes) || barcodes.isEmpty()) {
             return Collections.emptyList();
         }
-
         return productDao.findByBarcodes(barcodes);
     }
 
-    public List<ProductPojo> mapProductIdsToProductPojos(List<String> productIds) {
+    public List<ProductPojo> getProductPojosForProductIds(List<String> productIds) {
 
         if (Objects.isNull(productIds) || productIds.isEmpty()) {
             return Collections.emptyList();
         }
-
         return productDao.findAllById(productIds);
     }
 
@@ -83,7 +75,6 @@ public class ProductApiImpl implements ProductApi {
         if (Objects.isNull(record)) {
             throw new ApiException("Product with this given barcode doesn't exist");
         }
-
         return record;
     }
 

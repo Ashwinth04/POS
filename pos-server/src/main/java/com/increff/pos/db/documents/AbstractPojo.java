@@ -1,13 +1,11 @@
-package com.increff.pos.db;
+package com.increff.pos.db.documents;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 
-import java.time.Instant;
 import java.time.ZonedDateTime;
 
 @Getter
@@ -16,7 +14,7 @@ public abstract class AbstractPojo {
     @Id
     private String id;
     @CreatedDate
-    private ZonedDateTime createdAt; // TODO: Check if you can index inside only one implementation
+    private ZonedDateTime createdAt;
     @LastModifiedDate
     private ZonedDateTime updatedAt;
 } 

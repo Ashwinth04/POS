@@ -1,8 +1,7 @@
 package com.increff.pos.api;
 
 import com.increff.pos.dao.SalesDao;
-import com.increff.pos.db.ProductPojo;
-import com.increff.pos.db.SalesPojo;
+import com.increff.pos.db.documents.SalesPojo;
 import com.increff.pos.model.data.ProductRevenueRow;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -11,8 +10,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;

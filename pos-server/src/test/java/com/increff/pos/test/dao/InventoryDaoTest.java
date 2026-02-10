@@ -2,7 +2,7 @@ package com.increff.pos.test.dao;
 
 import com.increff.pos.config.TestConfig;
 import com.increff.pos.dao.InventoryDao;
-import com.increff.pos.db.InventoryPojo;
+import com.increff.pos.db.documents.InventoryPojo;
 import com.increff.pos.exception.ApiException;
 import com.mongodb.bulk.BulkWriteResult;
 import org.junit.jupiter.api.BeforeEach;

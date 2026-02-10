@@ -1,8 +1,6 @@
-package com.increff.pos.db;
+package com.increff.pos.db.subdocuments;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter

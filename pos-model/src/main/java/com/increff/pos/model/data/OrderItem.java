@@ -7,7 +7,6 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderItem {
-    private String orderItemId;
     private String barcode;
     private String productName;
     private Integer orderedQuantity;

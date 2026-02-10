@@ -1,12 +1,10 @@
 package com.increff.pos.dao;
 
-import com.increff.pos.db.UserPojo;
+import com.increff.pos.db.documents.UserPojo;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.repository.support.MongoRepositoryFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 

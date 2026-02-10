@@ -1,7 +1,7 @@
 package com.increff.pos.test.dto;
 
 import com.increff.pos.api.SalesApiImpl;
-import com.increff.pos.db.SalesPojo;
+import com.increff.pos.db.documents.SalesPojo;
 import com.increff.pos.dto.SalesDto;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.SalesHelper;

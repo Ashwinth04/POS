@@ -2,7 +2,7 @@ package com.increff.pos.test.api;
 
 import com.increff.pos.api.SalesApiImpl;
 import com.increff.pos.dao.SalesDao;
-import com.increff.pos.db.SalesPojo;
+import com.increff.pos.db.documents.SalesPojo;
 import com.increff.pos.model.data.ProductRevenueRow;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 

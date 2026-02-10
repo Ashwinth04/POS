@@ -2,7 +2,7 @@ package com.increff.pos.test.dao;
 
 import com.increff.pos.config.TestConfig;
 import com.increff.pos.dao.SalesDao;
-import com.increff.pos.db.SalesPojo;
+import com.increff.pos.db.documents.SalesPojo;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;

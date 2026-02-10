@@ -2,7 +2,7 @@ package com.increff.pos.test.api;
 
 import com.increff.pos.api.OrderApiImpl;
 import com.increff.pos.dao.OrderDao;
-import com.increff.pos.db.OrderPojo;
+import com.increff.pos.db.documents.OrderPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.MessageData;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ class OrderApiImplTest {
         when(orderDao.save(any(OrderPojo.class)))
                 .thenAnswer(i -> i.getArgument(0));
 
-        OrderPojo result = orderApi.createOrder(pojo);
+        OrderPojo result = orderApi.saveOrder(pojo);
 
         assertEquals("FULFILLABLE", result.getOrderStatus());
         verify(orderDao).save(pojo);
@@ -55,7 +55,7 @@ class OrderApiImplTest {
         when(orderDao.save(any(OrderPojo.class)))
                 .thenAnswer(i -> i.getArgument(0));
 
-        OrderPojo result = orderApi.createOrder(pojo);
+        OrderPojo result = orderApi.saveOrder(pojo);
 
         assertEquals("UNFULFILLABLE", result.getOrderStatus());
     }
@@ -173,10 +173,10 @@ class OrderApiImplTest {
         assertEquals("ORDER WITH THE GIVEN ID DOESN'T EXIST", ex.getMessage());
     }
 
-    // ---------- filterOrders ----------
+    // ---------- filterOrdersByDate ----------
 
     @Test
-    void filterOrders_success() {
+    void filterOrders_ByDate_success() {
         ZonedDateTime start = ZonedDateTime.now().minusDays(1);
         ZonedDateTime end = ZonedDateTime.now();
 
@@ -184,11 +184,11 @@ class OrderApiImplTest {
         Page<OrderPojo> page =
                 new PageImpl<>(List.of(pojo), PageRequest.of(0, 10), 1);
 
-        when(orderDao.findOrdersBetween(start, end, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "orderId"))))
+        when(orderDao.findOrdersBetweenDates(start, end, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "orderId"))))
                 .thenReturn(page);
 
         Page<OrderPojo> result =
-                orderApi.filterOrders(start, end, 0, 10);
+                orderApi.filterOrdersByDate(start, end, 0, 10);
 
         assertEquals(1, result.getTotalElements());
         assertEquals(1, result.getContent().size());

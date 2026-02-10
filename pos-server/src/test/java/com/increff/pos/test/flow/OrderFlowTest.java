@@ -163,9 +163,9 @@
 //    void filterOrders_success() {
 //        Page<OrderPojo> page = new PageImpl<>(List.of(orderPojo));
 //
-//        when(orderApi.filterOrders(any(), any(), eq(0), eq(10))).thenReturn(page);
+//        when(orderApi.filterOrdersByDate(any(), any(), eq(0), eq(10))).thenReturn(page);
 //
-//        Page<OrderPojo> result = orderApi.filterOrders(
+//        Page<OrderPojo> result = orderApi.filterOrdersByDate(
 //                ZonedDateTime.now().minusDays(1),
 //                ZonedDateTime.now(),
 //                0,
@@ -191,22 +191,22 @@
 //
 //    @Test
 //    void mapBarcodesToProductPojos_success() {
-//        when(productApi.mapBarcodesToProductPojos(anyList()))
+//        when(productApi.getProductPojosForBarcodes(anyList()))
 //                .thenReturn(Map.of("B1", new ProductPojo()));
 //
 //        Map<String, ProductPojo> result =
-//                orderFlow.mapBarcodesToProductPojos(List.of("B1"));
+//                orderFlow.getProductPojosForBarcodes(List.of("B1"));
 //
 //        assertEquals(1, result.size());
 //    }
 //
 //    @Test
 //    void mapProductIdsToProductPojos_success() {
-//        when(productApi.mapProductIdsToProductPojos(anyList()))
+//        when(productApi.getProductPojosForProductIds(anyList()))
 //                .thenReturn(List.of(new ProductPojo()));
 //
 //        Map<String, ProductPojo> result =
-//                orderFlow.mapProductIdsToProductPojos(List.of("P1"));
+//                orderFlow.getProductPojosForProductIds(List.of("P1"));
 //
 //        assertEquals(1, result.size());
 //    }
@@ -217,10 +217,10 @@
 //    void searchById_success() throws Exception {
 //        Page<OrderPojo> page = new PageImpl<>(List.of(orderPojo));
 //
-//        when(orderApi.search(ORDER_ID, 0, 10)).thenReturn(page);
+//        when(orderApi.searchById(ORDER_ID, 0, 10)).thenReturn(page);
 //
 //        Page<OrderPojo> result =
-//                orderApi.search(ORDER_ID, 0, 10);
+//                orderApi.searchById(ORDER_ID, 0, 10);
 //
 //        assertEquals(1, result.getTotalElements());
 //    }

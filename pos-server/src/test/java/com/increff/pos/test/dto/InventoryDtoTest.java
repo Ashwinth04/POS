@@ -70,7 +70,7 @@
 //                MockedStatic<InventoryHelper> inventoryHelperMock = mockStatic(InventoryHelper.class)
 //        ) {
 //
-//            when(productApi.mapBarcodesToProductPojos(List.of("B123")))
+//            when(productApi.getProductPojosForBarcodes(List.of("B123")))
 //                    .thenReturn(Map.of("B123", productPojo));
 //
 //            inventoryHelperMock
@@ -92,7 +92,7 @@
 //    @Test
 //    void updateInventory_productNotFound() {
 //
-//        when(productApi.mapBarcodesToProductPojos(anyList()))
+//        when(productApi.getProductPojosForBarcodes(anyList()))
 //                .thenReturn(Collections.emptyMap());
 //
 //        ApiException ex = assertThrows(ApiException.class,
@@ -138,7 +138,7 @@
 //            helperMock.when(() -> InventoryHelper.getAllBarcodes(rows, headerIndexMap))
 //                    .thenReturn(List.of("B123"));
 //
-//            when(productApi.mapBarcodesToProductPojos(anyList()))
+//            when(productApi.getProductPojosForBarcodes(anyList()))
 //                    .thenReturn(Map.of("B123", new ProductPojo()));
 //
 //            helperMock.when(() -> InventoryHelper.segragateValidAndInvalidEntries(

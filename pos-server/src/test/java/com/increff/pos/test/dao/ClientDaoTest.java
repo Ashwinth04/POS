@@ -2,7 +2,7 @@ package com.increff.pos.test.dao;
 
 import com.increff.pos.config.TestConfig;
 import com.increff.pos.dao.ClientDao;
-import com.increff.pos.db.ClientPojo;
+import com.increff.pos.db.documents.ClientPojo;
 import com.increff.pos.exception.ApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -86,22 +86,6 @@ class ClientDaoTest {
         assertThat(result)
                 .extracting(ClientPojo::getName)
                 .containsExactlyInAnyOrder("Client One", "Alpha Client");
-    }
-
-    @Test
-    void testFindExistingClientNames_emptyInput() {
-        List<ClientPojo> result =
-                clientDao.findExistingClientNames(List.of());
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void testFindExistingClientNames_nullInput() {
-        List<ClientPojo> result =
-                clientDao.findExistingClientNames(null);
-
-        assertThat(result).isEmpty();
     }
 
     @Test

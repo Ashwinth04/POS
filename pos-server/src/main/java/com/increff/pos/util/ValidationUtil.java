@@ -1,8 +1,9 @@
 package com.increff.pos.util;
 
-import com.increff.pos.db.ClientPojo;
-import com.increff.pos.db.ProductPojo;
+import com.increff.pos.db.documents.ClientPojo;
+import com.increff.pos.db.documents.ProductPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.model.data.RowError;
 import com.increff.pos.model.form.*;
 import org.springframework.security.core.Authentication;
@@ -13,26 +14,31 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.increff.pos.constants.Constants.*;
 import static com.increff.pos.constants.Constants.MRP;
+import static com.increff.pos.helper.ProductHelper.convertRowToProductPojo;
 import static com.increff.pos.util.FileUtils.getValueFromRow;
 
 public class ValidationUtil {
 
-    public static void validateLoginRequest(LoginRequest request) throws ApiException {
+    public static void segregateValidInvalidProducts(List<String[]> rows, Map<String, Integer> headerIndexMap, List<ProductPojo> validProducts, List<RowError> invalidProducts) {
 
-        if (request.getEmail() == null || request.getEmail().isBlank()) {
-            throw new ApiException("Username cannot be empty");
-        }
+        for (int i = 1; i < rows.size(); i++) {
+            String[] row = rows.get(i);
 
-        if (request.getPassword() == null || request.getPassword().isBlank()) {
-            throw new ApiException("Password cannot be empty");
+            if (ValidationUtil.isRowEmpty(row)) continue;
+
+            try {
+                ProductPojo pojo = convertRowToProductPojo(row, headerIndexMap);
+                validProducts.add(pojo);
+            } catch (Exception e) {
+                String barcode = getValueFromRow(row, headerIndexMap, "barcode");
+                String errorMessage = (e.getMessage() != null) ? e.getMessage() : "Unknown error";
+                invalidProducts.add(new RowError(barcode, errorMessage));
+            }
         }
     }
 
@@ -279,16 +285,14 @@ public class ValidationUtil {
         }
     }
 
-    public static void validateOrderItem(OrderItemForm item, ProductPojo product) throws ApiException {
+    public static void validateOrderItem(OrderItem item, ProductPojo product) throws ApiException {
 
-        String barcode = item.getBarcode();
-
-        if (product == null) {
-            throw new ApiException("Invalid barcode: " + barcode);
+        if (Objects.isNull(product)) {
+            throw new ApiException("Invalid barcode: " + item.getBarcode());
         }
 
         if (item.getSellingPrice() > product.getMrp() || item.getSellingPrice() <= 0) {
-            throw new ApiException("Selling price exceeds MRP for barcode: " + barcode);
+            throw new ApiException("Selling price exceeds MRP for barcode: " + item.getBarcode());
         }
     }
 } 

@@ -1,31 +1,43 @@
 package com.increff.pos.util;
 
-import com.increff.pos.db.ClientPojo;
 import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.model.form.*;
 
-import java.util.List;
+import java.util.Objects;
 
 public class NormalizationUtil {
 
     public static void normalizeClientForm(ClientForm clientForm) {
+        String name = clientForm.getName();
+        String location = clientForm.getLocation();
+        String email = clientForm.getEmail();
+        String phoneNumber = clientForm.getPhoneNumber();
 
-        String location = clientForm.getLocation().trim().toLowerCase();
-        clientForm.setEmail(clientForm.getEmail().trim().toLowerCase());
-        clientForm.setLocation(location);
+        if (Objects.nonNull(email)) clientForm.setEmail(email.trim().toLowerCase());
+        if (Objects.nonNull(location)) clientForm.setLocation(location.trim().toLowerCase());
+        if (Objects.nonNull(phoneNumber)) clientForm.setPhoneNumber(phoneNumber.trim().toLowerCase());
+        if (Objects.nonNull(name)) clientForm.setName(name.trim().toLowerCase());
     }
 
     public static void normalizeOrderForm(OrderForm orderForm) {
+        if (Objects.isNull(orderForm) || Objects.isNull(orderForm.getOrderItems())) return;
 
-        for (OrderItemForm orderItem: orderForm.getOrderItems()) {
-            orderItem.setBarcode(orderItem.getBarcode().trim().toLowerCase());
+        for (OrderItem orderItem: orderForm.getOrderItems()) {
+            String barcode = orderItem.getBarcode();
+            if (Objects.nonNull(barcode)) orderItem.setBarcode(barcode.trim().toLowerCase());
         }
     }
 
     public static void normalizeProductForm(ProductForm productForm) {
-        String normalizedBarcode = productForm.getBarcode().trim().toLowerCase();
-        productForm.setBarcode(normalizedBarcode);
-        productForm.setClientName(productForm.getClientName().trim());
+        String name = productForm.getName();
+        String clientName = productForm.getClientName();
+        String imageUrl = productForm.getImageUrl();
+        String barcode = productForm.getBarcode();
+
+        if (Objects.nonNull(name)) productForm.setName(name.trim().toLowerCase());
+        if (Objects.nonNull(clientName)) productForm.setClientName(clientName.trim());
+        if (Objects.nonNull(imageUrl)) productForm.setImageUrl(imageUrl.trim().toLowerCase());
+        if (Objects.nonNull(barcode)) productForm.setBarcode(barcode.trim().toLowerCase());
     }
 
     public static String normalizeEmail(String email) {
@@ -33,10 +45,23 @@ public class NormalizationUtil {
     }
 
     public static void normalizeInventoryForm(InventoryForm inventoryForm) {
-        inventoryForm.setBarcode(inventoryForm.getBarcode().trim().toLowerCase());
+        String barcode = inventoryForm.getBarcode();
+        if (Objects.nonNull(barcode)) inventoryForm.setBarcode(barcode.trim().toLowerCase());
     }
 
     public static void normalizeSearchProductForm(ProductSearchForm searchProductForm) {
-        searchProductForm.setQuery(searchProductForm.getQuery().trim().toLowerCase());
+        String query = searchProductForm.getQuery();
+        if (Objects.nonNull(query)) searchProductForm.setQuery(query.trim().toLowerCase());
+    }
+
+    public static void normalizeSearchClientForm(ClientSearchForm clientSearchForm) {
+        String query = clientSearchForm.getQuery();
+        if (Objects.nonNull(query)) clientSearchForm.setQuery(query.trim().toLowerCase());
+    }
+
+    public static String normalizeName(String name) {
+        if (Objects.nonNull(name)) return name.trim();
+
+        return "";
     }
 }

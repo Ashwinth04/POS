@@ -1,7 +1,7 @@
 package com.increff.pos.test.dto;
 
 import com.increff.pos.api.ClientApiImpl;
-import com.increff.pos.db.ClientPojo;
+import com.increff.pos.db.documents.ClientPojo;
 import com.increff.pos.dto.ClientDto;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.constants.ClientSearchType;

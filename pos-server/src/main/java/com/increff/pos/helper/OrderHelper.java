@@ -1,12 +1,12 @@
 package com.increff.pos.helper;
 
-import com.increff.pos.db.OrderItemPojo;
-import com.increff.pos.db.OrderPojo;
-import com.increff.pos.db.ProductPojo;
+import com.increff.pos.db.documents.InventoryPojo;
+import com.increff.pos.db.subdocuments.OrderItemPojo;
+import com.increff.pos.db.documents.OrderPojo;
+import com.increff.pos.db.documents.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.*;
 import com.increff.pos.model.form.OrderForm;
-import com.increff.pos.model.form.OrderItemForm;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -22,7 +22,7 @@ public class OrderHelper {
 
         List<OrderItemPojo> items = new ArrayList<>();
 
-        for (OrderItemForm item: orderForm.getOrderItems()) {
+        for (OrderItem item: orderForm.getOrderItems()) {
             OrderItemPojo OrderItemPojo = new OrderItemPojo();
             String barcode = item.getBarcode();
             ProductPojo productPojo = barcodeToProductPojo.get(barcode);
@@ -55,7 +55,6 @@ public class OrderHelper {
             OrderItem orderItem = new OrderItem();
             orderItem.setOrderedQuantity(item.getOrderedQuantity());
             orderItem.setSellingPrice(item.getSellingPrice());
-            orderItem.setOrderItemId(item.getOrderItemId());
 
             String productId = item.getProductId();
             ProductPojo product = productIdToProductPojo.get(productId);
@@ -71,6 +70,30 @@ public class OrderHelper {
         orderData.setOrderItems(orderItems);
 
         return orderData;
+    }
+
+    public static OrderData convertOrderFormToData(OrderForm orderForm, OrderPojo orderPojo) {
+        OrderData orderData = new OrderData();
+
+        orderData.setOrderId(orderPojo.getOrderId());
+        orderData.setOrderStatus(orderPojo.getOrderStatus());
+        orderData.setOrderTime(orderPojo.getOrderTime());
+        orderData.setOrderItems(orderForm.getOrderItems());
+
+        return orderData;
+    }
+
+    public static List<InventoryPojo> getInventoryPojosForOrder(List<OrderItemPojo> orderItems) {
+        List<InventoryPojo> inventoryPojos = new ArrayList<>();
+
+        for (OrderItemPojo item: orderItems) {
+            InventoryPojo pojo = new InventoryPojo();
+            pojo.setProductId(item.getProductId());
+            pojo.setQuantity(item.getOrderedQuantity());
+
+            inventoryPojos.add(pojo);
+        }
+        return inventoryPojos;
     }
 
     public static Map<String, ProductPojo> mapProductIdToProductPojo(Map<String, ProductPojo> barcodeToProductPojo) {
@@ -109,5 +132,12 @@ public class OrderHelper {
         if (status.equals("CANCELLED")) throw new ApiException("ORDER CANCELLED ALREADY");
 
         if (status.equals("PLACED")) throw new ApiException("PLACED ORDERS CANNOT BE CANCELLED");
+    }
+
+    public static void checkInvoiceDownloadable(OrderPojo orderPojo) throws ApiException {
+        if (Objects.isNull(orderPojo)) throw new ApiException("ORDER WITH THE GIVEN ID DOESN'T EXIST");
+
+        String status = orderPojo.getOrderStatus();
+        if (!status.equals("PLACED")) throw new ApiException("ORDER NOT PLACED YET. PLEASE PLACE THE ORDER TO DOWNLOAD INVOICE");
     }
 }

@@ -172,12 +172,12 @@
 //        assertTrue(result.contains("b2"));
 //    }
 //
-//    // ---------- mapBarcodesToProductPojos ----------
+//    // ---------- getProductPojosForBarcodes ----------
 //
 //    @Test
 //    void mapBarcodesToProductPojos_nullInput() {
 //        Map<String, ProductPojo> result =
-//                productApi.mapBarcodesToProductPojos(null);
+//                productApi.getProductPojosForBarcodes(null);
 //
 //        assertTrue(result.isEmpty());
 //        verify(productDao, never()).findByBarcodes(any());
@@ -186,7 +186,7 @@
 //    @Test
 //    void mapBarcodesToProductPojos_emptyList() {
 //        Map<String, ProductPojo> result =
-//                productApi.mapBarcodesToProductPojos(List.of());
+//                productApi.getProductPojosForBarcodes(List.of());
 //
 //        assertTrue(result.isEmpty());
 //    }
@@ -200,7 +200,7 @@
 //                .thenReturn(List.of(p));
 //
 //        Map<String, ProductPojo> result =
-//                productApi.mapBarcodesToProductPojos(List.of("b1"));
+//                productApi.getProductPojosForBarcodes(List.of("b1"));
 //
 //        assertEquals(1, result.size());
 //        assertEquals(p, result.get("b1"));
@@ -263,6 +263,6 @@
 ////        ApiException ex = assertThrows(ApiException.class,
 ////                () -> productApi.searchProducts("", "x", 0, 10));
 ////
-////        assertEquals("Invalid search type: invalid", ex.getMessage());
+////        assertEquals("Invalid searchById type: invalid", ex.getMessage());
 ////    }
 //}

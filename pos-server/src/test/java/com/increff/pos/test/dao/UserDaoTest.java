@@ -2,7 +2,7 @@ package com.increff.pos.test.dao;
 
 import com.increff.pos.config.TestConfig;
 import com.increff.pos.dao.UserDao;
-import com.increff.pos.db.UserPojo;
+import com.increff.pos.db.documents.UserPojo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

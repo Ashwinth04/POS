@@ -1,12 +1,13 @@
 package com.increff.pos.helper;
 
-import com.increff.pos.db.InventoryPojo;
-import com.increff.pos.db.ProductPojo;
+import com.increff.pos.db.documents.InventoryPojo;
+import com.increff.pos.db.documents.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.ProductData;
 import com.increff.pos.model.form.ProductForm;
 import com.increff.pos.util.ValidationUtil;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -59,6 +60,16 @@ public class ProductHelper {
         pojo.setImageUrl(getValueFromRow(row, headerIndexMap, IMAGE_URL));
 
         return pojo;
+    }
+
+    public static Map<String, Integer> extractHeaderIndexMap(String[] headerRow) {
+        Map<String, Integer> headerIndexMap = new HashMap<>();
+
+        for (int i = 0; i < headerRow.length; i++) {
+            headerIndexMap.put(headerRow[i], i);
+        }
+
+        return headerIndexMap;
     }
 
     public static ProductData convertToData(ProductPojo product, Map<String, InventoryPojo> inventoryByProductId) {

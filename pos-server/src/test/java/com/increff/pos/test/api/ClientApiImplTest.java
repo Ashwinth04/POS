@@ -2,7 +2,7 @@ package com.increff.pos.test.api;
 
 import com.increff.pos.api.ClientApiImpl;
 import com.increff.pos.dao.ClientDao;
-import com.increff.pos.db.ClientPojo;
+import com.increff.pos.db.documents.ClientPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.constants.ClientSearchType;
 import org.junit.jupiter.api.BeforeEach;

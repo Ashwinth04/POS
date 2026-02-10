@@ -2,8 +2,8 @@ package com.increff.pos.test.flow;
 
 import com.increff.pos.api.InventoryApiImpl;
 import com.increff.pos.api.ProductApiImpl;
-import com.increff.pos.db.InventoryPojo;
-import com.increff.pos.db.ProductPojo;
+import com.increff.pos.db.documents.InventoryPojo;
+import com.increff.pos.db.documents.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.ProductFlow;
 import com.increff.pos.model.constants.ProductSearchType;

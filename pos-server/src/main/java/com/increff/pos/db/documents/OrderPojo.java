@@ -1,5 +1,6 @@
-package com.increff.pos.db;
+package com.increff.pos.db.documents;
 
+import com.increff.pos.db.subdocuments.OrderItemPojo;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -14,7 +15,6 @@ import java.util.List;
 public class OrderPojo extends AbstractPojo {
     @Indexed(unique = true)
     private String orderId;
-    // TODO: Remove this field
     private Instant orderTime;
     private String orderStatus;
     private List<OrderItemPojo> orderItems;

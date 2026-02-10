@@ -1,7 +1,7 @@
 package com.increff.pos.helper;
 
-import com.increff.pos.db.DailyClientSalesPojo;
-import com.increff.pos.db.SalesPojo;
+import com.increff.pos.db.subdocuments.DailyClientSalesPojo;
+import com.increff.pos.db.documents.SalesPojo;
 import com.increff.pos.model.data.ClientSalesData;
 import com.increff.pos.model.data.DailyClientSalesData;
 import com.increff.pos.model.data.DailySalesData;

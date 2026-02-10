@@ -1,10 +1,8 @@
 package com.increff.pos.api;
 
-import com.increff.pos.constants.Constants;
 import com.increff.pos.constants.UserRole;
 import com.increff.pos.dao.UserDao;
-import com.increff.pos.db.ClientPojo;
-import com.increff.pos.db.UserPojo;
+import com.increff.pos.db.documents.UserPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.AuthHelper;
 import com.increff.pos.model.data.LoginResponse;

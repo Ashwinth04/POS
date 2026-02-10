@@ -16,6 +16,7 @@ public class ClientSearchForm {
     private ClientSearchType type;
 
     @NotBlank(message = "Query cannot be empty")
+    @NotNull(message = "Query cannot be null")
     private String query;
 
     @Min(value = 0, message = "Page number cannot be negative")

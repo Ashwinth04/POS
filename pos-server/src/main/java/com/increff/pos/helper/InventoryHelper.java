@@ -1,7 +1,7 @@
 package com.increff.pos.helper;
 
-import com.increff.pos.db.InventoryPojo;
-import com.increff.pos.db.ProductPojo;
+import com.increff.pos.db.documents.InventoryPojo;
+import com.increff.pos.db.documents.ProductPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.InventoryData;
 import com.increff.pos.model.data.RowError;
@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.increff.pos.constants.Constants.*;
 import static com.increff.pos.util.FileUtils.getValueFromRow;
 
 public class InventoryHelper {
@@ -45,6 +44,17 @@ public class InventoryHelper {
         }
 
         return pojos;
+    }
+
+    public static Map<String, ProductPojo> getBarcodeToProductPojoMap(List<ProductPojo> products) {
+        Map<String, ProductPojo> barcodeToProductPojo = new HashMap<>();
+        for (ProductPojo product : products) {
+            barcodeToProductPojo.put(
+                    product.getBarcode(),
+                    product
+            );
+        }
+        return barcodeToProductPojo;
     }
 
     public static Map<String, Integer> extractInventoryHeaderIndexMap(String[] headerRow) {
@@ -157,7 +167,12 @@ public class InventoryHelper {
                 );
             }
         }
+    }
 
+    public static boolean hasSufficientInventory(InventoryPojo item, InventoryPojo existingRecord) {
+        int available = existingRecord.getQuantity();
+        int required = item.getQuantity();
+        return available >= required;
     }
 
 }

@@ -42,9 +42,8 @@ public class ClientController {
         return clientDto.getAllClients(form);
     }
 
-    @RequestMapping(path = "/search", method = RequestMethod.POST)
+    @RequestMapping(path = "/searchById", method = RequestMethod.POST)
     public Page<ClientData> searchClients(@RequestBody ClientSearchForm searchForm) throws ApiException {
         return clientDto.search(searchForm);
     }
-
 }

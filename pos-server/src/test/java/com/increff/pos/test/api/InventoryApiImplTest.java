@@ -2,7 +2,7 @@ package com.increff.pos.test.api;
 
 import com.increff.pos.api.InventoryApiImpl;
 import com.increff.pos.dao.InventoryDao;
-import com.increff.pos.db.InventoryPojo;
+import com.increff.pos.db.documents.InventoryPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.InventoryHelper;
 import org.junit.jupiter.api.Test;

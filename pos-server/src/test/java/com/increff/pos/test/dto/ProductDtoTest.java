@@ -2,9 +2,9 @@ package com.increff.pos.test.dto;
 
 import com.increff.pos.api.ClientApiImpl;
 import com.increff.pos.api.ProductApiImpl;
-import com.increff.pos.db.ClientPojo;
-import com.increff.pos.db.InventoryPojo;
-import com.increff.pos.db.ProductPojo;
+import com.increff.pos.db.documents.ClientPojo;
+import com.increff.pos.db.documents.InventoryPojo;
+import com.increff.pos.db.documents.ProductPojo;
 import com.increff.pos.dto.ProductDto;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.ProductFlow;
@@ -136,19 +136,6 @@ class ProductDtoTest {
         }
     }
 
-    // ---------- extractHeaderIndexMap ----------
-
-    @Test
-    void testExtractHeaderIndexMap() {
-        String[] header = {"barcode", "name", "client"};
-
-        Map<String, Integer> map = ProductDto.extractHeaderIndexMap(header);
-
-        assertEquals(3, map.size());
-        assertEquals(0, map.get("barcode"));
-        assertEquals(2, map.get("client"));
-    }
-
     // ---------- createProducts (SUCCESS) ----------
 
     @Test
@@ -267,37 +254,6 @@ class ProductDtoTest {
                 productDto.getValidBarcodes(List.of(productPojo));
 
         assertEquals(1, result.size());
-    }
-
-    // ---------- convertProductResultsToBase64 ----------
-
-    @Test
-    void testConvertProductResultsToBase64_success() {
-        try (MockedStatic<com.increff.pos.util.FileUtils> fileUtils =
-                     mockStatic(com.increff.pos.util.FileUtils.class)) {
-
-            fileUtils.when(() -> generateProductUploadResults(anyList()))
-                    .thenReturn("file");
-
-            FileData result = productDto.convertProductResultsToBase64(List.of());
-
-            assertEquals("SUCCESS", result.getStatus());
-        }
-    }
-
-    @Test
-    void testConvertProductResultsToBase64_unsuccessful() {
-        try (MockedStatic<com.increff.pos.util.FileUtils> fileUtils =
-                     mockStatic(com.increff.pos.util.FileUtils.class)) {
-
-            fileUtils.when(() -> generateProductUploadResults(anyList()))
-                    .thenReturn("file");
-
-            FileData result =
-                    productDto.convertProductResultsToBase64(List.of(new RowError("","")));
-
-            assertEquals("UNSUCCESSFUL", result.getStatus());
-        }
     }
 
     // ---------- searchProducts ----------

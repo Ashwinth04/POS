@@ -1,12 +1,11 @@
 package com.increff.pos.dao;
 
-import com.increff.pos.db.InventoryPojo;
+import com.increff.pos.db.documents.InventoryPojo;
 import com.increff.pos.exception.ApiException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -32,7 +31,6 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
 
         Query query = Query.query(Criteria.where("productId").is(productId));
         Update update = new Update().set("quantity", quantity);
-
         UpdateResult result = mongoOperations.updateFirst(query, update, InventoryPojo.class);
 
         if (result.getMatchedCount() == 0) {
@@ -41,10 +39,6 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
     }
 
     public BulkWriteResult bulkUpdate(List<InventoryPojo> validPojos) {
-
-        if (validPojos == null || validPojos.isEmpty()) {
-            return null;
-        }
 
         BulkOperations bulkOps = mongoOperations.bulkOps(
                 BulkOperations.BulkMode.UNORDERED,
@@ -57,7 +51,6 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
 
             bulkOps.updateOne(query, update);
         }
-
         return bulkOps.execute();
     }
 
@@ -66,8 +59,6 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         Query query = new Query(
                 Criteria.where("productId").in(productIds)
         );
-
         return mongoOperations.find(query, InventoryPojo.class);
     }
-
 }

@@ -1,5 +1,5 @@
 package com.increff.pos.helper;
-import com.increff.pos.db.UserPojo;
+import com.increff.pos.db.documents.UserPojo;
 import com.increff.pos.model.data.OperatorData;
 
 public class AuthHelper {

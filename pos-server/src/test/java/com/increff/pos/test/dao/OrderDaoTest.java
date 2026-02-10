@@ -2,7 +2,7 @@ package com.increff.pos.test.dao;
 
 import com.increff.pos.config.TestConfig;
 import com.increff.pos.dao.OrderDao;
-import com.increff.pos.db.OrderPojo;
+import com.increff.pos.db.documents.OrderPojo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,13 +79,13 @@ class OrderDaoTest {
     }
 
     @Test
-    void testFindOrdersBetween_singlePage() {
+    void testFindOrdersBetween_Dates_singlePage() {
 
         ZonedDateTime start = ZonedDateTime.now().minusDays(1);
         ZonedDateTime end = ZonedDateTime.now().plusDays(1);
 
         Page<OrderPojo> page =
-                orderDao.findOrdersBetween(start, end, PageRequest.of(0, 10));
+                orderDao.findOrdersBetweenDates(start, end, PageRequest.of(0, 10));
 
         assertThat(page.getTotalElements()).isEqualTo(5);
         assertThat(page.getContent()).hasSize(5);
@@ -98,16 +98,16 @@ class OrderDaoTest {
     }
 
     @Test
-    void testFindOrdersBetween_withPagination() {
+    void testFindOrdersBetween_Dates_withPagination() {
 
         ZonedDateTime start = ZonedDateTime.now().minusDays(1);
         ZonedDateTime end = ZonedDateTime.now().plusDays(1);
 
         Page<OrderPojo> page1 =
-                orderDao.findOrdersBetween(start, end, PageRequest.of(0, 10));
+                orderDao.findOrdersBetweenDates(start, end, PageRequest.of(0, 10));
 
         Page<OrderPojo> page2 =
-                orderDao.findOrdersBetween(start, end, PageRequest.of(0, 10));
+                orderDao.findOrdersBetweenDates(start, end, PageRequest.of(0, 10));
 
         assertThat(page1.getContent()).hasSize(5);
         assertThat(page2.getContent()).hasSize(5);
@@ -117,27 +117,27 @@ class OrderDaoTest {
     }
 
     @Test
-    void testFindOrdersBetween_emptyResult() {
+    void testFindOrdersBetween_Dates_emptyResult() {
 
         ZonedDateTime start = ZonedDateTime.now().minusDays(10);
         ZonedDateTime end = ZonedDateTime.now().minusDays(5);
 
         Page<OrderPojo> page =
-                orderDao.findOrdersBetween(start, end, PageRequest.of(0, 10));
+                orderDao.findOrdersBetweenDates(start, end, PageRequest.of(0, 10));
 
         assertThat(page.getTotalElements()).isEqualTo(0);
         assertThat(page.getContent()).isEmpty();
     }
 
     @Test
-    void testFindOrdersBetween_boundaryInclusive() {
+    void testFindOrdersBetween_Dates_boundaryInclusive() {
 
         ZonedDateTime exactTime = ZonedDateTime.now().minusHours(1);
 
         insertOrder("BOUNDARY", exactTime);
 
         Page<OrderPojo> page =
-                orderDao.findOrdersBetween(
+                orderDao.findOrdersBetweenDates(
                         exactTime,
                         exactTime,
                         PageRequest.of(0, 10)

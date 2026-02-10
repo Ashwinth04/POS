@@ -1,12 +1,11 @@
-package com.increff.pos.db;
+package com.increff.pos.db.subdocuments;
 
+import com.increff.pos.db.documents.AbstractPojo;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.mongodb.core.index.Indexed;
 
 @Getter
 @Setter
-//todo : add segregated folders for documents and sub documents
 public class OrderItemPojo extends AbstractPojo {
     private String orderItemId;
     private String productId;

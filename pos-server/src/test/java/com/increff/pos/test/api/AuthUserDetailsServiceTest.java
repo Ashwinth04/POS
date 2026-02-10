@@ -4,7 +4,7 @@ import com.increff.pos.api.AuthUserDetailsService;
 import com.increff.pos.config.SupervisorConfig;
 import com.increff.pos.constants.Constants;
 import com.increff.pos.dao.UserDao;
-import com.increff.pos.db.UserPojo;
+import com.increff.pos.db.documents.UserPojo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

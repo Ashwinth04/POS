@@ -1,12 +1,11 @@
-package com.increff.pos.db;
+package com.increff.pos.db.documents;
 
-import com.increff.pos.model.data.DailyClientSalesData;
+import com.increff.pos.db.subdocuments.DailyClientSalesPojo;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 

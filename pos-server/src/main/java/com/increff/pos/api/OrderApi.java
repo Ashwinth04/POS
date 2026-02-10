@@ -1,11 +1,8 @@
 package com.increff.pos.api;
 
-import com.increff.pos.db.OrderPojo;
+import com.increff.pos.db.documents.OrderPojo;
 import com.increff.pos.exception.ApiException;
-import com.increff.pos.model.data.OrderStatus;
-
-import java.util.Map;
 
 public interface OrderApi {
-    OrderPojo createOrder(OrderPojo orderPojo) throws ApiException;
+    OrderPojo saveOrder(OrderPojo orderPojo) throws ApiException;
 }

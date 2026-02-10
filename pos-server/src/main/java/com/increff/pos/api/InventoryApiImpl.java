@@ -1,7 +1,7 @@
 package com.increff.pos.api;
 
 import com.increff.pos.dao.InventoryDao;
-import com.increff.pos.db.InventoryPojo;
+import com.increff.pos.db.documents.InventoryPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.InventoryHelper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,51 +13,34 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-public class InventoryApiImpl implements InventoryApi{
+public class InventoryApiImpl implements InventoryApi {
 
     @Autowired
     private InventoryDao inventoryDao;
 
     @Transactional(rollbackFor = ApiException.class)
     public InventoryPojo updateSingleInventory(InventoryPojo inventoryPojo) throws ApiException {
-
         inventoryDao.updateInventory(inventoryPojo);
         return inventoryPojo;
     }
 
     public boolean reserveInventory(List<InventoryPojo> inventoryUpdatePojos) {
+        Map<String, InventoryPojo> productIdToInventoryPojoMap = getProductIdToInventoryPojoMap(inventoryUpdatePojos);
 
-        List<String> productIds = inventoryUpdatePojos.stream()
-                .map(InventoryPojo::getProductId)
-                .distinct()
-                .toList();
-
-        List<InventoryPojo> inventoryPojos = getInventoryForProductIds(productIds);
-
-        Map<String, InventoryPojo> existingRecords = inventoryPojos
-                .stream()
-                .collect(Collectors.toMap(
-                        InventoryPojo::getProductId,
-                        Function.identity()
-                ));
-
-        // TODO: Dont use item as the name (Done)
         for (InventoryPojo inventoryUpdatePojo : inventoryUpdatePojos) {
             String productId = inventoryUpdatePojo.getProductId();
-
-            boolean fulfillable = isItemFulfillable(inventoryUpdatePojo,existingRecords.get(productId));
+            boolean fulfillable = InventoryHelper.hasSufficientInventory(inventoryUpdatePojo,productIdToInventoryPojoMap.get(productId));
             if (!fulfillable) return false;
 
             inventoryUpdatePojo.setQuantity(-inventoryUpdatePojo.getQuantity());
         }
 
-        updateBulkInventory(inventoryUpdatePojos);
+        inventoryDao.bulkUpdate(inventoryUpdatePojos);
         return true;
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public void calculateAndUpdateDeltaInventory(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) throws ApiException {
-
+    public void calculateAndUpdateDeltaInventory(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) {
         Map<String, Integer> delta = calculateDeltaInventory(existingItems, incomingItems);
         updateDeltaInventory(delta);
     }
@@ -70,7 +53,7 @@ public class InventoryApiImpl implements InventoryApi{
             pojo.setQuantity(quantity);
         }
 
-        updateBulkInventory(orderInventoryPojos);
+        inventoryDao.bulkUpdate(orderInventoryPojos);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -102,28 +85,13 @@ public class InventoryApiImpl implements InventoryApi{
         inventoryDao.saveAll(inventoryPojos);
     }
 
-    // TODO change names
     public boolean checkOrderFulfillable(List<InventoryPojo> inventories) {
-
-        List<String> productIds = inventories.stream()
-                .map(InventoryPojo::getProductId)
-                .distinct()
-                .toList();
-
-        List<InventoryPojo> inventoryPojos = getInventoryForProductIds(productIds);
-
-        Map<String, InventoryPojo> existingRecords = inventoryPojos
-                .stream()
-                .collect(Collectors.toMap(
-                        InventoryPojo::getProductId,
-                        Function.identity()
-                ));
+        Map<String, InventoryPojo> productIdToInventoryPojoMap = getProductIdToInventoryPojoMap(inventories);
 
         boolean allFulfillable = true;
-
         for (InventoryPojo item : inventories) {
             String productId = item.getProductId();
-            boolean fulfillable = isItemFulfillable(item,existingRecords.get(productId));
+            boolean fulfillable = InventoryHelper.hasSufficientInventory(item,productIdToInventoryPojoMap.get(productId));
 
             if (!fulfillable) allFulfillable = false;
         }
@@ -131,39 +99,31 @@ public class InventoryApiImpl implements InventoryApi{
         return allFulfillable;
     }
 
-    // TODO: Move this to helper
-    private boolean isItemFulfillable(InventoryPojo item, InventoryPojo existingRecord) {
-        int available = existingRecord.getQuantity();
-        int required = item.getQuantity();
-        return available >= required;
-    }
-
     public void updateBulkInventory(List<InventoryPojo> pojos) {
         inventoryDao.bulkUpdate(pojos);
     }
 
-    public void updateDeltaInventory(Map<String, Integer> delta)  {
-
-        List<InventoryPojo> pojos = InventoryHelper.getPojosFromMap(delta);
+    public void updateDeltaInventory(Map<String, Integer> deltaInventory) {
+        List<InventoryPojo> pojos = InventoryHelper.getPojosFromMap(deltaInventory);
         inventoryDao.bulkUpdate(pojos);
     }
 
     // TODO: Check if this can be here
     private Map<String, Integer> calculateDeltaInventory(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) {
 
-        Map<String, Integer> delta = new HashMap<>();
+        Map<String, Integer> deltaInventory = new HashMap<>();
 
         // Add all incoming
         incomingItems.forEach((barcode, qty) ->
-                delta.put(barcode, qty)
+                deltaInventory.put(barcode, qty)
         );
 
         // Subtract all existing
         existingItems.forEach((barcode, qty) ->
-                delta.merge(barcode, -qty, Integer::sum)
+                deltaInventory.merge(barcode, -qty, Integer::sum)
         );
 
-        return delta;
+        return deltaInventory;
     }
 
     public Map<String, Integer> aggregateItemsByProductId(List<InventoryPojo> inventoryPojos) {
@@ -180,7 +140,20 @@ public class InventoryApiImpl implements InventoryApi{
         return aggregatedItems;
     }
 
-    // TODO: Return a list here
+    public Map<String, InventoryPojo> getProductIdToInventoryPojoMap(List<InventoryPojo> inventoryPojos) {
+        List<String> productIds = inventoryPojos.stream()
+                .map(InventoryPojo::getProductId)
+                .distinct()
+                .toList();
+
+        return getInventoryForProductIds(productIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        InventoryPojo::getProductId,
+                        Function.identity()
+                ));
+    }
+
     public List<InventoryPojo> getInventoryForProductIds(List<String> productIds) {
         return inventoryDao.findByProductIds(productIds);
     }

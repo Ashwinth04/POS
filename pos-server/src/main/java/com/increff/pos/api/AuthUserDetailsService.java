@@ -3,7 +3,7 @@ package com.increff.pos.api;
 import com.increff.pos.config.SupervisorConfig;
 import com.increff.pos.constants.Constants;
 import com.increff.pos.dao.UserDao;
-import com.increff.pos.db.UserPojo;
+import com.increff.pos.db.documents.UserPojo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
