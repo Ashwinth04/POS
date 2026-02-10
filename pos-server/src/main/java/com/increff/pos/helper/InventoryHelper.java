@@ -113,6 +113,8 @@ public class InventoryHelper {
             throw new ApiException("Quantity is not a number");
         }
 
+        if(quantity > 5000) throw new ApiException("Quantity cannot be greater than 5000");
+
         InventoryPojo pojo = new InventoryPojo();
         pojo.setProductId(productId);
         pojo.setQuantity(quantity);
@@ -180,15 +182,24 @@ public class InventoryHelper {
             }
         }
 
-        // Add aggregated results to valid list
         validInventory.addAll(aggregated.values());
     }
-
 
     public static boolean hasSufficientInventory(InventoryPojo item, InventoryPojo existingRecord) {
         int available = existingRecord.getQuantity();
         int required = item.getQuantity();
         return available >= required;
+    }
+
+    public static Map<String, ProductPojo> mapProductIdToProductPojo(Map<String, ProductPojo> barcodeToProductPojo) {
+        Map<String, ProductPojo> productIdToProductPojo = new HashMap<>();
+
+        for (ProductPojo product : barcodeToProductPojo.values()) {
+            String productId = product.getId();
+            productIdToProductPojo.put(productId, product);
+        }
+
+        return productIdToProductPojo;
     }
 
 }

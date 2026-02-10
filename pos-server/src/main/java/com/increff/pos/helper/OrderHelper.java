@@ -18,7 +18,6 @@ public class OrderHelper {
     public static OrderPojo convertToEntity(OrderForm orderForm, Map<String, ProductPojo> barcodeToProductPojo) {
 
         OrderPojo orderPojo = new OrderPojo();
-        orderPojo.setOrderTime(Instant.now());
 
         List<OrderItemPojo> items = new ArrayList<>();
 
@@ -45,7 +44,6 @@ public class OrderHelper {
         OrderData orderData = new OrderData();
 
         orderData.setOrderId(orderPojo.getOrderId());
-        orderData.setOrderTime(orderPojo.getOrderTime());
         orderData.setOrderStatus(orderPojo.getOrderStatus());
 
         List<OrderItem> orderItems = new ArrayList<>();
@@ -78,7 +76,6 @@ public class OrderHelper {
 
         orderData.setOrderId(orderPojo.getOrderId());
         orderData.setOrderStatus(orderPojo.getOrderStatus());
-        orderData.setOrderTime(orderPojo.getOrderTime());
         orderData.setOrderItems(orderForm.getOrderItems());
 
         return orderData;

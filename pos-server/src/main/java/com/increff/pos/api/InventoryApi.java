@@ -6,7 +6,6 @@ import com.increff.pos.exception.ApiException;
 import java.util.List;
 
 public interface InventoryApi {
-    public void updateBulkInventory(List<InventoryPojo> inventoryPojos);
+    public List<String> updateBulkInventory(List<InventoryPojo> inventoryPojos);
     public InventoryPojo updateSingleInventory(InventoryPojo inventoryPojo) throws ApiException;
-
 }

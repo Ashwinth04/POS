@@ -96,8 +96,37 @@ public class InventoryApiImpl implements InventoryApi {
         return true;
     }
 
-    public void updateBulkInventory(List<InventoryPojo> pojos) {
+    public List<String> updateBulkInventory(List<InventoryPojo> pojos) {
+
+        List<String> productIds = pojos.stream()
+                .map(InventoryPojo::getProductId)
+                .toList();
+
+        List<InventoryPojo> existingList = inventoryDao.findByProductIds(productIds);
+
+        Map<String, Integer> currentQtyMap = existingList.stream()
+                .collect(Collectors.toMap(
+                        InventoryPojo::getProductId,
+                        InventoryPojo::getQuantity
+                ));
+
+        List<String> clampedProductIds = new ArrayList<>();
+
+        for (InventoryPojo pojo : pojos) {
+
+            Integer currentQty = currentQtyMap.get(pojo.getProductId());
+            if (currentQty == null) continue;
+
+            int newQty = currentQty + pojo.getQuantity();
+
+            if (newQty < 0) {
+                pojo.setQuantity(-currentQty);
+                clampedProductIds.add(pojo.getProductId());
+            }
+        }
+
         inventoryDao.bulkUpdate(pojos);
+        return clampedProductIds;
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -44,7 +44,7 @@ public class SalesDto {
 
         ZoneId zone = ZoneId.systemDefault();
         ZonedDateTime start = startDate.atStartOfDay(zone);
-        ZonedDateTime end = endDate.atTime(23, 59, 59, 999_000_000).atZone(zone);
+        ZonedDateTime end = endDate.plusDays(1).atStartOfDay(zone);
 
         SalesPojo pojo = salesApi.getDailySales(start, end);
         return SalesHelper.convertToData(pojo);

@@ -49,28 +49,8 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         );
 
         for (InventoryPojo pojo : validPojos) {
-
-            Query query = Query.query(
-                    Criteria.where("productId").is(pojo.getProductId())
-            );
-
-            AggregationUpdate update = AggregationUpdate.update()
-                    .set("quantity")
-                    .toValue(
-                            ConditionalOperators
-                                    .when(
-                                            ComparisonOperators.Lte.valueOf(
-                                                    ArithmeticOperators.Add.valueOf("quantity")
-                                                            .add(pojo.getQuantity())
-                                            ).lessThanEqualToValue(0)
-                                    )
-                                    .then(0)
-                                    .otherwise(
-                                            ArithmeticOperators.Add.valueOf("quantity")
-                                                    .add(pojo.getQuantity())
-                                    )
-                    );
-
+            Query query = Query.query(Criteria.where("productId").is(pojo.getProductId()));
+            Update update = new Update().inc("quantity", pojo.getQuantity());
             bulkOps.updateOne(query, update);
         }
         return bulkOps.execute();

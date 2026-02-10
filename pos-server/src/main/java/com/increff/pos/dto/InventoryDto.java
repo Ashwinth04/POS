@@ -38,9 +38,6 @@ public class InventoryDto {
         return InventoryHelper.convertToData(inventoryPojo);
     }
 
-    //TODO:: Do not ignore the negative quantity from the TSV , just sum all the rows of same product id ,
-    // and increment it by that value. IF the overall qty becomes zero for the product after inc operation
-    // then do that but still show them in the failed entries to the used
     public FileData updateInventoryBulk(FileForm fileForm) throws ApiException {
         FormValidator.validate(fileForm);
         List<String[]> rows = TsvParser.parseBase64Tsv(fileForm.getBase64file());
@@ -57,7 +54,17 @@ public class InventoryDto {
         List<RowError> invalidInventory = new ArrayList<>();
 
         segragateValidAndInvalidEntries(rows, validInventory, invalidInventory, headerIndexMap, barcodeToProductPojoMap);
-        inventoryApi.updateBulkInventory(validInventory);
+        List<String> invalidProductIds = inventoryApi.updateBulkInventory(validInventory);
+        Map<String, ProductPojo> productIdToProductPojoMap = InventoryHelper.mapProductIdToProductPojo(barcodeToProductPojoMap);
+
+        for (String productId: invalidProductIds) {
+            RowError err = new RowError();
+            String barcode = productIdToProductPojoMap.get(productId).getBarcode();
+            err.setBarcode(barcode);
+            err.setMessage("Negative net inventory update. Setting the inventory to zero");
+            invalidInventory.add(err);
+        }
+
         return buildInventoryBulkUpdateResponse(invalidInventory);
     }
 }

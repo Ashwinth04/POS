@@ -29,7 +29,6 @@ public class OrderDao extends AbstractDao<OrderPojo> {
         return mongoOperations.findOne(query, OrderPojo.class);
     }
 
-    //TODO::change this to use created at field
     public Page<OrderPojo> findOrdersBetweenDates(ZonedDateTime start, ZonedDateTime end, PageRequest pageable) {
 
         Query query = new Query();

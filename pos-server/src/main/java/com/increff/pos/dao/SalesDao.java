@@ -30,14 +30,13 @@ public class SalesDao extends AbstractDao<SalesPojo> {
         return mongoOperations.findOne(query, SalesPojo.class);
     }
 
-    //TODO: Add createdAt and add compound indexes on status and createdAt
     public List<ProductRevenueRow> getSalesReport(String clientName,
                                                   ZonedDateTime startDate,
                                                   ZonedDateTime endDate) {
 
         MatchOperation dateMatch = match(
                 Criteria.where("orderStatus").is("PLACED")
-                        .and("createdAt").gte(startDate).lt(endDate)
+                        .and("createdAt").gte(startDate.toInstant()).lt(endDate.toInstant())
         );
 
         UnwindOperation unwindItems = unwind("orderItems");
@@ -93,7 +92,7 @@ public class SalesDao extends AbstractDao<SalesPojo> {
     public SalesPojo getDailySalesData(ZonedDateTime start, ZonedDateTime end) {
         MatchOperation filterOrders = match(
                 Criteria.where("orderStatus").is("PLACED")
-                        .and("createdAt").gte(start).lt(end)
+                        .and("createdAt").gte(start.toInstant()).lt(end.toInstant())
         );
 
         // Summary Steps
