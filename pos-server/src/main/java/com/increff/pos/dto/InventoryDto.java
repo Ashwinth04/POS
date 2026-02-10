@@ -20,8 +20,6 @@ import java.util.*;
 import static com.increff.pos.helper.InventoryHelper.*;
 import static com.increff.pos.util.FileUtils.buildInventoryBulkUpdateResponse;
 
-// Looks good
-
 @Service
 public class InventoryDto {
 
@@ -62,5 +60,4 @@ public class InventoryDto {
         inventoryApi.updateBulkInventory(validInventory);
         return buildInventoryBulkUpdateResponse(invalidInventory);
     }
-
 }

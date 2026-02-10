@@ -45,7 +45,7 @@ public class OrderDto {
         NormalizationUtil.normalizeOrderForm(orderForm);
         FormValidator.validate(orderForm);
         Map<String, ProductPojo> barcodeToProductPojoMap = getBarcodeToProductPojoMap(orderForm);
-        validateAllOrderItems(orderForm, barcodeToProductPojoMap);
+        ValidationUtil.validateAllOrderItems(orderForm, barcodeToProductPojoMap);
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm, barcodeToProductPojoMap);
         OrderPojo resultOrderPojo = orderFlow.createOrder(orderPojo);
         return OrderHelper.convertOrderFormToData(orderForm, resultOrderPojo);
@@ -58,7 +58,7 @@ public class OrderDto {
         ValidationUtil.validateOrderId(orderId);
         orderApi.getCheckByOrderId(orderId);
         Map<String, ProductPojo> barcodeToProductPojo = getBarcodeToProductPojoMap(orderForm);
-        validateAllOrderItems(orderForm, barcodeToProductPojo);
+        ValidationUtil.validateAllOrderItems(orderForm, barcodeToProductPojo);
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm, barcodeToProductPojo);
         orderPojo.setOrderId(orderId);
         OrderPojo resultOrderPojo = orderFlow.editOrder(orderPojo, orderId);
@@ -109,19 +109,6 @@ public class OrderDto {
         OrderPojo orderPojo = orderApi.getCheckByOrderId(orderId);
         OrderHelper.checkInvoiceDownloadable(orderPojo);
         return invoiceClientWrapper.downloadInvoice(orderId);
-    }
-
-    // TODO: Check if this can be moved to ValidationUtil
-    public void validateAllOrderItems(OrderForm orderForm, Map<String, ProductPojo> barcodeToProductPojoMap) throws ApiException {
-
-        for (OrderItem item : orderForm.getOrderItems()) {
-            try {
-                ProductPojo product = barcodeToProductPojoMap.get(item.getBarcode());
-                validateOrderItem(item, product);
-            } catch (ApiException e) {
-                throw new ApiException(e.getMessage());
-            }
-        }
     }
 
     public Map<String, ProductPojo> getBarcodeToProductPojoMap(OrderForm orderForm) {

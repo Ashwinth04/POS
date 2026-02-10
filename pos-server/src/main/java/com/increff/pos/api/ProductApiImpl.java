@@ -26,7 +26,6 @@ public class ProductApiImpl implements ProductApi {
         return productDao.save(productPojo);
     }
 
-    //TODO:: There are always some non editable fields - Im getting record by barcode, so is it okay?
     @Transactional(rollbackFor = ApiException.class)
     public ProductPojo editProduct(ProductPojo productPojo) throws ApiException {
         ProductPojo existingRecord = getCheckByBarcode(productPojo.getBarcode());

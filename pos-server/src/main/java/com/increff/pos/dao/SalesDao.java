@@ -37,7 +37,7 @@ public class SalesDao extends AbstractDao<SalesPojo> {
 
         MatchOperation dateMatch = match(
                 Criteria.where("orderStatus").is("PLACED")
-                        .and("orderTime").gte(startDate).lt(endDate)
+                        .and("createdAt").gte(startDate).lt(endDate)
         );
 
         UnwindOperation unwindItems = unwind("orderItems");
@@ -93,7 +93,7 @@ public class SalesDao extends AbstractDao<SalesPojo> {
     public SalesPojo getDailySalesData(ZonedDateTime start, ZonedDateTime end) {
         MatchOperation filterOrders = match(
                 Criteria.where("orderStatus").is("PLACED")
-                        .and("orderTime").gte(start).lt(end)
+                        .and("createdAt").gte(start).lt(end)
         );
 
         // Summary Steps

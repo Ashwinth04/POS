@@ -1,8 +1,10 @@
 package com.increff.pos.client;
 
+import com.increff.pos.config.ApplicationProperties;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.FileData;
 import com.increff.pos.model.data.OrderData;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -16,15 +18,14 @@ public class InvoiceClient {
 
     private final WebClient webClient;
 
-    // TODO: Use a class for appplication.properties
-    public InvoiceClient(
-            @Value("${invoice.service.base-url}") String baseUrl
-    ) {
+    private final String baseUrl;
+
+    public InvoiceClient(ApplicationProperties applicationProperties) {
+        this.baseUrl = applicationProperties.getInvoiceServiceBaseUrl();
         this.webClient = WebClient.builder()
                 .baseUrl(baseUrl)
                 .build();
     }
-
 
     public FileData generateInvoice(OrderData orderData) throws ApiException {
         try {

@@ -6,6 +6,10 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.aggregation.AggregationUpdate;
+import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators;
+import org.springframework.data.mongodb.core.aggregation.ComparisonOperators;
+import org.springframework.data.mongodb.core.aggregation.ConditionalOperators;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -45,8 +49,28 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         );
 
         for (InventoryPojo pojo : validPojos) {
-            Query query = Query.query(Criteria.where("productId").is(pojo.getProductId()));
-            Update update = new Update().inc("quantity", pojo.getQuantity());
+
+            Query query = Query.query(
+                    Criteria.where("productId").is(pojo.getProductId())
+            );
+
+            AggregationUpdate update = AggregationUpdate.update()
+                    .set("quantity")
+                    .toValue(
+                            ConditionalOperators
+                                    .when(
+                                            ComparisonOperators.Lte.valueOf(
+                                                    ArithmeticOperators.Add.valueOf("quantity")
+                                                            .add(pojo.getQuantity())
+                                            ).lessThanEqualToValue(0)
+                                    )
+                                    .then(0)
+                                    .otherwise(
+                                            ArithmeticOperators.Add.valueOf("quantity")
+                                                    .add(pojo.getQuantity())
+                                    )
+                    );
+
             bulkOps.updateOne(query, update);
         }
         return bulkOps.execute();

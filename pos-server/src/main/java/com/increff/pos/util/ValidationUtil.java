@@ -285,6 +285,18 @@ public class ValidationUtil {
         }
     }
 
+    public static void validateAllOrderItems(OrderForm orderForm, Map<String, ProductPojo> barcodeToProductPojoMap) throws ApiException {
+
+        for (OrderItem item : orderForm.getOrderItems()) {
+            try {
+                ProductPojo product = barcodeToProductPojoMap.get(item.getBarcode());
+                validateOrderItem(item, product);
+            } catch (ApiException e) {
+                throw new ApiException(e.getMessage());
+            }
+        }
+    }
+
     public static void validateOrderItem(OrderItem item, ProductPojo product) throws ApiException {
 
         if (Objects.isNull(product)) {

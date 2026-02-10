@@ -4,16 +4,13 @@ import com.increff.pos.dto.SalesDto;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.ClientSalesData;
 import com.increff.pos.model.data.DailySalesData;
-import com.increff.pos.model.data.ProductRevenueRow;
 import com.increff.pos.model.form.PageForm;
-import org.apache.coyote.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @RestController
 @RequestMapping("api/sales")

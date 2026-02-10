@@ -113,10 +113,6 @@ public class InventoryHelper {
             throw new ApiException("Quantity is not a number");
         }
 
-        if (quantity < 0) {
-            throw new ApiException("Quantity cannot be negative");
-        }
-
         InventoryPojo pojo = new InventoryPojo();
         pojo.setProductId(productId);
         pojo.setQuantity(quantity);
@@ -145,7 +141,15 @@ public class InventoryHelper {
         return barcodes;
     }
 
-    public static void segragateValidAndInvalidEntries(List<String[]> rows, List<InventoryPojo> validInventory, List<RowError> invalidInventory, Map<String, Integer> headerIndexMap, Map<String, ProductPojo> barcodeToProductPojo) {
+    public static void segragateValidAndInvalidEntries(
+            List<String[]> rows,
+            List<InventoryPojo> validInventory,
+            List<RowError> invalidInventory,
+            Map<String, Integer> headerIndexMap,
+            Map<String, ProductPojo> barcodeToProductPojo) {
+
+        // Aggregation map
+        Map<String, InventoryPojo> aggregated = new HashMap<>();
 
         for (int i = 1; i < rows.size(); i++) {
 
@@ -155,19 +159,31 @@ public class InventoryHelper {
 
             try {
                 InventoryPojo pojo = InventoryHelper.convertRowToInventoryPojo(
-                        rows.get(i),
+                        row,
                         headerIndexMap,
                         barcodeToProductPojo
                 );
-                validInventory.add(pojo);
+
+                String barcode = getValueFromRow(row, headerIndexMap, "barcode");
+
+                // Aggregate by barcode
+                if (aggregated.containsKey(barcode)) {
+                    InventoryPojo existing = aggregated.get(barcode);
+                    existing.setQuantity(existing.getQuantity() + pojo.getQuantity());
+                } else {
+                    aggregated.put(barcode, pojo);
+                }
+
             } catch (Exception e) {
                 String barcode = getValueFromRow(row, headerIndexMap, "barcode");
-                invalidInventory.add(
-                        new RowError(barcode, e.getMessage())
-                );
+                invalidInventory.add(new RowError(barcode, e.getMessage()));
             }
         }
+
+        // Add aggregated results to valid list
+        validInventory.addAll(aggregated.values());
     }
+
 
     public static boolean hasSufficientInventory(InventoryPojo item, InventoryPojo existingRecord) {
         int available = existingRecord.getQuantity();
