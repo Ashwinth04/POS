@@ -39,7 +39,6 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
     }
 
     public BulkWriteResult bulkUpdate(List<InventoryPojo> validPojos) {
-
         BulkOperations bulkOps = mongoOperations.bulkOps(
                 BulkOperations.BulkMode.UNORDERED,
                 InventoryPojo.class
@@ -48,7 +47,6 @@ public class InventoryDao extends AbstractDao<InventoryPojo> {
         for (InventoryPojo pojo : validPojos) {
             Query query = Query.query(Criteria.where("productId").is(pojo.getProductId()));
             Update update = new Update().inc("quantity", pojo.getQuantity());
-
             bulkOps.updateOne(query, update);
         }
         return bulkOps.execute();

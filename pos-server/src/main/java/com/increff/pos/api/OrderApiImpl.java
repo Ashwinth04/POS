@@ -18,14 +18,17 @@ public class OrderApiImpl implements OrderApi {
     @Autowired
     private OrderDao orderDao;
 
+    @Transactional(rollbackFor = Exception.class)
     public OrderPojo saveOrder(OrderPojo orderPojo) {
         return orderDao.save(orderPojo);
     }
 
+    @Transactional(rollbackFor = ApiException.class)
     public OrderPojo editOrder(OrderPojo orderPojo) throws ApiException {
         OrderPojo record = getCheckByOrderId(orderPojo.getOrderId());
-        orderPojo.setId(record.getId());
-        return orderDao.save(orderPojo);
+        record.setOrderItems(orderPojo.getOrderItems());
+        record.setOrderStatus(orderPojo.getOrderStatus());
+        return orderDao.save(record);
     }
 
     @Transactional(rollbackFor = ApiException.class)
@@ -36,6 +39,7 @@ public class OrderApiImpl implements OrderApi {
         return new MessageData("Order cancelled successfully!");
     }
 
+    @Transactional(readOnly = true)
     public Page<OrderPojo> getAllOrders(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderId"));
         return orderDao.findAll(pageRequest);
@@ -55,6 +59,7 @@ public class OrderApiImpl implements OrderApi {
         orderDao.save(orderPojo);
     }
 
+    @Transactional(readOnly = true)
     public Page<OrderPojo> filterOrdersByDate(ZonedDateTime start, ZonedDateTime end, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderId"));
         Page<OrderPojo> pojoPage = orderDao.findOrdersBetweenDates(start, end, pageable);

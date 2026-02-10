@@ -68,6 +68,7 @@ public class OrderHelper {
         }
 
         orderData.setOrderItems(orderItems);
+        orderData.setCreatedAt(orderPojo.getUpdatedAt());
 
         return orderData;
     }

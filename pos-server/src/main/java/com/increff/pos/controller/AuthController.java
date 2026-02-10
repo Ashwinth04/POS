@@ -21,13 +21,14 @@ public class AuthController {
     private AuthDto authDto;
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ApiException {
+    public LoginResponse login(@RequestBody LoginRequest request,
+                               HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ApiException {
         return authDto.login(request, httpRequest, httpResponse);
     }
 
     @GetMapping("/me")
     public LoginResponse me(Authentication authentication) throws ApiException {
-        return authDto.me(authentication);
+        return authDto.getCurrentUser(authentication);
     }
 
     @PostMapping("/create-operator")

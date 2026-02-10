@@ -1,6 +1,7 @@
 package com.increff.pos.dto;
 
 import com.increff.pos.api.AuthApiImpl;
+import com.increff.pos.constants.UserRole;
 import com.increff.pos.db.documents.UserPojo;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.helper.AuthHelper;
@@ -17,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,34 +27,30 @@ public class AuthDto {
     @Autowired
     private AuthApiImpl authApi;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     public LoginResponse login(LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ApiException {
-
+        NormalizationUtil.normalizeLoginRequest(request);
         FormValidator.validate(request);
-        String email = request.getEmail();
-        String normalizedEmail = NormalizationUtil.normalizeEmail(email);
-        String password = request.getPassword();
-
-        return authApi.login(normalizedEmail, password, httpRequest, httpResponse);
+        return authApi.login(request.getEmail(), request.getPassword(), httpRequest, httpResponse);
     }
 
     public void createOperator(CreateUserRequest request) throws ApiException {
-
+        NormalizationUtil.normalizeCreateOperator(request);
         FormValidator.validate(request);
-        String email = request.getEmail();
-        String normalizedEmail = NormalizationUtil.normalizeEmail(email);
-        String password = request.getPassword();
-
-        authApi.createOperator(normalizedEmail, password);
+        String password = passwordEncoder.encode(request.getPassword());
+        String role = UserRole.OPERATOR.role();
+        UserPojo userPojo = AuthHelper.createUserPojo(password, request.getEmail(), role);
+        authApi.createOperator(userPojo);
     }
-    // change the function name
-    public LoginResponse me(Authentication authentication) throws ApiException {
 
+    public LoginResponse getCurrentUser(Authentication authentication) throws ApiException {
         ValidationUtil.validateAuthentication(authentication);
-        return authApi.me(authentication);
+        return authApi.getCurrentUser(authentication);
     }
 
     public Page<OperatorData> getAllOperators(PageForm form) throws ApiException {
-
         FormValidator.validate(form);
         Page<UserPojo> operatorPage = authApi.getAllOperators(form.getPage(), form.getSize());
         return operatorPage.map(AuthHelper::convertToData);

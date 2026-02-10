@@ -30,6 +30,7 @@ public class SalesDao extends AbstractDao<SalesPojo> {
         return mongoOperations.findOne(query, SalesPojo.class);
     }
 
+    //TODO: Add createdAt and add compound indexes on status and createdAt
     public List<ProductRevenueRow> getSalesReport(String clientName,
                                                   ZonedDateTime startDate,
                                                   ZonedDateTime endDate) {

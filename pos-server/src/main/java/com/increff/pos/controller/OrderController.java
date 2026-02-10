@@ -3,6 +3,7 @@ package com.increff.pos.controller;
 import com.increff.pos.dto.OrderDto;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.*;
+import com.increff.pos.model.form.OrderFilterForm;
 import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.PageForm;
 import com.increff.pos.model.form.SearchOrderForm;
@@ -51,20 +52,14 @@ public class OrderController {
         return orderDto.downloadInvoice(orderId);
     }
 
-    // TODO: Change this to post. merge this to get all and make the date params optional
-    @RequestMapping(value = "/filter-orders", method = RequestMethod.GET)
-    public Page<OrderData> filterOrders(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate, @RequestParam int page,@RequestParam int size) throws ApiException {
-        return orderDto.filterOrders(startDate, endDate, page, size);
-    }
-
     @Operation(summary = "Get all orders with pagination")
     @RequestMapping(path = "/get-all-paginated", method = RequestMethod.POST)
-    public Page<OrderData> getAllOrders(@RequestBody PageForm form) throws ApiException {
-        return orderDto.getAllOrders(form);
+    public Page<OrderData> getAllOrders(@RequestBody OrderFilterForm form) throws ApiException {
+        return orderDto.getOrders(form);
     }
 
     @Operation(summary = "Search by order id")
-    @RequestMapping(path = "/searchById-by-id", method = RequestMethod.POST)
+    @RequestMapping(path = "/search-by-id", method = RequestMethod.POST)
     public Page<OrderData> searchOrder(@RequestBody SearchOrderForm searchOrderForm) throws ApiException {
         return orderDto.searchById(searchOrderForm);
     }

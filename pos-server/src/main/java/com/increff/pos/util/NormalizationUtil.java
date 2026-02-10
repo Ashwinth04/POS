@@ -16,7 +16,7 @@ public class NormalizationUtil {
         if (Objects.nonNull(email)) clientForm.setEmail(email.trim().toLowerCase());
         if (Objects.nonNull(location)) clientForm.setLocation(location.trim().toLowerCase());
         if (Objects.nonNull(phoneNumber)) clientForm.setPhoneNumber(phoneNumber.trim().toLowerCase());
-        if (Objects.nonNull(name)) clientForm.setName(name.trim().toLowerCase());
+        if (Objects.nonNull(name)) clientForm.setName(name.trim());
     }
 
     public static void normalizeOrderForm(OrderForm orderForm) {
@@ -57,6 +57,17 @@ public class NormalizationUtil {
     public static void normalizeSearchClientForm(ClientSearchForm clientSearchForm) {
         String query = clientSearchForm.getQuery();
         if (Objects.nonNull(query)) clientSearchForm.setQuery(query.trim().toLowerCase());
+    }
+
+    public static void normalizeLoginRequest(LoginRequest request) {
+        if (Objects.isNull(request)) return;
+        String email = request.getEmail();
+        if (Objects.nonNull(email)) request.setEmail(email.trim().toLowerCase());
+    }
+
+    public static void normalizeCreateOperator(CreateUserRequest request) {
+        String email = request.getEmail();
+        if (Objects.nonNull(email)) request.setEmail(email.trim().toLowerCase());
     }
 
     public static String normalizeName(String name) {

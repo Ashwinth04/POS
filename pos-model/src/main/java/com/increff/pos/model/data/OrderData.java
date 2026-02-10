@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Getter
@@ -12,6 +13,7 @@ import java.util.List;
 public class OrderData {
     private String orderId;
     private Instant orderTime;
+    private ZonedDateTime createdAt;
     private String orderStatus;
     private List<OrderItem> orderItems;
 }

@@ -24,6 +24,7 @@ public class SalesApiImpl {
         return salesDao.getSalesReport(clientName, startDate, endDate);
     }
 
+    @Transactional(readOnly = true)
     public SalesPojo getDailySales(ZonedDateTime start, ZonedDateTime end) {
             return salesDao.getDailySalesData(start, end);
     }
@@ -40,6 +41,7 @@ public class SalesApiImpl {
         salesDao.save(data);
     }
 
+    @Transactional(readOnly = true)
     public Page<SalesPojo> getAllSales(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
         return salesDao.findAll(pageRequest);

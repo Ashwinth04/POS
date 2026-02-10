@@ -24,14 +24,12 @@ public class InventoryApiImpl implements InventoryApi {
         return inventoryPojo;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public boolean reserveInventory(List<InventoryPojo> inventoryUpdatePojos) {
-        Map<String, InventoryPojo> productIdToInventoryPojoMap = getProductIdToInventoryPojoMap(inventoryUpdatePojos);
+
+        if (!checkOrderFulfillable(inventoryUpdatePojos)) return false;
 
         for (InventoryPojo inventoryUpdatePojo : inventoryUpdatePojos) {
-            String productId = inventoryUpdatePojo.getProductId();
-            boolean fulfillable = InventoryHelper.hasSufficientInventory(inventoryUpdatePojo,productIdToInventoryPojoMap.get(productId));
-            if (!fulfillable) return false;
-
             inventoryUpdatePojo.setQuantity(-inventoryUpdatePojo.getQuantity());
         }
 
@@ -39,7 +37,7 @@ public class InventoryApiImpl implements InventoryApi {
         return true;
     }
 
-    @Transactional(rollbackFor = ApiException.class)
+    @Transactional(rollbackFor = Exception.class)
     public void calculateAndUpdateDeltaInventory(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) {
         Map<String, Integer> delta = calculateDeltaInventory(existingItems, incomingItems);
         updateDeltaInventory(delta);
@@ -88,42 +86,24 @@ public class InventoryApiImpl implements InventoryApi {
     public boolean checkOrderFulfillable(List<InventoryPojo> inventories) {
         Map<String, InventoryPojo> productIdToInventoryPojoMap = getProductIdToInventoryPojoMap(inventories);
 
-        boolean allFulfillable = true;
-        for (InventoryPojo item : inventories) {
-            String productId = item.getProductId();
-            boolean fulfillable = InventoryHelper.hasSufficientInventory(item,productIdToInventoryPojoMap.get(productId));
+        for (InventoryPojo inventoryPojo : inventories) {
+            String productId = inventoryPojo.getProductId();
+            boolean fulfillable = InventoryHelper.hasSufficientInventory(inventoryPojo,productIdToInventoryPojoMap.get(productId));
 
-            if (!fulfillable) allFulfillable = false;
+            if (!fulfillable) return false;
         }
 
-        return allFulfillable;
+        return true;
     }
 
     public void updateBulkInventory(List<InventoryPojo> pojos) {
         inventoryDao.bulkUpdate(pojos);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void updateDeltaInventory(Map<String, Integer> deltaInventory) {
         List<InventoryPojo> pojos = InventoryHelper.getPojosFromMap(deltaInventory);
         inventoryDao.bulkUpdate(pojos);
-    }
-
-    // TODO: Check if this can be here
-    private Map<String, Integer> calculateDeltaInventory(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) {
-
-        Map<String, Integer> deltaInventory = new HashMap<>();
-
-        // Add all incoming
-        incomingItems.forEach((barcode, qty) ->
-                deltaInventory.put(barcode, qty)
-        );
-
-        // Subtract all existing
-        existingItems.forEach((barcode, qty) ->
-                deltaInventory.merge(barcode, -qty, Integer::sum)
-        );
-
-        return deltaInventory;
     }
 
     public Map<String, Integer> aggregateItemsByProductId(List<InventoryPojo> inventoryPojos) {
@@ -156,5 +136,22 @@ public class InventoryApiImpl implements InventoryApi {
 
     public List<InventoryPojo> getInventoryForProductIds(List<String> productIds) {
         return inventoryDao.findByProductIds(productIds);
+    }
+
+    private Map<String, Integer> calculateDeltaInventory(Map<String, Integer> existingItems, Map<String, Integer> incomingItems) {
+
+        Map<String, Integer> deltaInventory = new HashMap<>();
+
+        // Add all incoming
+        incomingItems.forEach((barcode, qty) ->
+                deltaInventory.put(barcode, qty)
+        );
+
+        // Subtract all existing
+        existingItems.forEach((barcode, qty) ->
+                deltaInventory.merge(barcode, -qty, Integer::sum)
+        );
+
+        return deltaInventory;
     }
 }

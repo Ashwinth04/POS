@@ -32,7 +32,6 @@ public class ClientDao extends AbstractDao<ClientPojo> {
     public List<ClientPojo> findExistingClientNames(List<String> clientNames) {
         Query query = new Query();
         query.addCriteria(Criteria.where("name").in(clientNames));
-        query.fields().include("name");
         return mongoOperations.find(query, ClientPojo.class);
     }
 

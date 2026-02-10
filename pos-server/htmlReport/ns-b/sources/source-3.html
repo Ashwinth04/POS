@@ -1,0 +1,294 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > InventoryHelper</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.increff.pos.helper</a>
+</div>
+
+<h1>Coverage Summary for Class: InventoryHelper (com.increff.pos.helper)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">InventoryHelper</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    10%
+  </span>
+  <span class="absValue">
+    (1/10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    5%
+  </span>
+  <span class="absValue">
+    (2/40)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    3.8%
+  </span>
+  <span class="absValue">
+    (3/78)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.increff.pos.helper;
+&nbsp;
+&nbsp;import com.increff.pos.db.documents.InventoryPojo;
+&nbsp;import com.increff.pos.db.documents.ProductPojo;
+&nbsp;import com.increff.pos.exception.ApiException;
+&nbsp;import com.increff.pos.model.data.InventoryData;
+&nbsp;import com.increff.pos.model.data.RowError;
+&nbsp;import com.increff.pos.model.form.InventoryForm;
+&nbsp;import com.increff.pos.util.ValidationUtil;
+&nbsp;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.HashMap;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;import static com.increff.pos.util.FileUtils.getValueFromRow;
+&nbsp;
+<b class="nc">&nbsp;public class InventoryHelper {</b>
+&nbsp;
+&nbsp;    public static InventoryPojo convertToEntity(InventoryForm inventoryForm, String productId) {
+&nbsp;
+<b class="nc">&nbsp;        InventoryPojo inventoryPojo = new InventoryPojo();</b>
+<b class="nc">&nbsp;        inventoryPojo.setProductId(productId);</b>
+<b class="nc">&nbsp;        inventoryPojo.setQuantity(inventoryForm.getQuantity());</b>
+<b class="nc">&nbsp;        return inventoryPojo;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static InventoryData convertToData(InventoryPojo inventoryPojo) {
+&nbsp;
+<b class="nc">&nbsp;        InventoryData inventoryData = new InventoryData();</b>
+<b class="nc">&nbsp;        inventoryData.setProductId(inventoryPojo.getProductId());</b>
+<b class="nc">&nbsp;        inventoryData.setQuantity(inventoryPojo.getQuantity());</b>
+<b class="nc">&nbsp;        return inventoryData;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static List&lt;InventoryPojo&gt; getPojosFromMap(Map&lt;String, Integer&gt; delta) {
+<b class="nc">&nbsp;        List&lt;InventoryPojo&gt; pojos = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="nc">&nbsp;        for (String productId: delta.keySet()) {</b>
+<b class="nc">&nbsp;            InventoryPojo pojo = new InventoryPojo();</b>
+<b class="nc">&nbsp;            pojo.setProductId(productId);</b>
+<b class="nc">&nbsp;            pojo.setQuantity(-delta.get(productId));</b>
+<b class="nc">&nbsp;            pojos.add(pojo);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return pojos;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static Map&lt;String, ProductPojo&gt; getBarcodeToProductPojoMap(List&lt;ProductPojo&gt; products) {
+<b class="nc">&nbsp;        Map&lt;String, ProductPojo&gt; barcodeToProductPojo = new HashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;        for (ProductPojo product : products) {</b>
+<b class="nc">&nbsp;            barcodeToProductPojo.put(</b>
+<b class="nc">&nbsp;                    product.getBarcode(),</b>
+&nbsp;                    product
+&nbsp;            );
+&nbsp;        }
+<b class="nc">&nbsp;        return barcodeToProductPojo;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static Map&lt;String, Integer&gt; extractInventoryHeaderIndexMap(String[] headerRow) {
+&nbsp;
+<b class="nc">&nbsp;        Map&lt;String, Integer&gt; map = new HashMap&lt;&gt;();</b>
+&nbsp;
+<b class="nc">&nbsp;        for (int i = 0; i &lt; headerRow.length; i++) {</b>
+<b class="nc">&nbsp;            String normalized = headerRow[i]</b>
+<b class="nc">&nbsp;                    .trim()</b>
+<b class="nc">&nbsp;                    .toLowerCase()</b>
+<b class="nc">&nbsp;                    .replace(&quot; &quot;, &quot;&quot;)</b>
+<b class="nc">&nbsp;                    .replace(&quot;_&quot;, &quot;&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;            map.put(normalized, i);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return map;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static InventoryPojo convertRowToInventoryPojo(String[] row, Map&lt;String, Integer&gt; headerIndexMap, Map&lt;String, ProductPojo&gt; barcodeToProductId) throws ApiException {
+&nbsp;
+<b class="nc">&nbsp;        Integer barcodeIndex = headerIndexMap.get(&quot;barcode&quot;);</b>
+<b class="nc">&nbsp;        if (barcodeIndex == null || barcodeIndex &gt;= row.length) {</b>
+<b class="nc">&nbsp;            throw new ApiException(&quot;Barcode column missing&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String barcode = row[barcodeIndex].trim();</b>
+<b class="nc">&nbsp;        if (barcode.isEmpty()) {</b>
+<b class="nc">&nbsp;            throw new ApiException(&quot;Barcode is empty&quot;);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        if (barcode.length() &gt; 15) {</b>
+<b class="nc">&nbsp;            throw new ApiException(&quot;Barcode cannot be more than 15 characters&quot;);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;
+<b class="nc">&nbsp;        ProductPojo productPojo = barcodeToProductId.get(barcode);</b>
+<b class="nc">&nbsp;        if (productPojo == null) {</b>
+<b class="nc">&nbsp;            throw new ApiException(&quot;Product not found for barcode: &quot; + barcode);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        String productId = productPojo.getId();</b>
+&nbsp;
+<b class="nc">&nbsp;        Integer qtyIndex = headerIndexMap.get(&quot;quantity&quot;);</b>
+<b class="nc">&nbsp;        if (qtyIndex == null || qtyIndex &gt;= row.length) {</b>
+<b class="nc">&nbsp;            throw new ApiException(&quot;Quantity column missing&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String qtyStr = row[qtyIndex].trim();</b>
+<b class="nc">&nbsp;        if (qtyStr.isEmpty()) {</b>
+<b class="nc">&nbsp;            throw new ApiException(&quot;Quantity is empty&quot;);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        int quantity;
+&nbsp;        try {
+<b class="nc">&nbsp;            quantity = Integer.parseInt(qtyStr);</b>
+&nbsp;        } catch (NumberFormatException e) {
+<b class="nc">&nbsp;            throw new ApiException(&quot;Quantity is not a number&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (quantity &lt; 0) {</b>
+<b class="nc">&nbsp;            throw new ApiException(&quot;Quantity cannot be negative&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        InventoryPojo pojo = new InventoryPojo();</b>
+<b class="nc">&nbsp;        pojo.setProductId(productId);</b>
+<b class="nc">&nbsp;        pojo.setQuantity(quantity);</b>
+&nbsp;
+<b class="nc">&nbsp;        return pojo;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static List&lt;String&gt; getAllBarcodes(List&lt;String[]&gt; rows, Map&lt;String, Integer&gt; headerIndexMap) {
+&nbsp;
+<b class="nc">&nbsp;        List&lt;String&gt; barcodes = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="nc">&nbsp;        for (int i = 1; i &lt; rows.size(); i++) {</b>
+<b class="nc">&nbsp;            String[] row = rows.get(i);</b>
+&nbsp;
+<b class="nc">&nbsp;            if (ValidationUtil.isRowEmpty(row)) continue;</b>
+&nbsp;
+<b class="nc">&nbsp;            Integer barcodeIndex = headerIndexMap.get(&quot;barcode&quot;);</b>
+<b class="nc">&nbsp;            if (barcodeIndex != null &amp;&amp; barcodeIndex &lt; row.length) {</b>
+<b class="nc">&nbsp;                String barcode = row[barcodeIndex].trim();</b>
+<b class="nc">&nbsp;                if (!barcode.isEmpty()) {</b>
+<b class="nc">&nbsp;                    barcodes.add(barcode.toLowerCase());</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return barcodes;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static void segragateValidAndInvalidEntries(List&lt;String[]&gt; rows, List&lt;InventoryPojo&gt; validInventory, List&lt;RowError&gt; invalidInventory, Map&lt;String, Integer&gt; headerIndexMap, Map&lt;String, ProductPojo&gt; barcodeToProductPojo) {
+&nbsp;
+<b class="nc">&nbsp;        for (int i = 1; i &lt; rows.size(); i++) {</b>
+&nbsp;
+<b class="nc">&nbsp;            String[] row = rows.get(i);</b>
+&nbsp;
+<b class="nc">&nbsp;            if (ValidationUtil.isRowEmpty(row)) continue;</b>
+&nbsp;
+&nbsp;            try {
+<b class="nc">&nbsp;                InventoryPojo pojo = InventoryHelper.convertRowToInventoryPojo(</b>
+<b class="nc">&nbsp;                        rows.get(i),</b>
+&nbsp;                        headerIndexMap,
+&nbsp;                        barcodeToProductPojo
+&nbsp;                );
+<b class="nc">&nbsp;                validInventory.add(pojo);</b>
+&nbsp;            } catch (Exception e) {
+<b class="nc">&nbsp;                String barcode = getValueFromRow(row, headerIndexMap, &quot;barcode&quot;);</b>
+<b class="nc">&nbsp;                invalidInventory.add(</b>
+<b class="nc">&nbsp;                        new RowError(barcode, e.getMessage())</b>
+&nbsp;                );
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    public static boolean hasSufficientInventory(InventoryPojo item, InventoryPojo existingRecord) {
+<b class="fc">&nbsp;        int available = existingRecord.getQuantity();</b>
+<b class="fc">&nbsp;        int required = item.getQuantity();</b>
+<b class="fc">&nbsp;        return available &gt;= required;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-10 13:07</div>
+</div>
+</body>
+</html>

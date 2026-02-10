@@ -1,4 +1,4 @@
-package com.increff.pos.config;
+package com.increff.pos.util.dateUtils;
 
 import org.springframework.core.convert.converter.Converter;
 

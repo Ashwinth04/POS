@@ -8,6 +8,7 @@ import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.OrderFlow;
 import com.increff.pos.helper.OrderHelper;
 import com.increff.pos.model.data.*;
+import com.increff.pos.model.form.OrderFilterForm;
 import com.increff.pos.model.form.OrderForm;
 import com.increff.pos.model.form.PageForm;
 import com.increff.pos.model.form.SearchOrderForm;
@@ -24,6 +25,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.increff.pos.util.ValidationUtil.validateOrderItem;
 
@@ -70,19 +72,6 @@ public class OrderDto {
         return orderFlow.cancelOrder(orderId);
     }
 
-    public Page<OrderData> getAllOrders(PageForm form) throws ApiException {
-        FormValidator.validate(form);
-        Page<OrderPojo> orderPage = orderApi.getAllOrders(form.getPage(), form.getSize());
-
-        List<String> productIds = orderPage.stream()
-                .flatMap(order -> order.getOrderItems().stream())
-                .map(OrderItemPojo::getProductId)
-                .toList();
-
-        Map<String, ProductPojo> productIdToProductPojo = orderFlow.mapProductIdsToProductPojos(productIds);
-        return orderPage.map(orderPojo -> OrderHelper.convertToData(orderPojo, productIdToProductPojo));
-    }
-
     public Page<OrderData> searchById(SearchOrderForm searchOrderForm) throws ApiException {
 
         FormValidator.validate(searchOrderForm);
@@ -122,25 +111,7 @@ public class OrderDto {
         return invoiceClientWrapper.downloadInvoice(orderId);
     }
 
-    public Page<OrderData> filterOrders(LocalDate startDate, LocalDate endDate, int page, int size) throws ApiException {
-
-        ValidationUtil.validateDates(startDate, endDate);
-
-        ZoneId zone = ZoneId.systemDefault();
-        ZonedDateTime start = startDate.atStartOfDay(zone);
-        ZonedDateTime end = endDate.atTime(23, 59, 59, 999_000_000).atZone(zone);
-
-        Page<OrderPojo> orderPage =  orderApi.filterOrdersByDate(start, end, page, size);
-
-        List<String> productIds = orderPage.stream()
-                .flatMap(order -> order.getOrderItems().stream())
-                .map(OrderItemPojo::getProductId)
-                .toList();
-
-        Map<String, ProductPojo> productIdToProductPojo = orderFlow.mapProductIdsToProductPojos(productIds);
-        return orderPage.map(orderPojo -> OrderHelper.convertToData(orderPojo, productIdToProductPojo));
-    }
-
+    // TODO: Check if this can be moved to ValidationUtil
     public void validateAllOrderItems(OrderForm orderForm, Map<String, ProductPojo> barcodeToProductPojoMap) throws ApiException {
 
         for (OrderItem item : orderForm.getOrderItems()) {
@@ -161,4 +132,39 @@ public class OrderDto {
 
         return orderFlow.mapBarcodesToProductPojos(barcodes);
     }
+
+    public Page<OrderData> getOrders(OrderFilterForm form) throws ApiException {
+
+        FormValidator.validate(form);
+        ValidationUtil.validateDateInputs(form);
+
+        Page<OrderPojo> orderPage = fetchOrders(form);
+
+        List<String> productIds = orderPage.stream()
+                .flatMap(order -> order.getOrderItems().stream())
+                .map(OrderItemPojo::getProductId)
+                .toList();
+
+        Map<String, ProductPojo> productMap =
+                orderFlow.mapProductIdsToProductPojos(productIds);
+
+        return orderPage.map(order ->
+                OrderHelper.convertToData(order, productMap));
+    }
+
+    private Page<OrderPojo> fetchOrders(OrderFilterForm form) {
+
+        if (Objects.isNull(form.getStartDate())) {
+            return orderApi.getAllOrders(form.getPage(), form.getSize());
+        }
+
+        ZoneId zone = ZoneId.systemDefault();
+        ZonedDateTime start = form.getStartDate().atStartOfDay(zone);
+        ZonedDateTime end = form.getEndDate()
+                .atTime(23, 59, 59, 999_000_000)
+                .atZone(zone);
+
+        return orderApi.filterOrdersByDate(start, end, form.getPage(), form.getSize());
+    }
+
 }

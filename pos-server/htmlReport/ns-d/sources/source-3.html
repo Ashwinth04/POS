@@ -1,0 +1,194 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > NormalizationUtil</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.increff.pos.util</a>
+</div>
+
+<h1>Coverage Summary for Class: NormalizationUtil (com.increff.pos.util)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">NormalizationUtil</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    36.4%
+  </span>
+  <span class="absValue">
+    (4/11)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    18.4%
+  </span>
+  <span class="absValue">
+    (7/38)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    37.1%
+  </span>
+  <span class="absValue">
+    (13/35)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.increff.pos.util;
+&nbsp;
+&nbsp;import com.increff.pos.model.data.OrderItem;
+&nbsp;import com.increff.pos.model.form.*;
+&nbsp;
+&nbsp;import java.util.Objects;
+&nbsp;
+<b class="nc">&nbsp;public class NormalizationUtil {</b>
+&nbsp;
+&nbsp;    public static void normalizeClientForm(ClientForm clientForm) {
+<b class="fc">&nbsp;        String name = clientForm.getName();</b>
+<b class="fc">&nbsp;        String location = clientForm.getLocation();</b>
+<b class="fc">&nbsp;        String email = clientForm.getEmail();</b>
+<b class="fc">&nbsp;        String phoneNumber = clientForm.getPhoneNumber();</b>
+&nbsp;
+<b class="pc">&nbsp;        if (Objects.nonNull(email)) clientForm.setEmail(email.trim().toLowerCase());</b>
+<b class="pc">&nbsp;        if (Objects.nonNull(location)) clientForm.setLocation(location.trim().toLowerCase());</b>
+<b class="pc">&nbsp;        if (Objects.nonNull(phoneNumber)) clientForm.setPhoneNumber(phoneNumber.trim().toLowerCase());</b>
+<b class="pc">&nbsp;        if (Objects.nonNull(name)) clientForm.setName(name.trim());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static void normalizeOrderForm(OrderForm orderForm) {
+<b class="nc">&nbsp;        if (Objects.isNull(orderForm) || Objects.isNull(orderForm.getOrderItems())) return;</b>
+&nbsp;
+<b class="nc">&nbsp;        for (OrderItem orderItem: orderForm.getOrderItems()) {</b>
+<b class="nc">&nbsp;            String barcode = orderItem.getBarcode();</b>
+<b class="nc">&nbsp;            if (Objects.nonNull(barcode)) orderItem.setBarcode(barcode.trim().toLowerCase());</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    public static void normalizeProductForm(ProductForm productForm) {
+<b class="nc">&nbsp;        String name = productForm.getName();</b>
+<b class="nc">&nbsp;        String clientName = productForm.getClientName();</b>
+<b class="nc">&nbsp;        String imageUrl = productForm.getImageUrl();</b>
+<b class="nc">&nbsp;        String barcode = productForm.getBarcode();</b>
+&nbsp;
+<b class="nc">&nbsp;        if (Objects.nonNull(name)) productForm.setName(name.trim().toLowerCase());</b>
+<b class="nc">&nbsp;        if (Objects.nonNull(clientName)) productForm.setClientName(clientName.trim());</b>
+<b class="nc">&nbsp;        if (Objects.nonNull(imageUrl)) productForm.setImageUrl(imageUrl.trim().toLowerCase());</b>
+<b class="nc">&nbsp;        if (Objects.nonNull(barcode)) productForm.setBarcode(barcode.trim().toLowerCase());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static String normalizeEmail(String email) {
+<b class="nc">&nbsp;        return email.trim().toLowerCase();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static void normalizeInventoryForm(InventoryForm inventoryForm) {
+<b class="nc">&nbsp;        String barcode = inventoryForm.getBarcode();</b>
+<b class="nc">&nbsp;        if (Objects.nonNull(barcode)) inventoryForm.setBarcode(barcode.trim().toLowerCase());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static void normalizeSearchProductForm(ProductSearchForm searchProductForm) {
+<b class="fc">&nbsp;        String query = searchProductForm.getQuery();</b>
+<b class="pc">&nbsp;        if (Objects.nonNull(query)) searchProductForm.setQuery(query.trim().toLowerCase());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static void normalizeSearchClientForm(ClientSearchForm clientSearchForm) {
+<b class="fc">&nbsp;        String query = clientSearchForm.getQuery();</b>
+<b class="pc">&nbsp;        if (Objects.nonNull(query)) clientSearchForm.setQuery(query.trim().toLowerCase());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static void normalizeLoginRequest(LoginRequest request) {
+<b class="nc">&nbsp;        if (Objects.isNull(request)) return;</b>
+<b class="nc">&nbsp;        String email = request.getEmail();</b>
+<b class="nc">&nbsp;        if (Objects.nonNull(email)) request.setEmail(email.trim().toLowerCase());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static void normalizeCreateOperator(CreateUserRequest request) {
+<b class="nc">&nbsp;        String email = request.getEmail();</b>
+<b class="nc">&nbsp;        if (Objects.nonNull(email)) request.setEmail(email.trim().toLowerCase());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static String normalizeName(String name) {
+<b class="pc">&nbsp;        if (Objects.nonNull(name)) return name.trim();</b>
+&nbsp;
+<b class="nc">&nbsp;        return &quot;&quot;;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-10 13:07</div>
+</div>
+</body>
+</html>

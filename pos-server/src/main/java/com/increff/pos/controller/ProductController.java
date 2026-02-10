@@ -50,7 +50,7 @@ public class ProductController {
         return productDto.getAllProducts(form);
     }
 
-    @RequestMapping(path = "/searchById", method = RequestMethod.POST)
+    @RequestMapping(path = "/search", method = RequestMethod.POST)
     public Page<ProductData> searchProducts(@RequestBody ProductSearchForm searchProductForm) throws ApiException{
         return productDto.searchProducts(searchProductForm);
     }

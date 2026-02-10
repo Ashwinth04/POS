@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
 
+//TODO:: Read about ESR Rule for creating indexes
 @Repository
 public class OrderDao extends AbstractDao<OrderPojo> {
     public OrderDao(MongoOperations mongoOperations) {
@@ -28,13 +29,14 @@ public class OrderDao extends AbstractDao<OrderPojo> {
         return mongoOperations.findOne(query, OrderPojo.class);
     }
 
+    //TODO::change this to use created at field
     public Page<OrderPojo> findOrdersBetweenDates(ZonedDateTime start, ZonedDateTime end, PageRequest pageable) {
 
         Query query = new Query();
         query.addCriteria(
-                Criteria.where("orderTime")
-                        .gte(start.toInstant())
-                        .lte(end.toInstant())
+                Criteria.where("createdAt")
+                        .gte(start)
+                        .lte(end)
         );
 
         long total = mongoOperations.count(query, OrderPojo.class);
@@ -48,10 +50,9 @@ public class OrderDao extends AbstractDao<OrderPojo> {
         );
     }
 
-    public Page<OrderPojo> searchById(String orderId, PageRequest pageable) throws ApiException {
+    public Page<OrderPojo> searchById(String orderId, PageRequest pageable) {
 
         String pattern = ".*" + Pattern.quote(orderId) + ".*";
-
         Query query = new Query(Criteria.where("orderId").regex(pattern, "i"));
         long total = mongoOperations.count(query, OrderPojo.class);
         query.with(pageable);

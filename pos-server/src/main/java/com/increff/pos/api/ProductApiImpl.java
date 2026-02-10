@@ -26,13 +26,18 @@ public class ProductApiImpl implements ProductApi {
         return productDao.save(productPojo);
     }
 
+    //TODO:: There are always some non editable fields - Im getting record by barcode, so is it okay?
     @Transactional(rollbackFor = ApiException.class)
     public ProductPojo editProduct(ProductPojo productPojo) throws ApiException {
         ProductPojo existingRecord = getCheckByBarcode(productPojo.getBarcode());
-        productPojo.setId(existingRecord.getId());
+        existingRecord.setClientName(productPojo.getClientName());
+        existingRecord.setName(productPojo.getName());
+        existingRecord.setMrp(productPojo.getMrp());
+        existingRecord.setImageUrl(productPojo.getImageUrl());
         return productDao.save(productPojo);
     }
 
+    @Transactional(readOnly = true)
     public Page<ProductPojo> getAllProducts(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
         return productDao.findAll(pageRequest);
@@ -43,15 +48,18 @@ public class ProductApiImpl implements ProductApi {
         return productDao.saveAll(pojos);
     }
 
+    @Transactional(readOnly = true)
     public void checkBarcodeExists(String barcode) throws ApiException {
         ProductPojo result = productDao.findByBarcode(barcode);
         if (Objects.nonNull(result)) { throw new ApiException("Barcode already exists"); }
     }
 
+    @Transactional(readOnly = true)
     public List<ProductPojo> findExistingProducts(List<String> barcodes) {
         return productDao.findByBarcodes(barcodes);
     }
 
+    @Transactional(readOnly = true)
     public List<ProductPojo> getProductPojosForBarcodes(List<String> barcodes) {
 
         if (Objects.isNull(barcodes) || barcodes.isEmpty()) {
@@ -60,6 +68,7 @@ public class ProductApiImpl implements ProductApi {
         return productDao.findByBarcodes(barcodes);
     }
 
+    @Transactional(readOnly = true)
     public List<ProductPojo> getProductPojosForProductIds(List<String> productIds) {
 
         if (Objects.isNull(productIds) || productIds.isEmpty()) {
@@ -68,6 +77,7 @@ public class ProductApiImpl implements ProductApi {
         return productDao.findAllById(productIds);
     }
 
+    @Transactional(readOnly = true)
     public ProductPojo getCheckByBarcode(String barcode) throws ApiException {
 
         ProductPojo record = productDao.findByBarcode(barcode);
@@ -78,6 +88,7 @@ public class ProductApiImpl implements ProductApi {
         return record;
     }
 
+    @Transactional(readOnly = true)
     public Page<ProductPojo> searchProducts(ProductSearchType type, String query, int page, int size) throws ApiException {
         Pageable pageable = PageRequest.of(page, size);
 

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 import static com.increff.pos.helper.InventoryHelper.*;
+import static com.increff.pos.util.FileUtils.buildInventoryBulkUpdateResponse;
 
 // Looks good
 
@@ -39,6 +40,9 @@ public class InventoryDto {
         return InventoryHelper.convertToData(inventoryPojo);
     }
 
+    //TODO:: Do not ignore the negative quantity from the TSV , just sum all the rows of same product id ,
+    // and increment it by that value. IF the overall qty becomes zero for the product after inc operation
+    // then do that but still show them in the failed entries to the used
     public FileData updateInventoryBulk(FileForm fileForm) throws ApiException {
         FormValidator.validate(fileForm);
         List<String[]> rows = TsvParser.parseBase64Tsv(fileForm.getBase64file());
@@ -56,13 +60,7 @@ public class InventoryDto {
 
         segragateValidAndInvalidEntries(rows, validInventory, invalidInventory, headerIndexMap, barcodeToProductPojoMap);
         inventoryApi.updateBulkInventory(validInventory);
-        return buildBulkUpdateResponse(invalidInventory);
+        return buildInventoryBulkUpdateResponse(invalidInventory);
     }
 
-    private FileData buildBulkUpdateResponse(List<RowError> invalidInventory) {
-        FileData fileData = new FileData();
-        fileData.setBase64file(FileUtils.generateInventoryUpdateResults(invalidInventory));
-        fileData.setStatus(invalidInventory.isEmpty() ? "SUCCESS" : "UNSUCCESSFUL");
-        return fileData;
-    }
 }

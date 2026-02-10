@@ -295,4 +295,19 @@ public class ValidationUtil {
             throw new ApiException("Selling price exceeds MRP for barcode: " + item.getBarcode());
         }
     }
+
+    public static void validateDateInputs(OrderFilterForm form) throws ApiException {
+        LocalDate start = form.getStartDate();
+        LocalDate end = form.getEndDate();
+
+        if (start == null && end == null) {
+            return;
+        }
+
+        if (start == null || end == null) {
+            throw new ApiException("Both startDate and endDate must be provided together");
+        }
+
+        validateDates(start, end);
+    }
 } 

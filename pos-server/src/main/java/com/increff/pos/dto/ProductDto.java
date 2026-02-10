@@ -74,7 +74,8 @@ public class ProductDto {
         Map<String, ClientPojo> clientNamesToPojos = getValidClients(validProducts);
         Map<String, ProductPojo> barcodesToPojos = getValidBarcodes(validProducts);
 
-        List<ProductPojo> finalValidProducts = ValidationUtil.getFinalValidProducts(validProducts, invalidProducts, clientNamesToPojos, barcodesToPojos);
+        List<ProductPojo> finalValidProducts = ValidationUtil.getFinalValidProducts(validProducts, invalidProducts,
+                clientNamesToPojos, barcodesToPojos);
 
         productFlow.addProductsBulk(finalValidProducts);
         return FileUtils.convertProductResultsToBase64(invalidProducts);
@@ -108,7 +109,8 @@ public class ProductDto {
     public Page<ProductData> searchProducts(ProductSearchForm searchForm) throws ApiException {
         NormalizationUtil.normalizeSearchProductForm(searchForm);
         FormValidator.validate(searchForm);
-        Page<ProductPojo> productPage = productFlow.searchProducts(searchForm.getType(), searchForm.getQuery(), searchForm.getPage(), searchForm.getSize());
+        Page<ProductPojo> productPage = productFlow.searchProducts(searchForm.getType(), searchForm.getQuery(),
+                searchForm.getPage(), searchForm.getSize());
         Map<String, InventoryPojo> productIdToInventoryPojo = productFlow.getInventoryForProducts(productPage);
 
         return productPage.map(

@@ -49,23 +49,7 @@ public class OrderFlow {
         return orderApi.editOrder(orderPojo);
     }
 
-    private void aggregateAndUpdateInventory(String orderId, List<InventoryPojo> incomingInventoryPojos, String existingStatus, boolean isFulfillable) throws ApiException {
-
-        Map<String, Integer> aggregatedItemsIncoming = new HashMap<>();
-        Map<String, Integer> aggregatedItemsExisting = new HashMap<>();
-
-        if (existingStatus.equals("FULFILLABLE")) {
-            OrderPojo existingOrderPojo = orderApi.getCheckByOrderId(orderId);
-            List<InventoryPojo> existingInventoryPojos = OrderHelper.getInventoryPojosForOrder(existingOrderPojo.getOrderItems());
-            aggregatedItemsExisting = inventoryApi.aggregateItemsByProductId(existingInventoryPojos);
-        }
-
-        if (isFulfillable) {
-            aggregatedItemsIncoming = inventoryApi.aggregateItemsByProductId(incomingInventoryPojos);
-        }
-        inventoryApi.calculateAndUpdateDeltaInventory(aggregatedItemsExisting, aggregatedItemsIncoming);
-    }
-
+    @Transactional(rollbackFor = ApiException.class)
     public MessageData cancelOrder(String orderId) throws ApiException {
 
         OrderPojo orderPojo = orderApi.getCheckByOrderId(orderId);
@@ -81,6 +65,7 @@ public class OrderFlow {
         return orderApi.cancelOrder(orderId);
     }
 
+    @Transactional(readOnly = true)
     public Map<String, ProductPojo> mapBarcodesToProductPojos(List<String> barcodes) {
         List<ProductPojo> products = productApi.getProductPojosForBarcodes(barcodes);
 
@@ -95,6 +80,7 @@ public class OrderFlow {
         return barcodeToProductId;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, ProductPojo> mapProductIdsToProductPojos(List<String> productIds) {
         List<ProductPojo> products = productApi.getProductPojosForProductIds(productIds);
 
@@ -108,5 +94,23 @@ public class OrderFlow {
         }
 
         return productIdToProductPojo;
+    }
+
+    private void aggregateAndUpdateInventory(String orderId, List<InventoryPojo> incomingInventoryPojos,
+                                             String existingStatus, boolean isFulfillable) throws ApiException {
+
+        Map<String, Integer> aggregatedItemsIncoming = new HashMap<>();
+        Map<String, Integer> aggregatedItemsExisting = new HashMap<>();
+
+        if (existingStatus.equals("FULFILLABLE")) {
+            OrderPojo existingOrderPojo = orderApi.getCheckByOrderId(orderId);
+            List<InventoryPojo> existingInventoryPojos = OrderHelper.getInventoryPojosForOrder(existingOrderPojo.getOrderItems());
+            aggregatedItemsExisting = inventoryApi.aggregateItemsByProductId(existingInventoryPojos);
+        }
+
+        if (isFulfillable) {
+            aggregatedItemsIncoming = inventoryApi.aggregateItemsByProductId(incomingInventoryPojos);
+        }
+        inventoryApi.calculateAndUpdateDeltaInventory(aggregatedItemsExisting, aggregatedItemsIncoming);
     }
 }

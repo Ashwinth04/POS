@@ -1,7 +1,6 @@
 package com.increff.pos.util;
 
 import com.increff.pos.model.data.FileData;
-import com.increff.pos.model.data.ProductUploadResult;
 import com.increff.pos.model.data.RowError;
 
 import java.nio.charset.StandardCharsets;
@@ -27,6 +26,13 @@ public class FileUtils {
 
         byte[] tsvBytes = sb.toString().getBytes(StandardCharsets.UTF_8);
         return Base64.getEncoder().encodeToString(tsvBytes);
+    }
+
+    public static FileData buildInventoryBulkUpdateResponse(List<RowError> invalidInventory) {
+        FileData fileData = new FileData();
+        fileData.setBase64file(FileUtils.generateInventoryUpdateResults(invalidInventory));
+        fileData.setStatus(invalidInventory.isEmpty() ? "SUCCESS" : "UNSUCCESSFUL");
+        return fileData;
     }
 
     public static String generateInventoryUpdateResults(List<RowError> invalidInventory) {

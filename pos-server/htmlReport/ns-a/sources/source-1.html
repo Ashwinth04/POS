@@ -1,0 +1,232 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > OrderFlow</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.increff.pos.flow</a>
+</div>
+
+<h1>Coverage Summary for Class: OrderFlow (com.increff.pos.flow)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">OrderFlow</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    14.3%
+  </span>
+  <span class="absValue">
+    (1/7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/14)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    2.4%
+  </span>
+  <span class="absValue">
+    (1/41)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.increff.pos.flow;
+&nbsp;
+&nbsp;import com.increff.pos.api.InventoryApiImpl;
+&nbsp;import com.increff.pos.api.OrderApiImpl;
+&nbsp;import com.increff.pos.api.ProductApiImpl;
+&nbsp;import com.increff.pos.db.documents.InventoryPojo;
+&nbsp;import com.increff.pos.db.documents.OrderPojo;
+&nbsp;import com.increff.pos.db.documents.ProductPojo;
+&nbsp;import com.increff.pos.exception.ApiException;
+&nbsp;import com.increff.pos.helper.OrderHelper;
+&nbsp;import com.increff.pos.model.data.MessageData;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.transaction.annotation.Transactional;
+&nbsp;
+&nbsp;import java.util.*;
+&nbsp;
+&nbsp;@Service
+<b class="fc">&nbsp;public class OrderFlow {</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private OrderApiImpl orderApi;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private ProductApiImpl productApi;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private InventoryApiImpl inventoryApi;
+&nbsp;
+&nbsp;    @Transactional(rollbackFor = Exception.class)
+&nbsp;    public OrderPojo createOrder(OrderPojo orderPojo) {
+<b class="nc">&nbsp;        List&lt;InventoryPojo&gt; inventoryPojos = OrderHelper.getInventoryPojosForOrder(orderPojo.getOrderItems());</b>
+<b class="nc">&nbsp;        boolean isFulfillable = inventoryApi.reserveInventory(inventoryPojos);</b>
+<b class="nc">&nbsp;        orderPojo.setOrderStatus(isFulfillable ? &quot;FULFILLABLE&quot; : &quot;UNFULFILLABLE&quot;);</b>
+<b class="nc">&nbsp;        return orderApi.saveOrder(orderPojo);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional
+&nbsp;    public OrderPojo editOrder(OrderPojo orderPojo, String orderId) throws ApiException {
+<b class="nc">&nbsp;        OrderPojo existingOrder = orderApi.getCheckByOrderId(orderId);</b>
+<b class="nc">&nbsp;        String existingStatus = existingOrder.getOrderStatus();</b>
+<b class="nc">&nbsp;        OrderHelper.checkOrderEditable(existingStatus);</b>
+&nbsp;
+<b class="nc">&nbsp;        List&lt;InventoryPojo&gt; orderInventoryPojos = OrderHelper.getInventoryPojosForOrder(orderPojo.getOrderItems());</b>
+<b class="nc">&nbsp;        boolean isFulfillable = inventoryApi.checkOrderFulfillable(orderInventoryPojos);</b>
+<b class="nc">&nbsp;        aggregateAndUpdateInventory(orderId, orderInventoryPojos, existingStatus, isFulfillable);</b>
+&nbsp;
+<b class="nc">&nbsp;        orderPojo.setOrderStatus(isFulfillable ? &quot;FULFILLABLE&quot; : &quot;UNFULFILLABLE&quot;);</b>
+<b class="nc">&nbsp;        return orderApi.editOrder(orderPojo);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional(rollbackFor = ApiException.class)
+&nbsp;    public MessageData cancelOrder(String orderId) throws ApiException {
+&nbsp;
+<b class="nc">&nbsp;        OrderPojo orderPojo = orderApi.getCheckByOrderId(orderId);</b>
+&nbsp;
+<b class="nc">&nbsp;        String status = orderPojo.getOrderStatus();</b>
+<b class="nc">&nbsp;        OrderHelper.checkOrderCancellable(status);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (status.equals(&quot;FULFILLABLE&quot;)) {</b>
+<b class="nc">&nbsp;            List&lt;InventoryPojo&gt; orderInventoryPojos = OrderHelper.getInventoryPojosForOrder(orderPojo.getOrderItems());</b>
+<b class="nc">&nbsp;            inventoryApi.revertInventory(orderInventoryPojos);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return orderApi.cancelOrder(orderId);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public Map&lt;String, ProductPojo&gt; mapBarcodesToProductPojos(List&lt;String&gt; barcodes) {
+<b class="nc">&nbsp;        List&lt;ProductPojo&gt; products = productApi.getProductPojosForBarcodes(barcodes);</b>
+&nbsp;
+<b class="nc">&nbsp;        Map&lt;String, ProductPojo&gt; barcodeToProductId = new HashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;        for (ProductPojo product : products) {</b>
+<b class="nc">&nbsp;            barcodeToProductId.put(</b>
+<b class="nc">&nbsp;                    product.getBarcode(),</b>
+&nbsp;                    product
+&nbsp;            );
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return barcodeToProductId;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Transactional(rollbackFor = Exception.class)
+&nbsp;    public Map&lt;String, ProductPojo&gt; mapProductIdsToProductPojos(List&lt;String&gt; productIds) {
+<b class="nc">&nbsp;        List&lt;ProductPojo&gt; products = productApi.getProductPojosForProductIds(productIds);</b>
+&nbsp;
+<b class="nc">&nbsp;        Map&lt;String, ProductPojo&gt; productIdToProductPojo = new HashMap&lt;&gt;();</b>
+&nbsp;
+<b class="nc">&nbsp;        for (ProductPojo product : products) {</b>
+<b class="nc">&nbsp;            productIdToProductPojo.put(</b>
+<b class="nc">&nbsp;                    product.getId(),</b>
+&nbsp;                    product
+&nbsp;            );
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return productIdToProductPojo;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void aggregateAndUpdateInventory(String orderId, List&lt;InventoryPojo&gt; incomingInventoryPojos,
+&nbsp;                                             String existingStatus, boolean isFulfillable) throws ApiException {
+&nbsp;
+<b class="nc">&nbsp;        Map&lt;String, Integer&gt; aggregatedItemsIncoming = new HashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;        Map&lt;String, Integer&gt; aggregatedItemsExisting = new HashMap&lt;&gt;();</b>
+&nbsp;
+<b class="nc">&nbsp;        if (existingStatus.equals(&quot;FULFILLABLE&quot;)) {</b>
+<b class="nc">&nbsp;            OrderPojo existingOrderPojo = orderApi.getCheckByOrderId(orderId);</b>
+<b class="nc">&nbsp;            List&lt;InventoryPojo&gt; existingInventoryPojos = OrderHelper.getInventoryPojosForOrder(existingOrderPojo.getOrderItems());</b>
+<b class="nc">&nbsp;            aggregatedItemsExisting = inventoryApi.aggregateItemsByProductId(existingInventoryPojos);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (isFulfillable) {</b>
+<b class="nc">&nbsp;            aggregatedItemsIncoming = inventoryApi.aggregateItemsByProductId(incomingInventoryPojos);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        inventoryApi.calculateAndUpdateDeltaInventory(aggregatedItemsExisting, aggregatedItemsIncoming);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-10 13:07</div>
+</div>
+</body>
+</html>

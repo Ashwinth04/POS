@@ -32,9 +32,6 @@ public class AuthApiImpl {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
     private UserDao userDao;
 
     public LoginResponse login(String email, String password, HttpServletRequest request, HttpServletResponse response) throws ApiException {
@@ -65,18 +62,12 @@ public class AuthApiImpl {
     }
 
     @Transactional(rollbackFor = ApiException.class)
-    public void createOperator(String email, String password) throws ApiException {
-
-        checkUserExists(email);
-
-        String encodedPassword = passwordEncoder.encode(password);
-        String role = UserRole.OPERATOR.role();
-        UserPojo user = AuthHelper.createUserPojo(encodedPassword, email, role);
-
-        userDao.save(user);
+    public void createOperator(UserPojo userPojo) throws ApiException {
+        checkUserExists(userPojo.getEmail());
+        userDao.save(userPojo);
     }
 
-    public LoginResponse me(Authentication authentication) {
+    public LoginResponse getCurrentUser(Authentication authentication) {
 
         String email = authentication.getName();
         String role = authentication.getAuthorities()

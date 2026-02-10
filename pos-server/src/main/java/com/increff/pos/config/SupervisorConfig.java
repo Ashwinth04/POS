@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Getter
 @Setter
+//TODO::Change the name to Application properties and add the application properties in this class only and rename the fields
 public class SupervisorConfig {
 
     @Value("${app.supervisor.email}")

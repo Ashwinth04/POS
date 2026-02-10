@@ -1,0 +1,194 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > FileUtils</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.increff.pos.util</a>
+</div>
+
+<h1>Coverage Summary for Class: FileUtils (com.increff.pos.util)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">FileUtils</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/7)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/16)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/34)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.increff.pos.util;
+&nbsp;
+&nbsp;import com.increff.pos.model.data.FileData;
+&nbsp;import com.increff.pos.model.data.RowError;
+&nbsp;
+&nbsp;import java.nio.charset.StandardCharsets;
+&nbsp;import java.util.Base64;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;
+<b class="nc">&nbsp;public class FileUtils {</b>
+&nbsp;
+&nbsp;    public static String generateProductUploadResults(List&lt;RowError&gt; results) {
+&nbsp;
+<b class="nc">&nbsp;        StringBuilder sb = new StringBuilder();</b>
+&nbsp;
+<b class="nc">&nbsp;        sb.append(&quot;barcode\tstatus\tmessage\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        for (RowError r : results) {</b>
+&nbsp;
+<b class="nc">&nbsp;            sb.append(r.getBarcode()).append(&quot;\t&quot;)</b>
+<b class="nc">&nbsp;                    .append(&quot;FAILED&quot;).append(&quot;\t&quot;)</b>
+<b class="nc">&nbsp;                    .append(safe(r.getMessage()))</b>
+<b class="nc">&nbsp;                    .append(&quot;\n&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        byte[] tsvBytes = sb.toString().getBytes(StandardCharsets.UTF_8);</b>
+<b class="nc">&nbsp;        return Base64.getEncoder().encodeToString(tsvBytes);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static FileData buildInventoryBulkUpdateResponse(List&lt;RowError&gt; invalidInventory) {
+<b class="nc">&nbsp;        FileData fileData = new FileData();</b>
+<b class="nc">&nbsp;        fileData.setBase64file(FileUtils.generateInventoryUpdateResults(invalidInventory));</b>
+<b class="nc">&nbsp;        fileData.setStatus(invalidInventory.isEmpty() ? &quot;SUCCESS&quot; : &quot;UNSUCCESSFUL&quot;);</b>
+<b class="nc">&nbsp;        return fileData;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static String generateInventoryUpdateResults(List&lt;RowError&gt; invalidInventory) {
+<b class="nc">&nbsp;        if (invalidInventory.isEmpty()) return &quot;&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        StringBuilder sb = new StringBuilder();</b>
+&nbsp;
+<b class="nc">&nbsp;        sb.append(&quot;barcode\tmessage\n&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        for (RowError row: invalidInventory) {</b>
+<b class="nc">&nbsp;            sb.append(safe(row.getBarcode()))</b>
+<b class="nc">&nbsp;                    .append(&quot;\t&quot;)</b>
+<b class="nc">&nbsp;                    .append(row.getMessage())</b>
+<b class="nc">&nbsp;                    .append(&quot;\n&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        byte[] tsvBytes = sb.toString().getBytes(StandardCharsets.UTF_8);</b>
+<b class="nc">&nbsp;        return Base64.getEncoder().encodeToString(tsvBytes);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private static String safe(String value) {
+<b class="nc">&nbsp;        return value == null ? &quot;&quot; : value.replace(&quot;\t&quot;, &quot; &quot;).replace(&quot;\n&quot;, &quot; &quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static String getValueFromRow(String[] row, Map&lt;String, Integer&gt; headerIndexMap, String header) {
+<b class="nc">&nbsp;        Integer index = headerIndexMap.get(header);</b>
+<b class="nc">&nbsp;        if (index == null || index &gt;= row.length) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return row[index].trim();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static FileData convertProductResultsToBase64(List&lt;RowError&gt; results) {
+&nbsp;
+<b class="nc">&nbsp;        String resultFile = generateProductUploadResults(results);</b>
+&nbsp;
+<b class="nc">&nbsp;        FileData fileData = new FileData();</b>
+<b class="nc">&nbsp;        fileData.setStatus(results.isEmpty() ? &quot;SUCCESS&quot; : &quot;UNSUCCESSFUL&quot;);</b>
+<b class="nc">&nbsp;        fileData.setBase64file(resultFile);</b>
+&nbsp;
+<b class="nc">&nbsp;        return fileData;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-10 13:07</div>
+</div>
+</body>
+</html>

@@ -45,7 +45,8 @@ public class ClientDto {
     public Page<ClientData> search(ClientSearchForm searchForm) throws ApiException {
         NormalizationUtil.normalizeSearchClientForm(searchForm);
         FormValidator.validate(searchForm);
-        Page<ClientPojo> clientPage = clientApi.search(searchForm.getType(), searchForm.getQuery(), searchForm.getPage(), searchForm.getSize());
+        Page<ClientPojo> clientPage = clientApi.search(searchForm.getType(), searchForm.getQuery(),
+                searchForm.getPage(), searchForm.getSize());
         return clientPage.map(ClientHelper::convertToData);
     }
 }

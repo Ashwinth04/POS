@@ -1,0 +1,208 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ProductHelper</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.increff.pos.helper</a>
+</div>
+
+<h1>Coverage Summary for Class: ProductHelper (com.increff.pos.helper)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ProductHelper</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/44)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.increff.pos.helper;
+&nbsp;
+&nbsp;import com.increff.pos.db.documents.InventoryPojo;
+&nbsp;import com.increff.pos.db.documents.ProductPojo;
+&nbsp;import com.increff.pos.exception.ApiException;
+&nbsp;import com.increff.pos.model.data.ProductData;
+&nbsp;import com.increff.pos.model.form.ProductForm;
+&nbsp;import com.increff.pos.util.ValidationUtil;
+&nbsp;
+&nbsp;import java.util.HashMap;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.Objects;
+&nbsp;
+&nbsp;import static com.increff.pos.constants.Constants.*;
+&nbsp;import static com.increff.pos.util.FileUtils.getValueFromRow;
+&nbsp;
+<b class="nc">&nbsp;public class ProductHelper {</b>
+&nbsp;    public static ProductPojo convertToEntity(ProductForm productForm) {
+&nbsp;
+<b class="nc">&nbsp;        ProductPojo productPojo = new ProductPojo();</b>
+<b class="nc">&nbsp;        productPojo.setName(productForm.getName().trim());</b>
+<b class="nc">&nbsp;        productPojo.setMrp(productForm.getMrp());</b>
+<b class="nc">&nbsp;        productPojo.setBarcode(productForm.getBarcode().toLowerCase().trim());</b>
+<b class="nc">&nbsp;        productPojo.setClientName(productForm.getClientName().trim());</b>
+<b class="nc">&nbsp;        productPojo.setImageUrl(productForm.getImageUrl().trim());</b>
+<b class="nc">&nbsp;        return productPojo;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static ProductData convertToData(ProductPojo productPojo) {
+&nbsp;
+<b class="nc">&nbsp;        ProductData productData = new ProductData();</b>
+<b class="nc">&nbsp;        productData.setId(productPojo.getId());</b>
+<b class="nc">&nbsp;        productData.setName(productPojo.getName());</b>
+<b class="nc">&nbsp;        productData.setMrp(productPojo.getMrp());</b>
+<b class="nc">&nbsp;        productData.setBarcode(productPojo.getBarcode());</b>
+<b class="nc">&nbsp;        productData.setClientName(productPojo.getClientName());</b>
+<b class="nc">&nbsp;        productData.setImageUrl(productPojo.getImageUrl());</b>
+&nbsp;
+<b class="nc">&nbsp;        return productData;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static ProductPojo convertRowToProductPojo(String[] row, Map&lt;String, Integer&gt; headerIndexMap) throws ApiException {
+&nbsp;
+<b class="nc">&nbsp;        ValidationUtil.validateProductRow(row, headerIndexMap);</b>
+<b class="nc">&nbsp;        ProductPojo pojo = new ProductPojo();</b>
+&nbsp;
+<b class="nc">&nbsp;        String barcode = getValueFromRow(row, headerIndexMap, BARCODE);</b>
+<b class="nc">&nbsp;        pojo.setBarcode(barcode.toLowerCase());</b>
+&nbsp;
+<b class="nc">&nbsp;        String name = getValueFromRow(row, headerIndexMap, PRODUCT_NAME);</b>
+<b class="nc">&nbsp;        pojo.setName(name.toLowerCase());</b>
+&nbsp;
+<b class="nc">&nbsp;        String clientName = getValueFromRow(row, headerIndexMap, CLIENT_NAME);</b>
+<b class="nc">&nbsp;        pojo.setClientName(clientName);</b>
+&nbsp;
+<b class="nc">&nbsp;        String mrpStr = getValueFromRow(row, headerIndexMap, MRP);</b>
+<b class="nc">&nbsp;        double mrp = Double.parseDouble(mrpStr.trim());</b>
+<b class="nc">&nbsp;        pojo.setMrp(mrp);</b>
+&nbsp;
+<b class="nc">&nbsp;        pojo.setImageUrl(getValueFromRow(row, headerIndexMap, IMAGE_URL));</b>
+&nbsp;
+<b class="nc">&nbsp;        return pojo;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static Map&lt;String, Integer&gt; extractHeaderIndexMap(String[] headerRow) {
+<b class="nc">&nbsp;        Map&lt;String, Integer&gt; headerIndexMap = new HashMap&lt;&gt;();</b>
+&nbsp;
+<b class="nc">&nbsp;        for (int i = 0; i &lt; headerRow.length; i++) {</b>
+<b class="nc">&nbsp;            headerIndexMap.put(headerRow[i], i);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return headerIndexMap;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static ProductData convertToData(ProductPojo product, Map&lt;String, InventoryPojo&gt; inventoryByProductId) {
+<b class="nc">&nbsp;        ProductData data = new ProductData();</b>
+&nbsp;
+<b class="nc">&nbsp;        data.setId(product.getId());</b>
+<b class="nc">&nbsp;        data.setName(product.getName());</b>
+<b class="nc">&nbsp;        data.setMrp(product.getMrp());</b>
+<b class="nc">&nbsp;        data.setClientName(product.getClientName());</b>
+<b class="nc">&nbsp;        data.setBarcode(product.getBarcode());</b>
+<b class="nc">&nbsp;        data.setImageUrl(product.getImageUrl());</b>
+&nbsp;
+<b class="nc">&nbsp;        InventoryPojo inventory = inventoryByProductId.get(product.getId());</b>
+<b class="nc">&nbsp;        if (Objects.nonNull(inventory)) {</b>
+<b class="nc">&nbsp;            data.setQuantity(inventory.getQuantity());</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return data;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-02-10 13:07</div>
+</div>
+</body>
+</html>

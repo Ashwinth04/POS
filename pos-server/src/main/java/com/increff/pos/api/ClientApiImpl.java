@@ -26,6 +26,7 @@ public class ClientApiImpl implements ClientApi {
         return clientDao.save(clientPojo);
     }
 
+    @Transactional(readOnly = true)
     public Page<ClientPojo> getAllClients(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return clientDao.findAll(pageRequest);
@@ -33,10 +34,11 @@ public class ClientApiImpl implements ClientApi {
 
     @Transactional(rollbackFor = ApiException.class)
     public ClientPojo updateClient(ClientPojo clientPojo) throws ApiException {
-        String clientName = clientPojo.getName();
-        ClientPojo existingRecord = getCheckByClientName(clientName);
-        clientPojo.setId(existingRecord.getId());
-        return clientDao.save(clientPojo);
+        ClientPojo existingRecord = getCheckByClientName(clientPojo.getName());
+        existingRecord.setEmail(clientPojo.getEmail());
+        existingRecord.setLocation(clientPojo.getLocation());
+        existingRecord.setPhoneNumber(clientPojo.getPhoneNumber());
+        return clientDao.save(existingRecord);
     }
 
     public void checkNameExists(String name) throws ApiException {
@@ -46,6 +48,7 @@ public class ClientApiImpl implements ClientApi {
         }
     }
 
+    @Transactional(readOnly = true)
     public List<ClientPojo> fetchExistingClientNames(List<String> clientNames) {
        return clientDao.findExistingClientNames(clientNames);
     }
@@ -60,6 +63,7 @@ public class ClientApiImpl implements ClientApi {
         };
     }
 
+    @Transactional(readOnly = true)
     public ClientPojo getCheckByClientName(String clientName) throws ApiException {
         ClientPojo record = clientDao.findByName(clientName);
         if (Objects.isNull(record)) {throw new ApiException("Client with the given name doesn't exist");}
