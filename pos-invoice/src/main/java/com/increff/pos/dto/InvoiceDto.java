@@ -4,10 +4,9 @@ import com.increff.pos.api.InvoiceApiImpl;
 import com.increff.pos.exception.ApiException;
 import com.increff.pos.model.data.FileData;
 import com.increff.pos.model.data.OrderData;
-import com.increff.pos.service.InvoiceGenerator;
+import com.increff.pos.invoiceUtils.InvoiceGenerator;
 import com.increff.pos.util.ValidationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;

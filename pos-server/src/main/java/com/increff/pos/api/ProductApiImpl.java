@@ -33,7 +33,7 @@ public class ProductApiImpl implements ProductApi {
         existingRecord.setName(productPojo.getName());
         existingRecord.setMrp(productPojo.getMrp());
         existingRecord.setImageUrl(productPojo.getImageUrl());
-        return productDao.save(productPojo);
+        return productDao.save(existingRecord);
     }
 
     @Transactional(readOnly = true)

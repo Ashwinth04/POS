@@ -1,4 +1,4 @@
-package com.increff.pos.service;
+package com.increff.pos.invoiceUtils;
 
 import com.increff.pos.model.data.OrderItem;
 import com.increff.pos.model.data.OrderData;

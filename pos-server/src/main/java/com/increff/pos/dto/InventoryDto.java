@@ -5,6 +5,7 @@ import com.increff.pos.api.ProductApiImpl;
 import com.increff.pos.db.documents.InventoryPojo;
 import com.increff.pos.db.documents.ProductPojo;
 import com.increff.pos.exception.ApiException;
+import com.increff.pos.flow.InventoryFlow;
 import com.increff.pos.helper.InventoryHelper;
 import com.increff.pos.model.data.FileData;
 import com.increff.pos.model.data.InventoryData;
@@ -27,12 +28,12 @@ public class InventoryDto {
     private InventoryApiImpl inventoryApi;
 
     @Autowired
-    private ProductApiImpl productApi;
+    private InventoryFlow inventoryFlow;
 
     public InventoryData updateInventory(InventoryForm inventoryForm) throws ApiException {
         NormalizationUtil.normalizeInventoryForm(inventoryForm);
         FormValidator.validate(inventoryForm);
-        ProductPojo productPojo = productApi.getCheckByBarcode(inventoryForm.getBarcode());
+        ProductPojo productPojo = inventoryFlow.getCheckByBarcode(inventoryForm.getBarcode());
         InventoryPojo inventoryPojo = InventoryHelper.convertToEntity(inventoryForm, productPojo.getId());
         inventoryApi.updateSingleInventory(inventoryPojo);
         return InventoryHelper.convertToData(inventoryPojo);
@@ -47,7 +48,7 @@ public class InventoryDto {
         ValidationUtil.validateRowLimit(rows);
 
         List<String> barcodes = getAllBarcodes(rows, headerIndexMap);
-        List<ProductPojo> products = productApi.getProductPojosForBarcodes(new ArrayList<>(barcodes));
+        List<ProductPojo> products = inventoryFlow.getProductPojosForBarcodes(new ArrayList<>(barcodes));
         Map<String, ProductPojo> barcodeToProductPojoMap = InventoryHelper.getBarcodeToProductPojoMap(products);
 
         List<InventoryPojo> validInventory = new ArrayList<>();
