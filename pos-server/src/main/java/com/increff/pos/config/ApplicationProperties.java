@@ -17,7 +17,7 @@ public class ApplicationProperties {
     private String supervisorPassword;
 
     @Value("${invoice.service.base-url}")
-    private String invoiceUrl;
+    private String invoiceServiceBaseUrl;
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;

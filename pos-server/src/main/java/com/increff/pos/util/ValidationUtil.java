@@ -47,18 +47,6 @@ public class ValidationUtil {
         if (orderId.length() != 24) throw new ApiException("Not a valid order id");
     }
 
-    public static void validateEmail(String email) throws ApiException {
-        if (!StringUtils.hasText(email)) {
-            throw new ApiException("Email cannot be empty");
-        }
-        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            throw new ApiException("Invalid email format");
-        }
-        if (email.length() < 3 || email.length() > 21) {
-            throw new ApiException("Number of characters should be between 3 to 21");
-        }
-    }
-
     public static void validateName(String name) throws ApiException {
         if (!StringUtils.hasText(name)) {
             throw new ApiException("Name cannot be empty");
@@ -66,24 +54,6 @@ public class ValidationUtil {
 
         if (name.length() < 3 || name.length() > 21) {
             throw new ApiException("Number of characters should be between 3 to 21");
-        }
-    }
-
-    private static void validateMrp(Double mrp) throws ApiException {
-        if (mrp <= 0) {
-            throw new ApiException("MRP cannot be less than or equal to zero");
-        }
-    }
-
-    private static void validateUrl(String url) throws ApiException {
-        try {
-            URL newUrl = new URL(url);
-            URLConnection conn = newUrl.openConnection();
-            conn.connect();
-        } catch (MalformedURLException e) {
-            throw new ApiException("Not a valid URL");
-        } catch (IOException e) {
-            throw new ApiException("Connection couldn't be established to the URL");
         }
     }
 
@@ -132,35 +102,6 @@ public class ValidationUtil {
 
         if (mrp <= 0 || Double.isNaN(mrp) || Double.isInfinite(mrp) || mrp > 1_000_000) {
             throw new ApiException("Invalid MRP: " + mrpStr);
-        }
-    }
-
-
-    public static void validatePhoneNumber(String phoneNumber) throws ApiException {
-        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-            throw new ApiException("Phone number is required");
-        }
-
-        if (!phoneNumber.matches("^[0-9]{10}$")) {
-            throw new ApiException("Phone number must be exactly 10 digits");
-        }
-    }
-
-
-    public static void validateSearchParams(String type, String query) throws ApiException {
-        if (type.equals("name")) {
-            if (!StringUtils.hasText(type)) {
-                throw new ApiException("Name cannot be empty");
-            }
-        }
-        else if (type.equals("email")) {
-            validateEmail(query);
-        }
-        else if (type.equals("phone")) {
-            validatePhoneNumber(query);
-        }
-        else {
-            throw new ApiException("Not a valid type");
         }
     }
 
@@ -267,17 +208,6 @@ public class ValidationUtil {
         }
     }
 
-    public static void validateCreateUserRequest(CreateUserRequest request) throws ApiException {
-
-        if (request.getEmail() == null || request.getEmail().isBlank()) {
-            throw new ApiException("Username missing");
-        }
-
-        if (request.getPassword() == null || request.getPassword().isBlank()) {
-            throw new ApiException("Password missing");
-        }
-    }
-
     public static void validateAuthentication(Authentication authentication) throws ApiException {
 
         if (authentication == null) {
@@ -287,7 +217,7 @@ public class ValidationUtil {
 
     public static void validateAllOrderItems(OrderForm orderForm, Map<String, ProductPojo> barcodeToProductPojoMap) throws ApiException {
 
-        for (OrderItem item : orderForm.getOrderItems()) {
+        for (OrderItemForm item : orderForm.getOrderItems()) {
             try {
                 ProductPojo product = barcodeToProductPojoMap.get(item.getBarcode());
                 validateOrderItem(item, product);
@@ -297,7 +227,7 @@ public class ValidationUtil {
         }
     }
 
-    public static void validateOrderItem(OrderItem item, ProductPojo product) throws ApiException {
+    public static void validateOrderItem(OrderItemForm item, ProductPojo product) throws ApiException {
 
         if (Objects.isNull(product)) {
             throw new ApiException("Invalid barcode: " + item.getBarcode());
@@ -312,11 +242,11 @@ public class ValidationUtil {
         LocalDate start = form.getStartDate();
         LocalDate end = form.getEndDate();
 
-        if (start == null && end == null) {
+        if (Objects.isNull(start) && Objects.isNull(end)) {
             return;
         }
 
-        if (start == null || end == null) {
+        if (Objects.isNull(start) || Objects.isNull(end)) {
             throw new ApiException("Both startDate and endDate must be provided together");
         }
 

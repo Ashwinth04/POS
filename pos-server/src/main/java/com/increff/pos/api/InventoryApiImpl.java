@@ -26,7 +26,6 @@ public class InventoryApiImpl implements InventoryApi {
 
     @Transactional(rollbackFor = Exception.class)
     public boolean reserveInventory(List<InventoryPojo> inventoryUpdatePojos) {
-
         if (!checkOrderFulfillable(inventoryUpdatePojos)) return false;
 
         for (InventoryPojo inventoryUpdatePojo : inventoryUpdatePojos) {
@@ -45,7 +44,6 @@ public class InventoryApiImpl implements InventoryApi {
 
     @Transactional(rollbackFor = ApiException.class)
     public void revertInventory(List<InventoryPojo> orderInventoryPojos) {
-
         for (InventoryPojo pojo: orderInventoryPojos) {
             int quantity = pojo.getQuantity();
             pojo.setQuantity(quantity);
@@ -56,11 +54,9 @@ public class InventoryApiImpl implements InventoryApi {
 
     @Transactional(rollbackFor = Exception.class)
     public void createDummyInventoryRecord(String productId) {
-
         InventoryPojo dummyRecord = new InventoryPojo();
         dummyRecord.setProductId(productId);
         dummyRecord.setQuantity(0);
-
         inventoryDao.save(dummyRecord);
     }
 
@@ -125,14 +121,14 @@ public class InventoryApiImpl implements InventoryApi {
             }
         }
 
-        inventoryDao.bulkUpdate(pojos);
+        if (!pojos.isEmpty()) inventoryDao.bulkUpdate(pojos);
         return clampedProductIds;
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void updateDeltaInventory(Map<String, Integer> deltaInventory) {
         List<InventoryPojo> pojos = InventoryHelper.getPojosFromMap(deltaInventory);
-        inventoryDao.bulkUpdate(pojos);
+        if (!pojos.isEmpty()) inventoryDao.bulkUpdate(pojos);
     }
 
     public Map<String, Integer> aggregateItemsByProductId(List<InventoryPojo> inventoryPojos) {
@@ -142,7 +138,6 @@ public class InventoryApiImpl implements InventoryApi {
         for (InventoryPojo pojo : inventoryPojos) {
             String productId = pojo.getProductId();
             Integer quantity = pojo.getQuantity();
-
             aggregatedItems.merge(productId, quantity, Integer::sum);
         }
 

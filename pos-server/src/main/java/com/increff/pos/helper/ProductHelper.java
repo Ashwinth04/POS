@@ -16,7 +16,6 @@ import static com.increff.pos.util.FileUtils.getValueFromRow;
 
 public class ProductHelper {
     public static ProductPojo convertToEntity(ProductForm productForm) {
-
         ProductPojo productPojo = new ProductPojo();
         productPojo.setName(productForm.getName().trim());
         productPojo.setMrp(productForm.getMrp());
@@ -27,7 +26,6 @@ public class ProductHelper {
     }
 
     public static ProductData convertToData(ProductPojo productPojo) {
-
         ProductData productData = new ProductData();
         productData.setId(productPojo.getId());
         productData.setName(productPojo.getName());
@@ -40,7 +38,6 @@ public class ProductHelper {
     }
 
     public static ProductPojo convertRowToProductPojo(String[] row, Map<String, Integer> headerIndexMap) throws ApiException {
-
         ValidationUtil.validateProductRow(row, headerIndexMap);
         ProductPojo pojo = new ProductPojo();
 
@@ -64,7 +61,6 @@ public class ProductHelper {
 
     public static Map<String, Integer> extractHeaderIndexMap(String[] headerRow) {
         Map<String, Integer> headerIndexMap = new HashMap<>();
-
         for (int i = 0; i < headerRow.length; i++) {
             headerIndexMap.put(headerRow[i], i);
         }
@@ -74,7 +70,6 @@ public class ProductHelper {
 
     public static ProductData convertToData(ProductPojo product, Map<String, InventoryPojo> inventoryByProductId) {
         ProductData data = new ProductData();
-
         data.setId(product.getId());
         data.setName(product.getName());
         data.setMrp(product.getMrp());

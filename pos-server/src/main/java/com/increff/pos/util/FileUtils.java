@@ -7,8 +7,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class FileUtils {
+
+    public static FileData convertProductResultsToBase64(List<RowError> results) {
+        String resultFile = generateProductUploadResults(results);
+        FileData fileData = new FileData();
+        fileData.setStatus(results.isEmpty() ? "SUCCESS" : "UNSUCCESSFUL");
+        fileData.setBase64file(resultFile);
+        return fileData;
+    }
 
     public static String generateProductUploadResults(List<RowError> results) {
 
@@ -39,9 +48,7 @@ public class FileUtils {
         if (invalidInventory.isEmpty()) return "";
 
         StringBuilder sb = new StringBuilder();
-
         sb.append("barcode\tmessage\n");
-
         for (RowError row: invalidInventory) {
             sb.append(safe(row.getBarcode()))
                     .append("\t")
@@ -53,26 +60,15 @@ public class FileUtils {
         return Base64.getEncoder().encodeToString(tsvBytes);
     }
 
-    private static String safe(String value) {
-        return value == null ? "" : value.replace("\t", " ").replace("\n", " ");
-    }
-
     public static String getValueFromRow(String[] row, Map<String, Integer> headerIndexMap, String header) {
         Integer index = headerIndexMap.get(header);
-        if (index == null || index >= row.length) {
+        if (Objects.isNull(index) || index >= row.length) {
             return null;
         }
         return row[index].trim();
     }
 
-    public static FileData convertProductResultsToBase64(List<RowError> results) {
-
-        String resultFile = generateProductUploadResults(results);
-
-        FileData fileData = new FileData();
-        fileData.setStatus(results.isEmpty() ? "SUCCESS" : "UNSUCCESSFUL");
-        fileData.setBase64file(resultFile);
-
-        return fileData;
+    private static String safe(String value) {
+        return Objects.isNull(value) ? "" : value.replace("\t", " ").replace("\n", " ");
     }
 }

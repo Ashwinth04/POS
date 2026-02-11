@@ -68,7 +68,6 @@ public class OrderFlow {
     @Transactional(readOnly = true)
     public Map<String, ProductPojo> mapBarcodesToProductPojos(List<String> barcodes) {
         List<ProductPojo> products = productApi.getProductPojosForBarcodes(barcodes);
-
         Map<String, ProductPojo> barcodeToProductId = new HashMap<>();
         for (ProductPojo product : products) {
             barcodeToProductId.put(
@@ -83,7 +82,6 @@ public class OrderFlow {
     @Transactional(rollbackFor = Exception.class)
     public Map<String, ProductPojo> mapProductIdsToProductPojos(List<String> productIds) {
         List<ProductPojo> products = productApi.getProductPojosForProductIds(productIds);
-
         Map<String, ProductPojo> productIdToProductPojo = new HashMap<>();
 
         for (ProductPojo product : products) {

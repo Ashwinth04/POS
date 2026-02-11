@@ -22,7 +22,7 @@ public class NormalizationUtil {
     public static void normalizeOrderForm(OrderForm orderForm) {
         if (Objects.isNull(orderForm) || Objects.isNull(orderForm.getOrderItems())) return;
 
-        for (OrderItem orderItem: orderForm.getOrderItems()) {
+        for (OrderItemForm orderItem: orderForm.getOrderItems()) {
             String barcode = orderItem.getBarcode();
             if (Objects.nonNull(barcode)) orderItem.setBarcode(barcode.trim().toLowerCase());
         }
@@ -38,10 +38,6 @@ public class NormalizationUtil {
         if (Objects.nonNull(clientName)) productForm.setClientName(clientName.trim());
         if (Objects.nonNull(imageUrl)) productForm.setImageUrl(imageUrl.trim().toLowerCase());
         if (Objects.nonNull(barcode)) productForm.setBarcode(barcode.trim().toLowerCase());
-    }
-
-    public static String normalizeEmail(String email) {
-        return email.trim().toLowerCase();
     }
 
     public static void normalizeInventoryForm(InventoryForm inventoryForm) {

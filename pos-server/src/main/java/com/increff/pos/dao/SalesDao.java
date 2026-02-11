@@ -132,6 +132,7 @@ public class SalesDao extends AbstractDao<SalesPojo> {
                 .and("totalRevenue").as("totalRevenue")
                 .andExclude("_id");
 
+        // Facet
         FacetOperation facetOperation = facet()
                 .and(summaryProject, summaryGroup, project().andExclude("_id")).as("summary")
                 .and(unwindItems, addProductIdObj, lookupProduct, unwindProduct, clientGroup, clientProject).as("clients");

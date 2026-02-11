@@ -14,7 +14,6 @@ public class AuthHelper {
         user.setPassword(encodedPassword);
         user.setEmail(email);
         user.setRole(role);
-
         return user;
     }
 }

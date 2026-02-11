@@ -13,7 +13,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
 
-//TODO:: Read about ESR Rule for creating indexes
 @Repository
 public class OrderDao extends AbstractDao<OrderPojo> {
     public OrderDao(MongoOperations mongoOperations) {

@@ -43,9 +43,7 @@ public class AuthUserDetailsService implements UserDetailsService {
     }
 
     private UserPojo getCheckByUsername(String username) {
-
         UserPojo user = userDao.findByEmail(username);
-
         if (Objects.isNull(user)) {
             throw new UsernameNotFoundException("User with the given email not found");
         }

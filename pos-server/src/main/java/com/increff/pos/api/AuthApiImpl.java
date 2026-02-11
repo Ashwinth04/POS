@@ -68,7 +68,6 @@ public class AuthApiImpl {
     }
 
     public LoginResponse getCurrentUser(Authentication authentication) {
-
         String email = authentication.getName();
         String role = authentication.getAuthorities()
                 .iterator()
@@ -79,15 +78,12 @@ public class AuthApiImpl {
     }
 
     public Page<UserPojo> getAllOperators(int page, int size) {
-
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return userDao.findAll(pageRequest);
     }
 
     public void checkUserExists(String email) throws ApiException {
-
         UserPojo user = userDao.findByEmail(email);
-
         if (Objects.nonNull(user)) {
             throw new ApiException("User already exists");
         }

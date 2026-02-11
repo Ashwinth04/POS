@@ -8,10 +8,7 @@ import com.increff.pos.exception.ApiException;
 import com.increff.pos.flow.OrderFlow;
 import com.increff.pos.helper.OrderHelper;
 import com.increff.pos.model.data.*;
-import com.increff.pos.model.form.OrderFilterForm;
-import com.increff.pos.model.form.OrderForm;
-import com.increff.pos.model.form.PageForm;
-import com.increff.pos.model.form.SearchOrderForm;
+import com.increff.pos.model.form.*;
 import com.increff.pos.wrapper.InvoiceClientWrapper;
 import com.increff.pos.util.FormValidator;
 import com.increff.pos.util.NormalizationUtil;
@@ -48,11 +45,10 @@ public class OrderDto {
         ValidationUtil.validateAllOrderItems(orderForm, barcodeToProductPojoMap);
         OrderPojo orderPojo = OrderHelper.convertToEntity(orderForm, barcodeToProductPojoMap);
         OrderPojo resultOrderPojo = orderFlow.createOrder(orderPojo);
-        return OrderHelper.convertOrderFormToData(orderForm, resultOrderPojo);
+        return OrderHelper.convertOrderFormToData(orderForm, resultOrderPojo, barcodeToProductPojoMap);
     }
 
     public OrderData editOrder(String orderId, OrderForm orderForm) throws ApiException {
-
         NormalizationUtil.normalizeOrderForm(orderForm);
         FormValidator.validate(orderForm);
         ValidationUtil.validateOrderId(orderId);
@@ -63,7 +59,6 @@ public class OrderDto {
         orderPojo.setOrderId(orderId);
         OrderPojo resultOrderPojo = orderFlow.editOrder(orderPojo, orderId);
         Map<String, ProductPojo> productIdToProductPojo = OrderHelper.mapProductIdToProductPojo(barcodeToProductPojo);
-
         return OrderHelper.convertToData(resultOrderPojo, productIdToProductPojo);
     }
 
@@ -73,7 +68,6 @@ public class OrderDto {
     }
 
     public Page<OrderData> searchById(SearchOrderForm searchOrderForm) throws ApiException {
-
         FormValidator.validate(searchOrderForm);
         Page<OrderPojo> orderPage = orderApi.searchById(searchOrderForm.getOrderId(), searchOrderForm.getPage(), searchOrderForm.getSize());
         List<String> productIds = orderPage.stream()
@@ -86,7 +80,6 @@ public class OrderDto {
     }
 
     public FileData generateInvoice(String orderId) throws ApiException {
-
         ValidationUtil.validateOrderId(orderId);
         OrderPojo orderPojo = orderApi.getCheckByOrderId(orderId);
 
@@ -114,7 +107,7 @@ public class OrderDto {
     public Map<String, ProductPojo> getBarcodeToProductPojoMap(OrderForm orderForm) {
         List<String> barcodes = orderForm.getOrderItems()
                 .stream()
-                .map(OrderItem::getBarcode)
+                .map(OrderItemForm::getBarcode)
                 .toList();
 
         return orderFlow.mapBarcodesToProductPojos(barcodes);
@@ -140,7 +133,6 @@ public class OrderDto {
     }
 
     private Page<OrderPojo> fetchOrders(OrderFilterForm form) {
-
         if (Objects.isNull(form.getStartDate())) {
             return orderApi.getAllOrders(form.getPage(), form.getSize());
         }
@@ -153,5 +145,4 @@ public class OrderDto {
 
         return orderApi.filterOrdersByDate(start, end, form.getPage(), form.getSize());
     }
-
 }

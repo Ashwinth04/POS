@@ -26,7 +26,7 @@ public class SalesApiImpl {
 
     @Transactional(readOnly = true)
     public SalesPojo getDailySales(ZonedDateTime start, ZonedDateTime end) {
-            return salesDao.getDailySalesData(start, end);
+        return salesDao.getDailySalesData(start, end);
     }
 
     @Transactional(rollbackFor = Exception.class)

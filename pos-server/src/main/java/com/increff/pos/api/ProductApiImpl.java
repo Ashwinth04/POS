@@ -38,7 +38,7 @@ public class ProductApiImpl implements ProductApi {
 
     @Transactional(readOnly = true)
     public Page<ProductPojo> getAllProducts(int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return productDao.findAll(pageRequest);
     }
 
@@ -60,7 +60,6 @@ public class ProductApiImpl implements ProductApi {
 
     @Transactional(readOnly = true)
     public List<ProductPojo> getProductPojosForBarcodes(List<String> barcodes) {
-
         if (Objects.isNull(barcodes) || barcodes.isEmpty()) {
             return Collections.emptyList();
         }
@@ -69,7 +68,6 @@ public class ProductApiImpl implements ProductApi {
 
     @Transactional(readOnly = true)
     public List<ProductPojo> getProductPojosForProductIds(List<String> productIds) {
-
         if (Objects.isNull(productIds) || productIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -78,9 +76,7 @@ public class ProductApiImpl implements ProductApi {
 
     @Transactional(readOnly = true)
     public ProductPojo getCheckByBarcode(String barcode) throws ApiException {
-
         ProductPojo record = productDao.findByBarcode(barcode);
-
         if (Objects.isNull(record)) {
             throw new ApiException("Product with this given barcode doesn't exist");
         }

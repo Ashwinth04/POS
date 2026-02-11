@@ -18,7 +18,6 @@ import static com.increff.pos.util.FileUtils.getValueFromRow;
 public class InventoryHelper {
 
     public static InventoryPojo convertToEntity(InventoryForm inventoryForm, String productId) {
-
         InventoryPojo inventoryPojo = new InventoryPojo();
         inventoryPojo.setProductId(productId);
         inventoryPojo.setQuantity(inventoryForm.getQuantity());
@@ -26,7 +25,6 @@ public class InventoryHelper {
     }
 
     public static InventoryData convertToData(InventoryPojo inventoryPojo) {
-
         InventoryData inventoryData = new InventoryData();
         inventoryData.setProductId(inventoryPojo.getProductId());
         inventoryData.setQuantity(inventoryPojo.getQuantity());
@@ -35,7 +33,6 @@ public class InventoryHelper {
 
     public static List<InventoryPojo> getPojosFromMap(Map<String, Integer> delta) {
         List<InventoryPojo> pojos = new ArrayList<>();
-
         for (String productId: delta.keySet()) {
             InventoryPojo pojo = new InventoryPojo();
             pojo.setProductId(productId);
@@ -58,9 +55,7 @@ public class InventoryHelper {
     }
 
     public static Map<String, Integer> extractInventoryHeaderIndexMap(String[] headerRow) {
-
         Map<String, Integer> map = new HashMap<>();
-
         for (int i = 0; i < headerRow.length; i++) {
             String normalized = headerRow[i]
                     .trim()
@@ -75,7 +70,6 @@ public class InventoryHelper {
     }
 
     public static InventoryPojo convertRowToInventoryPojo(String[] row, Map<String, Integer> headerIndexMap, Map<String, ProductPojo> barcodeToProductId) throws ApiException {
-
         Integer barcodeIndex = headerIndexMap.get("barcode");
         if (barcodeIndex == null || barcodeIndex >= row.length) {
             throw new ApiException("Barcode column missing");
@@ -123,9 +117,7 @@ public class InventoryHelper {
     }
 
     public static List<String> getAllBarcodes(List<String[]> rows, Map<String, Integer> headerIndexMap) {
-
         List<String> barcodes = new ArrayList<>();
-
         for (int i = 1; i < rows.size(); i++) {
             String[] row = rows.get(i);
 

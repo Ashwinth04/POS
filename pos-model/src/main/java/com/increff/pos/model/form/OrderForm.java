@@ -14,5 +14,5 @@ import java.util.List;
 public class OrderForm {
     @NotNull(message = "orderItems cannot be null")
     @NotEmpty(message = "orderItems cannot be empty")
-    private List<OrderItem> orderItems;
+    private List<OrderItemForm> orderItems;
 }

@@ -16,4 +16,3 @@ public class PageForm {
     @Max(value = 100, message = "Page size cannot be greater than 100")
     private int size = 10;
 }
-// TODO: read what happens if you ue @Valid here - Nothing will happen, we need something to trigger it
